@@ -1,6 +1,6 @@
 {
     "name": "php-sso/php-sso",
-    "description": "An OpenID Connect provider with SCIM provisioning and SAML sign-in, built on php-sso/oauth-server, php-sso/scim-server and php-sso/saml.",
+    "description": "An OpenID Connect provider with SCIM provisioning and SAML sign-in, and an admin panel.",
     "keywords": [
         "sso",
         "single-sign-on",
