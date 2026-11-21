@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\ClientAuthThrottle;
 
-use PhpSso\Store\Sqlite\Database;
+use PhpSso\Store\Sql\Connection;
 use PhpSso\OAuth\ClientAuthThrottle;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
-use PhpSso\Store\Sqlite\SqliteClientAuthFailures;
+use PhpSso\Store\Sql\SqlClientAuthFailures;
 
 #[CoversMethod(ClientAuthThrottle::class, 'recordFailure')]
 final class RecordFailureTest extends TestCase
@@ -18,8 +18,8 @@ final class RecordFailureTest extends TestCase
     public function testFailuresOlderThanTheWindowAreForgotten(): void
     {
         // Arrange
-        $db = new Database(':memory:');
-        $throttle = new ClientAuthThrottle(new SqliteClientAuthFailures($db), ['window_seconds' => 600]);
+        $db = Connection::sqlite(':memory:');
+        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures($db), ['window_seconds' => 600]);
         $throttle->recordFailure('web', '10.0.0.1', self::NOW);
 
         // Act
@@ -32,8 +32,8 @@ final class RecordFailureTest extends TestCase
     public function testNothingIsStoredWhenSwitchedOff(): void
     {
         // Arrange
-        $db = new Database(':memory:');
-        $throttle = new ClientAuthThrottle(new SqliteClientAuthFailures($db), ['enabled' => false]);
+        $db = Connection::sqlite(':memory:');
+        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures($db), ['enabled' => false]);
 
         // Act
         $throttle->recordFailure('web', '10.0.0.1', self::NOW);

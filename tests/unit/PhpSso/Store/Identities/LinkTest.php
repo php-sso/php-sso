@@ -9,7 +9,7 @@ use PhpSso\Store\DuplicateValue;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteIdentities;
+use PhpSso\Store\Sql\SqlIdentities;
 
 #[CoversMethod(Identities::class, 'link')]
 #[CoversMethod(Identities::class, 'find')]
@@ -23,7 +23,7 @@ final class LinkTest extends TestCase
         // Arrange
         $data = new TestData();
         $alice = $data->user('alice');
-        $identities = new SqliteIdentities($data->db);
+        $identities = new SqlIdentities($data->db);
         $identities->link($alice, 'google', 'g-1', 'alice@example.com');
 
         // Act
@@ -39,7 +39,7 @@ final class LinkTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $identities = new SqliteIdentities($data->db);
+        $identities = new SqlIdentities($data->db);
         $identities->link($data->user('alice'), 'google', 'g-1', null);
         $this->expectException(DuplicateValue::class);
 
@@ -54,7 +54,7 @@ final class LinkTest extends TestCase
         // Arrange
         $data = new TestData();
         $alice = $data->user('alice');
-        $identities = new SqliteIdentities($data->db);
+        $identities = new SqlIdentities($data->db);
         $identities->link($alice, 'google', 'g-1', null);
         $identities->link($alice, 'github', 'h-1', null);
         $identities->link($data->user('bob'), 'google', 'g-2', null);
@@ -70,7 +70,7 @@ final class LinkTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $identities = new SqliteIdentities($data->db);
+        $identities = new SqlIdentities($data->db);
         $identities->link($data->user('alice'), 'google', 'g-1', 'alice@example.com');
         $id = $identities->find('google', 'g-1')['id'];
 
@@ -88,7 +88,7 @@ final class LinkTest extends TestCase
         // Arrange
         $data = new TestData();
         $alice = $data->user('alice');
-        $identities = new SqliteIdentities($data->db);
+        $identities = new SqlIdentities($data->db);
         $identities->link($alice, 'google', 'g-1', null);
         $identities->link($alice, 'github', 'h-1', null);
 
@@ -107,7 +107,7 @@ final class LinkTest extends TestCase
         // Arrange
         $data = new TestData();
         $alice = $data->user('alice');
-        $identities = new SqliteIdentities($data->db);
+        $identities = new SqlIdentities($data->db);
         $identities->link($alice, 'google', 'g-1', null);
 
         // Act

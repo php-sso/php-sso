@@ -10,7 +10,7 @@ use PhpSso\Store\Sessions;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteSessions;
+use PhpSso\Store\Sql\SqlSessions;
 
 #[CoversMethod(RequiredActions::class, 'next')]
 final class NextTest extends TestCase
@@ -21,7 +21,7 @@ final class NextTest extends TestCase
         $data = new TestData();
         $sub = $data->user('alice');
         $data->users->setMustChangePassword($sub, true);
-        $actions = new RequiredActions([new ChangePasswordAction($data->users, new SqliteSessions($data->db, 3600))]);
+        $actions = new RequiredActions([new ChangePasswordAction($data->users, new SqlSessions($data->db, 3600))]);
 
         // Act
         $next = $actions->next($data->users->find($sub));
@@ -35,7 +35,7 @@ final class NextTest extends TestCase
         // Arrange
         $data = new TestData();
         $sub = $data->user('alice');
-        $actions = new RequiredActions([new ChangePasswordAction($data->users, new SqliteSessions($data->db, 3600))]);
+        $actions = new RequiredActions([new ChangePasswordAction($data->users, new SqlSessions($data->db, 3600))]);
 
         // Act
         $next = $actions->next($data->users->find($sub));

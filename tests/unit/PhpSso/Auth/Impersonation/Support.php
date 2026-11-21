@@ -7,7 +7,7 @@ namespace Tests\unit\PhpSso\Auth\Impersonation;
 use PhpSso\Auth\Impersonation;
 use PhpSso\Store\Sessions;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteSessions;
+use PhpSso\Store\Sql\SqlSessions;
 
 /** An administrator who is signed in, someone to browse as, and the service under test. */
 final class Support
@@ -21,7 +21,7 @@ final class Support
     public function __construct()
     {
         $this->data = new TestData();
-        $this->sessions = new SqliteSessions($this->data->db, 3600);
+        $this->sessions = new SqlSessions($this->data->db, 3600);
         $this->impersonation = new Impersonation($this->sessions, $this->data->users);
         $this->adminSub = $this->data->users->create(['username' => 'root', 'password' => 'secret-pass', 'name' => 'Root', 'email' => 'root@example.com', 'email_verified' => true, 'is_admin' => true]);
         $this->adminSid = $this->sessions->start($this->adminSub, '203.0.113.1', 'agent');

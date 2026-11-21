@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Support;
 
-use PhpSso\Store\Sqlite\Database;
+use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Clients;
 use PhpSso\Store\Groups;
 use PhpSso\Store\Roles;
 use PhpSso\Store\Users;
-use PhpSso\Store\Sqlite\SqliteClients;
-use PhpSso\Store\Sqlite\SqliteGroups;
-use PhpSso\Store\Sqlite\SqliteRoles;
-use PhpSso\Store\Sqlite\SqliteUsers;
+use PhpSso\Store\Sql\SqlClients;
+use PhpSso\Store\Sql\SqlGroups;
+use PhpSso\Store\Sql\SqlRoles;
+use PhpSso\Store\Sql\SqlUsers;
 
 /** Builds people, groups, clients and roles in an in-memory database for tests. */
 final class TestData
 {
-    public readonly Database $db;
+    public readonly Connection $db;
     public readonly Users $users;
     public readonly Groups $groups;
     public readonly Clients $clients;
@@ -25,11 +25,11 @@ final class TestData
 
     public function __construct()
     {
-        $this->db = new Database(':memory:');
-        $this->users = new SqliteUsers($this->db);
-        $this->groups = new SqliteGroups($this->db);
-        $this->clients = new SqliteClients($this->db);
-        $this->roles = new SqliteRoles($this->db);
+        $this->db = Connection::sqlite(':memory:');
+        $this->users = new SqlUsers($this->db);
+        $this->groups = new SqlGroups($this->db);
+        $this->clients = new SqlClients($this->db);
+        $this->roles = new SqlRoles($this->db);
     }
 
     /** A group with the given people in it. @param string[] $subs */

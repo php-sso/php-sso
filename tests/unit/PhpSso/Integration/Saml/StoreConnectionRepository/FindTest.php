@@ -9,7 +9,7 @@ use PhpSso\Store\SamlConnections;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteSamlConnections;
+use PhpSso\Store\Sql\SqlSamlConnections;
 
 #[CoversMethod(StoreConnectionRepository::class, 'find')]
 final class FindTest extends TestCase
@@ -17,7 +17,7 @@ final class FindTest extends TestCase
     public function testItDescribesTheProviderTheAdministratorSetUp(): void
     {
         // Arrange
-        $connections = new SqliteSamlConnections((new TestData())->db);
+        $connections = new SqlSamlConnections((new TestData())->db);
         $id = $connections->create(['name' => 'Acme', 'idp_entity_id' => 'https://idp.acme.test/e', 'idp_sso_url' => 'https://idp.acme.test/sso', 'idp_certificate' => 'CERT', 'enabled' => true, 'create_users' => false, 'link_existing' => false], ['Acme.com', 'acme.org']);
         $repository = new StoreConnectionRepository($connections);
 
@@ -33,7 +33,7 @@ final class FindTest extends TestCase
     public function testASwitchedOffConnectionSaysSo(): void
     {
         // Arrange
-        $connections = new SqliteSamlConnections((new TestData())->db);
+        $connections = new SqlSamlConnections((new TestData())->db);
         $id = $connections->create(['name' => 'Acme', 'idp_entity_id' => 'e', 'idp_sso_url' => 'https://x.test', 'idp_certificate' => 'x', 'enabled' => false, 'create_users' => false, 'link_existing' => false], ['acme.com']);
 
         // Act
@@ -47,7 +47,7 @@ final class FindTest extends TestCase
     public function testAConnectionThatDoesNotExistIsNull(): void
     {
         // Arrange
-        $repository = new StoreConnectionRepository(new SqliteSamlConnections((new TestData())->db));
+        $repository = new StoreConnectionRepository(new SqlSamlConnections((new TestData())->db));
 
         // Act
         $connection = $repository->find(999);

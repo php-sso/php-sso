@@ -10,8 +10,8 @@ use PhpSso\Store\Settings;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteLoginAttempts;
-use PhpSso\Store\Sqlite\SqliteSettings;
+use PhpSso\Store\Sql\SqlLoginAttempts;
+use PhpSso\Store\Sql\SqlSettings;
 
 #[CoversMethod(LoginThrottle::class, 'failing')]
 #[CoversMethod(LoginThrottle::class, 'lockedCount')]
@@ -27,8 +27,8 @@ final class FailingTest extends TestCase
     protected function setUp(): void
     {
         $this->data = new TestData();
-        $this->attempts = new SqliteLoginAttempts($this->data->db);
-        $this->throttle = new LoginThrottle($this->attempts, new SqliteSettings($this->data->db), ['per_identifier' => 2, 'per_ip' => 3, 'window_seconds' => 600]);
+        $this->attempts = new SqlLoginAttempts($this->data->db);
+        $this->throttle = new LoginThrottle($this->attempts, new SqlSettings($this->data->db), ['per_identifier' => 2, 'per_ip' => 3, 'window_seconds' => 600]);
     }
 
     public function testItListsAccountsIdentifiersAndAddressesWithTheirCounts(): void

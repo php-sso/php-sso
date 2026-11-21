@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\Store\StorageFactory;
 
 use InvalidArgumentException;
-use PhpSso\Store\Sqlite\SqliteStorage;
+use PhpSso\Store\Sql\SqlStorage;
 use PhpSso\Store\StorageFactory;
 use PhpSso\Store\StorageOptions;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -23,7 +23,7 @@ final class CreateTest extends TestCase
         $storage = StorageFactory::create(['path' => ':memory:'], $options);
 
         // Assert
-        $this->assertInstanceOf(SqliteStorage::class, $storage);
+        $this->assertInstanceOf(SqlStorage::class, $storage);
     }
 
     public function testItRefusesADriverItDoesNotKnow(): void

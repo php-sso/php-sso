@@ -9,7 +9,7 @@ use PhpSso\Store\Sessions;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteSessions;
+use PhpSso\Store\Sql\SqlSessions;
 
 #[CoversMethod(ChangePasswordAction::class, 'applies')]
 final class AppliesTest extends TestCase
@@ -20,7 +20,7 @@ final class AppliesTest extends TestCase
         $data = new TestData();
         $sub = $data->user('alice');
         $data->users->setMustChangePassword($sub, true);
-        $action = new ChangePasswordAction($data->users, new SqliteSessions($data->db, 3600));
+        $action = new ChangePasswordAction($data->users, new SqlSessions($data->db, 3600));
 
         // Act
         $applies = $action->applies($data->users->find($sub));
@@ -34,7 +34,7 @@ final class AppliesTest extends TestCase
         // Arrange
         $data = new TestData();
         $sub = $data->user('alice');
-        $action = new ChangePasswordAction($data->users, new SqliteSessions($data->db, 3600));
+        $action = new ChangePasswordAction($data->users, new SqlSessions($data->db, 3600));
 
         // Act
         $applies = $action->applies($data->users->find($sub));
@@ -48,7 +48,7 @@ final class AppliesTest extends TestCase
         // Arrange
         $data = new TestData();
         $sub = $data->users->create(['username' => 'bob', 'password' => null, 'name' => 'Bob', 'email' => 'bob@example.com', 'email_verified' => true, 'is_admin' => false, 'must_change_password' => true]);
-        $action = new ChangePasswordAction($data->users, new SqliteSessions($data->db, 3600));
+        $action = new ChangePasswordAction($data->users, new SqlSessions($data->db, 3600));
 
         // Act
         $applies = $action->applies($data->users->find($sub));

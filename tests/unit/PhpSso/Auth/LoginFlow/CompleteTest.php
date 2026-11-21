@@ -10,8 +10,8 @@ use PhpSso\Store\Sessions;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteLoginAttempts;
-use PhpSso\Store\Sqlite\SqliteSessions;
+use PhpSso\Store\Sql\SqlLoginAttempts;
+use PhpSso\Store\Sql\SqlSessions;
 
 #[CoversMethod(LoginFlow::class, 'complete')]
 final class CompleteTest extends TestCase
@@ -25,8 +25,8 @@ final class CompleteTest extends TestCase
     protected function setUp(): void
     {
         $this->data = new TestData();
-        $this->sessions = new SqliteSessions($this->data->db, 3600);
-        $this->attempts = new SqliteLoginAttempts($this->data->db);
+        $this->sessions = new SqlSessions($this->data->db, 3600);
+        $this->attempts = new SqlLoginAttempts($this->data->db);
         $this->regenerated = 0;
         $this->flow = new LoginFlow($this->sessions, $this->attempts, new \PhpSso\Auth\Actions\RequiredActions([]), function (): bool {
             $this->regenerated++;

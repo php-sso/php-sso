@@ -8,7 +8,7 @@ use PhpSso\Store\Consents;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteConsents;
+use PhpSso\Store\Sql\SqlConsents;
 
 #[CoversMethod(Consents::class, 'bump')]
 #[CoversMethod(Consents::class, 'update')]
@@ -18,7 +18,7 @@ final class BumpTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $id = $consents->create('Terms', 'Please read.', null, true);
         $sub = $data->user('alice');
         $consents->accept($sub, $id, 1, '203.0.113.9');
@@ -34,7 +34,7 @@ final class BumpTest extends TestCase
     public function testBumpingAnUnknownConsentReturnsNull(): void
     {
         // Arrange
-        $consents = new SqliteConsents((new TestData())->db);
+        $consents = new SqlConsents((new TestData())->db);
 
         // Act
         $version = $consents->bump(99);
@@ -47,7 +47,7 @@ final class BumpTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $id = $consents->create('Terms', 'Please read.', null, true);
         $sub = $data->user('alice');
         $consents->accept($sub, $id, 1, '203.0.113.9');

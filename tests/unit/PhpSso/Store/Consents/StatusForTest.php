@@ -8,7 +8,7 @@ use PhpSso\Store\Consents;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteConsents;
+use PhpSso\Store\Sql\SqlConsents;
 
 #[CoversMethod(Consents::class, 'statusFor')]
 #[CoversMethod(Consents::class, 'all')]
@@ -18,7 +18,7 @@ final class StatusForTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $terms = $consents->create('Terms', 'a', null, true);
         $policy = $consents->create('Policy', 'b', null, true);
         $consents->create('Privacy', 'c', null, true);
@@ -39,7 +39,7 @@ final class StatusForTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $id = $consents->create('Terms', 'a', null, true);
         $consents->accept($data->user('alice'), $id, 1, '203.0.113.9');
         $consents->accept($data->user('bob'), $id, 1, '203.0.113.9');

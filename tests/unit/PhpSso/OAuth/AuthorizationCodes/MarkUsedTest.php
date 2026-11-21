@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\AuthorizationCodes;
 
-use PhpSso\Store\Sqlite\Database;
-use PhpSso\Store\Sqlite\SqliteAuthorizationCodes;
-use PhpSso\Store\Sqlite\SqliteRefreshTokens;
+use PhpSso\Store\Sql\Connection;
+use PhpSso\Store\Sql\SqlAuthorizationCodes;
+use PhpSso\Store\Sql\SqlRefreshTokens;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\OAuthServer\Grant\AuthorizationCodeRecord;
 
-#[CoversMethod(SqliteAuthorizationCodes::class, 'markUsed')]
+#[CoversMethod(SqlAuthorizationCodes::class, 'markUsed')]
 final class MarkUsedTest extends TestCase
 {
-    private function saved(SqliteAuthorizationCodes $store, string $family = 'family-1'): void
+    private function saved(SqlAuthorizationCodes $store, string $family = 'family-1'): void
     {
         $store->save(new AuthorizationCodeRecord('hash-1', 'web', 'user-1', 'https://app/cb', ['openid'], str_repeat('c', 43), null, null, $family, 2_000_000_000, null, null));
     }
@@ -22,7 +22,7 @@ final class MarkUsedTest extends TestCase
     public function testExactlyOneCallerRedeemsACode(): void
     {
         // Arrange
-        $store = new SqliteAuthorizationCodes(new Database(':memory:'));
+        $store = new SqlAuthorizationCodes(Connection::sqlite(':memory:'));
         $this->saved($store);
 
         // Act
@@ -38,10 +38,10 @@ final class MarkUsedTest extends TestCase
     public function testACodeWhoseSessionEndedMeanwhileCannotBeRedeemed(): void
     {
         // Arrange
-        $db = new Database(':memory:');
-        $store = new SqliteAuthorizationCodes($db);
+        $db = Connection::sqlite(':memory:');
+        $store = new SqlAuthorizationCodes($db);
         $this->saved($store, 'family-9');
-        (new SqliteRefreshTokens($db))->revokeFamily('family-9', 1_700_000_000);
+        (new SqlRefreshTokens($db))->revokeFamily('family-9', 1_700_000_000);
 
         // Act
         $redeemed = $store->markUsed('hash-1', 1_700_000_001);
@@ -53,7 +53,7 @@ final class MarkUsedTest extends TestCase
     public function testItRefusesAnUnknownCode(): void
     {
         // Arrange
-        $store = new SqliteAuthorizationCodes(new Database(':memory:'));
+        $store = new SqlAuthorizationCodes(Connection::sqlite(':memory:'));
 
         // Act
         $redeemed = $store->markUsed('nope', 1_700_000_000);

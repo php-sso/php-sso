@@ -9,8 +9,8 @@ use PhpSso\Auth\Mfa\SecretBox;
 use PhpSso\Store\MfaFactors;
 use PhpSso\Store\Settings;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteMfaFactors;
-use PhpSso\Store\Sqlite\SqliteSettings;
+use PhpSso\Store\Sql\SqlMfaFactors;
+use PhpSso\Store\Sql\SqlSettings;
 
 /** The two-step service on an in-memory database with a throwaway key file. */
 final class Support
@@ -24,8 +24,8 @@ final class Support
     public function __construct(string $defaultPolicy = 'optional')
     {
         $this->data = new TestData();
-        $this->factors = new SqliteMfaFactors($this->data->db);
-        $this->settings = new SqliteSettings($this->data->db);
+        $this->factors = new SqlMfaFactors($this->data->db);
+        $this->settings = new SqlSettings($this->data->db);
         $this->keyFile = sys_get_temp_dir() . '/sso-mfa-test-' . bin2hex(random_bytes(4)) . '.key';
         $this->mfa = new Mfa($this->factors, new SecretBox($this->keyFile), $this->settings, 'Test SSO', $defaultPolicy);
     }

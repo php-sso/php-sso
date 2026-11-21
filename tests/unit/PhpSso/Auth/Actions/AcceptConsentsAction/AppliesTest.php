@@ -9,7 +9,7 @@ use PhpSso\Store\Consents;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteConsents;
+use PhpSso\Store\Sql\SqlConsents;
 
 #[CoversMethod(AcceptConsentsAction::class, 'applies')]
 #[CoversMethod(AcceptConsentsAction::class, 'page')]
@@ -19,7 +19,7 @@ final class AppliesTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $consents->create('Terms', 'a', null, true);
         $user = $data->users->find($data->user('alice'));
 
@@ -37,7 +37,7 @@ final class AppliesTest extends TestCase
         $user = $data->users->find($data->user('alice'));
 
         // Act
-        $applies = (new AcceptConsentsAction(new SqliteConsents($data->db)))->applies($user);
+        $applies = (new AcceptConsentsAction(new SqlConsents($data->db)))->applies($user);
 
         // Assert
         $this->assertFalse($applies);
@@ -47,7 +47,7 @@ final class AppliesTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $first = $consents->create('Terms', 'a', 'https://example.com/t', true);
         $consents->create('Policy', 'b', null, true);
         $user = $data->users->find($data->user('alice'));

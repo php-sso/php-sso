@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Store\Scopes;
 
-use PhpSso\Store\Sqlite\Database;
+use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Scopes;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
-use PhpSso\Store\Sqlite\SqliteScopes;
+use PhpSso\Store\Sql\SqlScopes;
 
 #[CoversMethod(Scopes::class, 'find')]
 final class FindTest extends TestCase
@@ -16,7 +16,7 @@ final class FindTest extends TestCase
     public function testItFindsAnAddedScopeByItsExactName(): void
     {
         // Arrange
-        $scopes = new SqliteScopes(new Database(':memory:'), ['openid']);
+        $scopes = new SqlScopes(Connection::sqlite(':memory:'), ['openid']);
         $scopes->create('reports:read', 'Read reports');
 
         // Act
@@ -29,7 +29,7 @@ final class FindTest extends TestCase
     public function testItFindsABuiltInScopeToo(): void
     {
         // Arrange
-        $scopes = new SqliteScopes(new Database(':memory:'), ['openid']);
+        $scopes = new SqlScopes(Connection::sqlite(':memory:'), ['openid']);
 
         // Act
         $found = $scopes->find('openid');
@@ -42,7 +42,7 @@ final class FindTest extends TestCase
     public function testTheNameMustMatchExactlyIncludingCase(): void
     {
         // Arrange
-        $scopes = new SqliteScopes(new Database(':memory:'), ['openid']);
+        $scopes = new SqlScopes(Connection::sqlite(':memory:'), ['openid']);
         $scopes->create('reports:read', '');
 
         // Act

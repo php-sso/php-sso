@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Store\Scopes;
 
-use PhpSso\Store\Sqlite\Database;
+use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Scopes;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use PhpSso\Store\ScopeName;
-use PhpSso\Store\Sqlite\SqliteScopes;
+use PhpSso\Store\Sql\SqlScopes;
 
 #[CoversMethod(Scopes::class, 'exists')]
 #[CoversMethod(Scopes::class, 'isBuiltin')]
@@ -19,7 +19,7 @@ final class ExistsTest extends TestCase
     public function testNamesAreComparedWithoutCase(): void
     {
         // Arrange
-        $scopes = new SqliteScopes(new Database(':memory:'), ['openid', 'email']);
+        $scopes = new SqlScopes(Connection::sqlite(':memory:'), ['openid', 'email']);
         $scopes->create('reports:read', '');
 
         // Act
@@ -32,7 +32,7 @@ final class ExistsTest extends TestCase
     public function testOnlyTheConfiguredScopesAreBuiltIn(): void
     {
         // Arrange
-        $scopes = new SqliteScopes(new Database(':memory:'), ['openid']);
+        $scopes = new SqlScopes(Connection::sqlite(':memory:'), ['openid']);
         $scopes->create('reports:read', '');
 
         // Act

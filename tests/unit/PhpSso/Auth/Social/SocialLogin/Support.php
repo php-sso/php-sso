@@ -11,8 +11,8 @@ use PhpSso\Auth\Social\SocialProviders;
 use PhpSso\Store\Identities;
 use PhpSso\Store\Settings;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteIdentities;
-use PhpSso\Store\Sqlite\SqliteSettings;
+use PhpSso\Store\Sql\SqlIdentities;
+use PhpSso\Store\Sql\SqlSettings;
 
 /** Social sign-in on an in-memory database with a fake provider. */
 final class Support
@@ -27,10 +27,10 @@ final class Support
     public function __construct(array $policy = [], ?TestData $data = null)
     {
         $this->data = $data ?? new TestData();
-        $this->identities = new SqliteIdentities($this->data->db);
+        $this->identities = new SqlIdentities($this->data->db);
         $this->provider = new FakeProvider();
         $this->providers = new SocialProviders(['fake' => $this->provider], [['key' => 'fake', 'label' => 'Fake', 'enabled' => true]]);
-        $this->social = new SocialLogin($this->providers, $this->identities, $this->data->users, new AccountPolicy(new SqliteSettings($this->data->db), $policy), 'https://sso.example.com', new \PhpSso\Auth\Social\AccountMatcher($this->identities, $this->data->users), new \PhpSso\Store\Sqlite\SqliteSamlConnections($this->data->db));
+        $this->social = new SocialLogin($this->providers, $this->identities, $this->data->users, new AccountPolicy(new SqlSettings($this->data->db), $policy), 'https://sso.example.com', new \PhpSso\Auth\Social\AccountMatcher($this->identities, $this->data->users), new \PhpSso\Store\Sql\SqlSamlConnections($this->data->db));
         $_SESSION = [];
     }
 

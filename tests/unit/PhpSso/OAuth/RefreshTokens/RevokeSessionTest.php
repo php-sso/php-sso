@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\RefreshTokens;
 
-use PhpSso\Store\Sqlite\Database;
-use PhpSso\Store\Sqlite\SqliteAuthorizationCodes;
-use PhpSso\Store\Sqlite\SqliteRefreshTokens;
+use PhpSso\Store\Sql\Connection;
+use PhpSso\Store\Sql\SqlAuthorizationCodes;
+use PhpSso\Store\Sql\SqlRefreshTokens;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\OAuthServer\Grant\AuthorizationCodeRecord;
 use PhpSso\OAuthServer\Grant\RefreshTokenRecord;
 
-#[CoversMethod(SqliteRefreshTokens::class, 'revokeSession')]
+#[CoversMethod(SqlRefreshTokens::class, 'revokeSession')]
 final class RevokeSessionTest extends TestCase
 {
     public function testItRevokesEveryFamilyOfTheSessionIncludingOnesWithoutARefreshToken(): void
     {
         // Arrange
-        $db = new Database(':memory:');
-        $store = new SqliteRefreshTokens($db);
+        $db = Connection::sqlite(':memory:');
+        $store = new SqlRefreshTokens($db);
         $store->save($this->token('rt-1', 'family-with-refresh', 'session-1'));
         $store->save($this->token('rt-2', 'family-other-session', 'session-2'));
-        (new SqliteAuthorizationCodes($db))->save(new AuthorizationCodeRecord('code-1', 'spa', 'user-1', 'https://app/cb', ['openid'], str_repeat('c', 43), null, 'session-1', 'family-code-only', 2_000_000_000, null, null));
+        (new SqlAuthorizationCodes($db))->save(new AuthorizationCodeRecord('code-1', 'spa', 'user-1', 'https://app/cb', ['openid'], str_repeat('c', 43), null, 'session-1', 'family-code-only', 2_000_000_000, null, null));
 
         // Act
         $store->revokeSession('session-1', 1_700_000_000);

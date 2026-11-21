@@ -9,7 +9,7 @@ use PhpSso\Store\Sessions;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteSessions;
+use PhpSso\Store\Sql\SqlSessions;
 
 #[CoversMethod(ChangePasswordAction::class, 'submit')]
 final class SubmitTest extends TestCase
@@ -22,7 +22,7 @@ final class SubmitTest extends TestCase
     protected function setUp(): void
     {
         $this->data = new TestData();
-        $this->sessions = new SqliteSessions($this->data->db, 3600);
+        $this->sessions = new SqlSessions($this->data->db, 3600);
         $this->action = new ChangePasswordAction($this->data->users, $this->sessions);
         $this->sub = $this->data->user('alice');
         $this->data->users->setMustChangePassword($this->sub, true);

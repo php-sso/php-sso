@@ -9,8 +9,8 @@ use PhpSso\Store\SamlRequests;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteSamlConnections;
-use PhpSso\Store\Sqlite\SqliteSamlRequests;
+use PhpSso\Store\Sql\SqlSamlConnections;
+use PhpSso\Store\Sql\SqlSamlRequests;
 
 #[CoversMethod(SamlRequests::class, 'consume')]
 #[CoversMethod(SamlRequests::class, 'remember')]
@@ -19,9 +19,9 @@ final class ConsumeTest extends TestCase
     private function setup2(): array
     {
         $data = new TestData();
-        $id = (new SqliteSamlConnections($data->db))->create(['name' => 'Acme', 'idp_entity_id' => 'e', 'idp_sso_url' => 'https://x.test', 'idp_certificate' => 'x', 'enabled' => true, 'create_users' => false, 'link_existing' => false], ['acme.com']);
+        $id = (new SqlSamlConnections($data->db))->create(['name' => 'Acme', 'idp_entity_id' => 'e', 'idp_sso_url' => 'https://x.test', 'idp_certificate' => 'x', 'enabled' => true, 'create_users' => false, 'link_existing' => false], ['acme.com']);
 
-        return [new SqliteSamlRequests($data->db), $id];
+        return [new SqlSamlRequests($data->db), $id];
     }
 
     public function testARequestWorksOnceAndKeepsTheHashItWasGivenOfTheBrowserSecret(): void

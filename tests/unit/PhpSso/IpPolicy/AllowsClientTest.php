@@ -9,7 +9,7 @@ use PhpSso\Store\IpRules;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteIpRules;
+use PhpSso\Store\Sql\SqlIpRules;
 
 #[CoversMethod(IpPolicy::class, 'allowsClient')]
 final class AllowsClientTest extends TestCase
@@ -21,7 +21,7 @@ final class AllowsClientTest extends TestCase
     {
         $data = new TestData();
         $data->client('app');
-        $this->rules = new SqliteIpRules($data->db);
+        $this->rules = new SqlIpRules($data->db);
         $this->policy = new IpPolicy($this->rules);
     }
 

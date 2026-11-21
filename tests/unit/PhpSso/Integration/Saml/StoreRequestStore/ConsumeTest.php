@@ -10,8 +10,8 @@ use PhpSso\Store\SamlRequests;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteSamlConnections;
-use PhpSso\Store\Sqlite\SqliteSamlRequests;
+use PhpSso\Store\Sql\SqlSamlConnections;
+use PhpSso\Store\Sql\SqlSamlRequests;
 
 #[CoversMethod(StoreRequestStore::class, 'consume')]
 #[CoversMethod(StoreRequestStore::class, 'remember')]
@@ -21,8 +21,8 @@ final class ConsumeTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $id = (new SqliteSamlConnections($data->db))->create(['name' => 'Acme', 'idp_entity_id' => 'e', 'idp_sso_url' => 'https://x.test', 'idp_certificate' => 'x', 'enabled' => true, 'create_users' => false, 'link_existing' => false], ['acme.com']);
-        $store = new StoreRequestStore(new SqliteSamlRequests($data->db));
+        $id = (new SqlSamlConnections($data->db))->create(['name' => 'Acme', 'idp_entity_id' => 'e', 'idp_sso_url' => 'https://x.test', 'idp_certificate' => 'x', 'enabled' => true, 'create_users' => false, 'link_existing' => false], ['acme.com']);
+        $store = new StoreRequestStore(new SqlSamlRequests($data->db));
         $store->remember('_r1', $id, hash('sha256', 'secret'), '/account');
 
         // Act
@@ -38,7 +38,7 @@ final class ConsumeTest extends TestCase
     public function testARequestNobodyMadeIsNull(): void
     {
         // Arrange
-        $store = new StoreRequestStore(new SqliteSamlRequests((new TestData())->db));
+        $store = new StoreRequestStore(new SqlSamlRequests((new TestData())->db));
 
         // Act
         $request = $store->consume('_never');

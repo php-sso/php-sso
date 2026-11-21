@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\DeviceRequests;
 
-use PhpSso\Store\Sqlite\Database;
-use PhpSso\Store\Sqlite\SqliteDeviceRequests;
+use PhpSso\Store\Sql\Connection;
+use PhpSso\Store\Sql\SqlDeviceRequests;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\OAuthServer\Grant\DeviceAuthorizationRecord;
 use PhpSso\OAuthServer\Grant\DeviceStatus;
 
-#[CoversMethod(SqliteDeviceRequests::class, 'approve')]
+#[CoversMethod(SqlDeviceRequests::class, 'approve')]
 final class ApproveTest extends TestCase
 {
     public function testItApprovesAPendingRequestOnceAndRemembersWho(): void
     {
         // Arrange
-        $store = new SqliteDeviceRequests(new Database(':memory:'));
+        $store = new SqlDeviceRequests(Connection::sqlite(':memory:'));
         $store->save($this->request());
 
         // Act

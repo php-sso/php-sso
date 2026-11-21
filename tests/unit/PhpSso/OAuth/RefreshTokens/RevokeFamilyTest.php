@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\RefreshTokens;
 
-use PhpSso\Store\Sqlite\Database;
-use PhpSso\Store\Sqlite\SqliteRefreshTokens;
+use PhpSso\Store\Sql\Connection;
+use PhpSso\Store\Sql\SqlRefreshTokens;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 
-#[CoversMethod(SqliteRefreshTokens::class, 'revokeFamily')]
+#[CoversMethod(SqlRefreshTokens::class, 'revokeFamily')]
 final class RevokeFamilyTest extends TestCase
 {
     public function testItRevokesOneFamilyOnly(): void
     {
         // Arrange
-        $store = new SqliteRefreshTokens(new Database(':memory:'));
+        $store = new SqlRefreshTokens(Connection::sqlite(':memory:'));
 
         // Act
         $store->revokeFamily('family-1', 1_700_000_000);
@@ -28,7 +28,7 @@ final class RevokeFamilyTest extends TestCase
     public function testRevokingTwiceIsHarmless(): void
     {
         // Arrange
-        $store = new SqliteRefreshTokens(new Database(':memory:'));
+        $store = new SqlRefreshTokens(Connection::sqlite(':memory:'));
         $store->revokeFamily('family-1', 1_700_000_000);
 
         // Act

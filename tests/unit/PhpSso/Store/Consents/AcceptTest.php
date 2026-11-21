@@ -8,7 +8,7 @@ use PhpSso\Store\Consents;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteConsents;
+use PhpSso\Store\Sql\SqlConsents;
 
 #[CoversMethod(Consents::class, 'accept')]
 #[CoversMethod(Consents::class, 'withdraw')]
@@ -18,7 +18,7 @@ final class AcceptTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $id = $consents->create('Terms', 'Please read.', 'https://example.com/terms', true);
         $sub = $data->user('alice');
 
@@ -36,7 +36,7 @@ final class AcceptTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $id = $consents->create('Terms', 'Please read.', null, true);
         $consents->bump($id);
         $sub = $data->user('alice');
@@ -53,7 +53,7 @@ final class AcceptTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $id = $consents->create('Terms', 'Please read.', null, false);
         $sub = $data->user('alice');
 
@@ -68,7 +68,7 @@ final class AcceptTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $id = $consents->create('Terms', 'Please read.', null, true);
         $alice = $data->user('alice');
         $bob = $data->user('bob');
@@ -88,7 +88,7 @@ final class AcceptTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new SqliteConsents($data->db);
+        $consents = new SqlConsents($data->db);
         $id = $consents->create('Terms', 'Please read.', null, true);
         $sub = $data->user('alice');
         $consents->accept($sub, $id, 1, '203.0.113.9');

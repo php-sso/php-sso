@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\RefreshTokens;
 
-use PhpSso\Store\Sqlite\Database;
-use PhpSso\Store\Sqlite\SqliteRefreshTokens;
+use PhpSso\Store\Sql\Connection;
+use PhpSso\Store\Sql\SqlRefreshTokens;
 use PhpSso\OAuthServer\Grant\RefreshTokenRecord;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 
-#[CoversMethod(SqliteRefreshTokens::class, 'save')]
-#[CoversMethod(SqliteRefreshTokens::class, 'find')]
+#[CoversMethod(SqlRefreshTokens::class, 'save')]
+#[CoversMethod(SqlRefreshTokens::class, 'find')]
 final class AmrTest extends TestCase
 {
     public function testTheMethodsComeBackWithTheToken(): void
     {
         // Arrange
-        $store = new SqliteRefreshTokens(new Database(':memory:'));
+        $store = new SqlRefreshTokens(Connection::sqlite(':memory:'));
 
         // Act
         $store->save(new RefreshTokenRecord('rt-1', 'family-1', 'web', 'user-1', ['openid'], 'session-1', 2_000_000_000, null, 1_999_999_000, ['pwd', 'mfa']));
@@ -29,7 +29,7 @@ final class AmrTest extends TestCase
     public function testNoMethodsStayNull(): void
     {
         // Arrange
-        $store = new SqliteRefreshTokens(new Database(':memory:'));
+        $store = new SqlRefreshTokens(Connection::sqlite(':memory:'));
 
         // Act
         $store->save(new RefreshTokenRecord('rt-1', 'family-1', 'web', 'user-1', ['openid'], 'session-1', 2_000_000_000, null, 1_999_999_000));

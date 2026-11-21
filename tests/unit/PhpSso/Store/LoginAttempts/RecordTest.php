@@ -8,7 +8,7 @@ use PhpSso\Store\LoginAttempts;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteLoginAttempts;
+use PhpSso\Store\Sql\SqlLoginAttempts;
 
 #[CoversMethod(LoginAttempts::class, 'record')]
 final class RecordTest extends TestCase
@@ -16,7 +16,7 @@ final class RecordTest extends TestCase
     public function testAnAttemptIsAboutThePasswordUnlessSaidOtherwise(): void
     {
         // Arrange
-        $attempts = new SqliteLoginAttempts((new TestData())->db);
+        $attempts = new SqlLoginAttempts((new TestData())->db);
 
         // Act
         $attempts->record('alice', null, false, '203.0.113.9', 'agent');
@@ -28,7 +28,7 @@ final class RecordTest extends TestCase
     public function testAWrongCodeIsRecordedAsACodeAttempt(): void
     {
         // Arrange
-        $attempts = new SqliteLoginAttempts((new TestData())->db);
+        $attempts = new SqlLoginAttempts((new TestData())->db);
 
         // Act
         $attempts->record('alice', null, false, '203.0.113.9', 'agent', factor: 'code');
@@ -40,7 +40,7 @@ final class RecordTest extends TestCase
     public function testAnUnknownFactorIsStoredAsPasswordSoTheColumnStaysTidy(): void
     {
         // Arrange
-        $attempts = new SqliteLoginAttempts((new TestData())->db);
+        $attempts = new SqlLoginAttempts((new TestData())->db);
 
         // Act
         $attempts->record('alice', null, false, '203.0.113.9', 'agent', factor: 'something-else');
@@ -53,7 +53,7 @@ final class RecordTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $attempts = new SqliteLoginAttempts($data->db);
+        $attempts = new SqlLoginAttempts($data->db);
         $sub = $data->user('alice');
         $attempts->record('alice', $sub, false, '203.0.113.9', 'agent');
         $attempts->record('alice', $sub, false, '203.0.113.9', 'agent', factor: 'code');

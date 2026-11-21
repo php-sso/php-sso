@@ -8,7 +8,7 @@ use PhpSso\Store\Relation;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteRelation;
+use PhpSso\Store\Sql\SqlRelation;
 
 #[CoversMethod(Relation::class, 'roleGroups')]
 final class RoleGroupsTest extends TestCase
@@ -23,7 +23,7 @@ final class RoleGroupsTest extends TestCase
         $role = $data->roles->create('editor', '');
 
         // Act
-        SqliteRelation::roleGroups($data->db)->add($role, $staff);
+        SqlRelation::roleGroups($data->db)->add($role, $staff);
 
         // Assert
         $this->assertSame(['editor'], $data->roles->effectiveFor($alice, 'app'));
@@ -37,7 +37,7 @@ final class RoleGroupsTest extends TestCase
         $alice = $data->user('alice');
         $staff = $data->group('staff', [$alice]);
         $role = $data->roles->create('editor', '');
-        $relation = SqliteRelation::roleGroups($data->db);
+        $relation = SqlRelation::roleGroups($data->db);
         $relation->add($role, $staff);
 
         // Act
@@ -57,7 +57,7 @@ final class RoleGroupsTest extends TestCase
         $data->group('guests');
 
         // Act
-        $page = SqliteRelation::roleGroups($data->db)->page($role, '', 20, 0);
+        $page = SqlRelation::roleGroups($data->db)->page($role, '', 20, 0);
 
         // Assert
         $this->assertSame(['staff'], array_column($page, 'name'));
@@ -73,7 +73,7 @@ final class RoleGroupsTest extends TestCase
         $data->group('guests');
 
         // Act
-        $candidates = SqliteRelation::roleGroups($data->db)->candidates($role, '', 8);
+        $candidates = SqlRelation::roleGroups($data->db)->candidates($role, '', 8);
 
         // Assert
         $this->assertSame(['guests'], array_column($candidates, 'name'));

@@ -10,8 +10,8 @@ use PhpSso\Store\Sessions;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteLoginAttempts;
-use PhpSso\Store\Sqlite\SqliteSessions;
+use PhpSso\Store\Sql\SqlLoginAttempts;
+use PhpSso\Store\Sql\SqlSessions;
 
 #[CoversMethod(LoginFlow::class, 'primaryAuthenticated')]
 final class PrimaryAuthenticatedTest extends TestCase
@@ -22,7 +22,7 @@ final class PrimaryAuthenticatedTest extends TestCase
     protected function setUp(): void
     {
         $this->data = new TestData();
-        $this->flow = new LoginFlow(new SqliteSessions($this->data->db, 3600), new SqliteLoginAttempts($this->data->db), new \PhpSso\Auth\Actions\RequiredActions([]), static fn (): bool => true);
+        $this->flow = new LoginFlow(new SqlSessions($this->data->db, 3600), new SqlLoginAttempts($this->data->db), new \PhpSso\Auth\Actions\RequiredActions([]), static fn (): bool => true);
         $_SESSION = [];
     }
 

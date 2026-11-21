@@ -10,8 +10,8 @@ use PhpSso\Store\Sessions;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
-use PhpSso\Store\Sqlite\SqliteLoginAttempts;
-use PhpSso\Store\Sqlite\SqliteSessions;
+use PhpSso\Store\Sql\SqlLoginAttempts;
+use PhpSso\Store\Sql\SqlSessions;
 
 #[CoversMethod(LoginFlow::class, 'begin')]
 #[CoversMethod(LoginFlow::class, 'pending')]
@@ -22,7 +22,7 @@ final class BeginTest extends TestCase
     protected function setUp(): void
     {
         $data = new TestData();
-        $this->flow = new LoginFlow(new SqliteSessions($data->db, 3600), new SqliteLoginAttempts($data->db), new \PhpSso\Auth\Actions\RequiredActions([]), static fn (): bool => true);
+        $this->flow = new LoginFlow(new SqlSessions($data->db, 3600), new SqlLoginAttempts($data->db), new \PhpSso\Auth\Actions\RequiredActions([]), static fn (): bool => true);
         $_SESSION = [];
     }
 
@@ -85,7 +85,7 @@ final class BeginTest extends TestCase
         // Arrange
         $data = new TestData();
         $sub = $data->user('alice');
-        $flow = new LoginFlow(new SqliteSessions($data->db, 3600), new SqliteLoginAttempts($data->db), new \PhpSso\Auth\Actions\RequiredActions([]), static fn (): bool => true);
+        $flow = new LoginFlow(new SqlSessions($data->db, 3600), new SqlLoginAttempts($data->db), new \PhpSso\Auth\Actions\RequiredActions([]), static fn (): bool => true);
         $flow->begin('alice', $sub);
 
         // Act
