@@ -41,17 +41,17 @@ use PhpSso\Auth\LoginThrottle;
 use PhpSso\Claims;
 use PhpSso\Store\Sqlite\Database;
 use PhpSso\Keys;
-use PhpSso\OAuth\AuthorizationCodes;
+use PhpSso\Store\Sqlite\SqliteAuthorizationCodes;
 use PhpSso\OAuth\BrowserErrors;
 use PhpSso\OAuth\ClientAuthThrottle;
 use PhpSso\OAuth\DevicePage;
-use PhpSso\OAuth\DeviceRequests;
+use PhpSso\Store\Sqlite\SqliteDeviceRequests;
 use PhpSso\OAuth\LogoutScreens;
-use PhpSso\OAuth\RevokedAccessTokens;
+use PhpSso\Store\Sqlite\SqliteRevokedAccessTokens;
 use PhpSso\OAuth\SessionLinks;
 use PhpSso\OAuth\AuthorizationScreens;
 use PhpSso\OAuth\ClientAccess;
-use PhpSso\OAuth\RefreshTokens;
+use PhpSso\Store\Sqlite\SqliteRefreshTokens;
 use PhpSso\OAuth\RegisteredClients;
 use PhpSso\Pages;
 use PhpSso\Seeder;
@@ -113,6 +113,8 @@ use PhpSso\Store\Sqlite\SqliteScopes;
 use PhpSso\Store\Sqlite\SqliteSessions;
 use PhpSso\Store\Sqlite\SqliteSettings;
 use PhpSso\Store\Sqlite\SqliteUsers;
+use PhpSso\Store\Sqlite\SqliteClientAuthFailures;
+use PhpSso\Store\Sqlite\SqliteDeviceFailures;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
@@ -127,7 +129,7 @@ $groups = new SqliteGroups($db);
 $clients = new SqliteClients($db);
 $roles = new SqliteRoles($db);
 $scopes = new SqliteScopes($db, array_keys($config['scopes']));
-$refreshTokens = new RefreshTokens($db);
+$refreshTokens = new SqliteRefreshTokens($db);
 $sessions = new SqliteSessions($db, $config['session_idle_seconds']);
 $attempts = new SqliteLoginAttempts($db);
 $ipRules = new SqliteIpRules($db);
@@ -164,10 +166,10 @@ $oauth = new AuthorizationServer(
     policy: new ClientAccess($clients),
     ui: new AuthorizationScreens($pages, $users),
     keys: $keys->provider,
-    codes: new AuthorizationCodes($db),
+    codes: new SqliteAuthorizationCodes($db),
     refreshTokens: $refreshTokens,
-    devices: new DeviceRequests($db),
-    revokedAccessTokens: new RevokedAccessTokens($db),
+    devices: new SqliteDeviceRequests($db),
+    revokedAccessTokens: new SqliteRevokedAccessTokens($db),
     logout: new LogoutSupport($sessionLinks, $sessionLinks, new LogoutScreens($pages, $users), new StreamHttpClient(), new RequestFactory()),
     responseFactory: new ResponseFactory(),
     streamFactory: new StreamFactory(),
@@ -201,8 +203,8 @@ $samlService = new SignIn(new StoreConnectionRepository($samlConnections), new S
 $accountMatcher = new AccountMatcher($identities, $users);
 $socialPolicy = new AccountPolicy($settings, $config['login']['social']);
 $social = new SocialLogin($socialProviders, $identities, $users, $socialPolicy, $config['issuer'], $accountMatcher, $samlConnections);
-$verifier = new DeviceVerifier(new DeviceRequests($db), new RegisteredClients($clients, $scopes->builtinNames()), new ClientAccess($clients), new SystemClock());
-$sso = new Sso($config, $oauth, $users, new AdminController($twig, $users, $groups, $clients, $roles, $sessions, $attempts, $ipRules, $ipPolicy, $clientIp, new AccessTester($ipPolicy, $clients, $users), new RelationPicker($twig, new SqliteRelations($db), $users, $groups, $clients, $roles), $userRules, $throttle, $mfa, $social, $consents, $samlConnections, $samlService, $scimClients, $scimEvents, $scimUsers, $scimGroups, $config['issuer'], $impersonation, $scopes), $sessions, $attempts, $clients, $pages, new AccountController($pages, $users, $sessions, $userRules, $mfa, $mfaChallenge, $clientIp, $social), new DevicePage($pages, $verifier, $db), $clientIp, $ipPolicy, $loginFlow, new LoginController($pages, $loginFlow, IdentifierResolverFactory::create($config['login']['identifier'], $users), $users, $attempts, $clientIp, $throttle, $mfa, $socialProviders, $samlConnections), new MfaLoginController($pages, $loginFlow, $mfa, $mfaChallenge, $users, $clientIp), new SocialController($social, $loginFlow, $mfa, $clientIp), new SamlController($samlService, $samlConnections, $accountMatcher, $socialPolicy, $loginFlow, $mfa, $clientIp), new RequiredActionController($pages, $loginFlow, $requiredActions, $users, $clientIp), $requiredActions, new ClientAuthThrottle($db, $config['client_auth_throttle']), $impersonation);
+$verifier = new DeviceVerifier(new SqliteDeviceRequests($db), new RegisteredClients($clients, $scopes->builtinNames()), new ClientAccess($clients), new SystemClock());
+$sso = new Sso($config, $oauth, $users, new AdminController($twig, $users, $groups, $clients, $roles, $sessions, $attempts, $ipRules, $ipPolicy, $clientIp, new AccessTester($ipPolicy, $clients, $users), new RelationPicker($twig, new SqliteRelations($db), $users, $groups, $clients, $roles), $userRules, $throttle, $mfa, $social, $consents, $samlConnections, $samlService, $scimClients, $scimEvents, $scimUsers, $scimGroups, $config['issuer'], $impersonation, $scopes), $sessions, $attempts, $clients, $pages, new AccountController($pages, $users, $sessions, $userRules, $mfa, $mfaChallenge, $clientIp, $social), new DevicePage($pages, $verifier, new SqliteDeviceFailures($db)), $clientIp, $ipPolicy, $loginFlow, new LoginController($pages, $loginFlow, IdentifierResolverFactory::create($config['login']['identifier'], $users), $users, $attempts, $clientIp, $throttle, $mfa, $socialProviders, $samlConnections), new MfaLoginController($pages, $loginFlow, $mfa, $mfaChallenge, $users, $clientIp), new SocialController($social, $loginFlow, $mfa, $clientIp), new SamlController($samlService, $samlConnections, $accountMatcher, $socialPolicy, $loginFlow, $mfa, $clientIp), new RequiredActionController($pages, $loginFlow, $requiredActions, $users, $clientIp), $requiredActions, new ClientAuthThrottle(new SqliteClientAuthFailures($db), $config['client_auth_throttle']), $impersonation);
 
 // Provisioning clients call the SCIM endpoints with a bearer token: no cookie, no session.
 $request = ServerRequestFactory::fromGlobals();

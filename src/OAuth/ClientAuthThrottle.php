@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace PhpSso\OAuth;
 
-use PhpSso\Store\Sqlite\Database;
-use PDO;
+use PhpSso\Store\ClientAuthFailures;
 
 /**
  * Slows down guessing of client secrets. A failure counts against the client and the address together, and against
@@ -14,7 +13,7 @@ use PDO;
 final class ClientAuthThrottle
 {
     /** @param array{enabled?: bool, per_client_ip?: int, per_ip?: int, window_seconds?: int} $limits */
-    public function __construct(private Database $db, private array $limits = [])
+    public function __construct(private ClientAuthFailures $failures, private array $limits = [])
     {
     }
 
@@ -29,12 +28,12 @@ final class ClientAuthThrottle
         $since = $now - $limits['window_seconds'];
 
         $waits = [];
-        $perIp = $this->times('SELECT created_at FROM client_auth_failures WHERE ip = ? AND created_at > ? ORDER BY created_at', [$ip, $since]);
+        $perIp = $this->failures->times($ip, null, $since);
         if (count($perIp) >= $limits['per_ip']) {
             $waits[] = $perIp[count($perIp) - $limits['per_ip']] + $limits['window_seconds'] - $now;
         }
         if ($clientId !== null) {
-            $perClient = $this->times('SELECT created_at FROM client_auth_failures WHERE ip = ? AND client_id = ? AND created_at > ? ORDER BY created_at', [$ip, $clientId, $since]);
+            $perClient = $this->failures->times($ip, $clientId, $since);
             if (count($perClient) >= $limits['per_client_ip']) {
                 $waits[] = $perClient[count($perClient) - $limits['per_client_ip']] + $limits['window_seconds'] - $now;
             }
@@ -50,10 +49,7 @@ final class ClientAuthThrottle
             return;
         }
         $now ??= time();
-        $pdo = $this->db->pdo;
-        $pdo->prepare('INSERT INTO client_auth_failures (client_id, ip, created_at) VALUES (?, ?, ?)')
-            ->execute([mb_substr($clientId ?? '', 0, 200), $ip, $now]);
-        $pdo->prepare('DELETE FROM client_auth_failures WHERE created_at <= ?')->execute([$now - $limits['window_seconds']]);
+        $this->failures->record($clientId, $ip, $now, $now - $limits['window_seconds']);
     }
 
     /** @return array{enabled: bool, per_client_ip: int, per_ip: int, window_seconds: int} */
@@ -67,15 +63,4 @@ final class ClientAuthThrottle
         ];
     }
 
-    /**
-     * @param list<string|int> $params
-     * @return list<int>
-     */
-    private function times(string $sql, array $params): array
-    {
-        $stmt = $this->db->pdo->prepare($sql);
-        $stmt->execute($params);
-
-        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
-    }
 }

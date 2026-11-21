@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\Store\Identities;
 
 use PhpSso\Store\Identities;
-use PDOException;
+use PhpSso\Store\DuplicateValue;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
@@ -41,7 +41,7 @@ final class LinkTest extends TestCase
         $data = new TestData();
         $identities = new SqliteIdentities($data->db);
         $identities->link($data->user('alice'), 'google', 'g-1', null);
-        $this->expectException(PDOException::class);
+        $this->expectException(DuplicateValue::class);
 
         // Act
         $identities->link($data->user('bob'), 'google', 'g-1', null);

@@ -24,8 +24,10 @@ interface ScimUsers
      */
     public function list(int $clientId, ?array $filter, int $start, int $count): array;
 
+    /** @throws DuplicateValue when another record of this client already has the userName, displayName or externalId */
     public function attach(int $clientId, string $sub, string $userName, ?string $externalId, ?string $givenName, ?string $familyName): void;
 
+    /** @throws DuplicateValue when another record of this client already has the userName, displayName or externalId */
     public function update(string $sub, string $userName, ?string $externalId, ?string $givenName, ?string $familyName): void;
 
     /** Which client manages this person, as `id` and `name`, or null. @return array{id: int, name: string}|null */

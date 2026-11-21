@@ -22,8 +22,10 @@ interface ScimGroups
      */
     public function list(int $clientId, ?array $filter, int $start, int $count): array;
 
+    /** @throws DuplicateValue when another record of this client already has the userName, displayName or externalId */
     public function attach(int $clientId, int $groupId, string $displayName, ?string $externalId): void;
 
+    /** @throws DuplicateValue when another record of this client already has the userName, displayName or externalId */
     public function update(int $groupId, string $displayName, ?string $externalId): void;
 
     /** Which client manages this group, as `id` and `name`, or null. @return array{id: int, name: string}|null */

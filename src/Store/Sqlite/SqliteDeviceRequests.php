@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-namespace PhpSso\OAuth;
+namespace PhpSso\Store\Sqlite;
 
-use PhpSso\Store\Sqlite\Database;
 use PDO;
 use PhpSso\OAuthServer\Grant\DeviceAuthorizationRecord;
 use PhpSso\OAuthServer\Grant\DeviceAuthorizationStore;
 use PhpSso\OAuthServer\Grant\DeviceStatus;
 
 /** Device authorization requests (RFC 8628) in SQLite. Only hashes of the device code and the user code are stored. */
-final class DeviceRequests implements DeviceAuthorizationStore
+final class SqliteDeviceRequests implements DeviceAuthorizationStore
 {
     private PDO $pdo;
 

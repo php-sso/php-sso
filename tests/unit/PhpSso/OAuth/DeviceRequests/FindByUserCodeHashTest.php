@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\OAuth\DeviceRequests;
 
 use PhpSso\Store\Sqlite\Database;
-use PhpSso\OAuth\DeviceRequests;
+use PhpSso\Store\Sqlite\SqliteDeviceRequests;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 
-#[CoversMethod(DeviceRequests::class, 'findByUserCodeHash')]
+#[CoversMethod(SqliteDeviceRequests::class, 'findByUserCodeHash')]
 final class FindByUserCodeHashTest extends TestCase
 {
     public function testItKnowsNothingOfAnUnknownUserCode(): void
     {
         // Arrange
-        $store = new DeviceRequests(new Database(':memory:'));
+        $store = new SqliteDeviceRequests(new Database(':memory:'));
 
         // Act
         $found = $store->findByUserCodeHash('nope');

@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PhpSso\OAuth;
+namespace PhpSso\Store\Sqlite;
 
-use PhpSso\Store\Sqlite\Database;
 use PDO;
 use PhpSso\OAuthServer\Grant\RevokedAccessTokens as RevokedAccessTokensStore;
 
 /** Access tokens a client revoked one by one (RFC 7009), kept until they would have expired anyway. */
-final class RevokedAccessTokens implements RevokedAccessTokensStore
+final class SqliteRevokedAccessTokens implements RevokedAccessTokensStore
 {
     private PDO $pdo;
 

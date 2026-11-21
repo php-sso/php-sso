@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\Database;
 
 use PhpSso\Store\Sqlite\Database;
-use PDOException;
+use PhpSso\Store\DuplicateValue;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -20,7 +20,7 @@ final class EnforceUniqueEmailTest extends TestCase
         $data = new TestData();
         $data->user('alice');
         $data->db->enforceUniqueEmail(true);
-        $this->expectException(PDOException::class);
+        $this->expectException(DuplicateValue::class);
 
         // Act
         $data->users->create(['username' => 'other', 'password' => 'secret-pass', 'name' => 'Other', 'email' => 'ALICE@example.com', 'email_verified' => false, 'is_admin' => false]);

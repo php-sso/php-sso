@@ -91,7 +91,7 @@ final class SqliteRoles implements \PhpSso\Store\Roles
         return $id;
     }
 
-    /** @throws \PDOException when there is already another role with that name */
+    /** @throws \PhpSso\Store\DuplicateValue when there is already another role with that name */
     public function update(int $id, string $name, string $description): void
     {
         $this->pdo->prepare('UPDATE role SET name = ?, description = ? WHERE id = ?')->execute([$name, $description, $id]);

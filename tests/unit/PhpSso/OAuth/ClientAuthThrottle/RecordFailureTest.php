@@ -8,6 +8,7 @@ use PhpSso\Store\Sqlite\Database;
 use PhpSso\OAuth\ClientAuthThrottle;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
+use PhpSso\Store\Sqlite\SqliteClientAuthFailures;
 
 #[CoversMethod(ClientAuthThrottle::class, 'recordFailure')]
 final class RecordFailureTest extends TestCase
@@ -18,7 +19,7 @@ final class RecordFailureTest extends TestCase
     {
         // Arrange
         $db = new Database(':memory:');
-        $throttle = new ClientAuthThrottle($db, ['window_seconds' => 600]);
+        $throttle = new ClientAuthThrottle(new SqliteClientAuthFailures($db), ['window_seconds' => 600]);
         $throttle->recordFailure('web', '10.0.0.1', self::NOW);
 
         // Act
@@ -32,7 +33,7 @@ final class RecordFailureTest extends TestCase
     {
         // Arrange
         $db = new Database(':memory:');
-        $throttle = new ClientAuthThrottle($db, ['enabled' => false]);
+        $throttle = new ClientAuthThrottle(new SqliteClientAuthFailures($db), ['enabled' => false]);
 
         // Act
         $throttle->recordFailure('web', '10.0.0.1', self::NOW);

@@ -9,12 +9,12 @@ use PhpSso\ScimServer\GroupPage;
 use PhpSso\ScimServer\ScimFilter;
 use PhpSso\ScimServer\ScimGroup;
 use PhpSso\Store\ScimGroups;
+use PhpSso\Store\DuplicateValue;
+use PhpSso\ScimServer\UniquenessViolation;
 
 /** Which groups each provisioning client manages, kept in the `scim_groups` table next to the application's groups. */
 final class StoreManagedGroups implements ManagedGroups
 {
-    use TranslatesConstraintErrors;
-
     public function __construct(private ScimGroups $scimGroups)
     {
     }
@@ -45,8 +45,8 @@ final class StoreManagedGroups implements ManagedGroups
     {
         try {
             $this->scimGroups->attach($clientId, $groupId, $displayName, $externalId);
-        } catch (\PDOException $e) {
-            throw self::translate($e);
+        } catch (DuplicateValue $e) {
+            throw new UniquenessViolation('A unique value is already taken.', 0, $e);
         }
     }
 
@@ -54,8 +54,8 @@ final class StoreManagedGroups implements ManagedGroups
     {
         try {
             $this->scimGroups->update($groupId, $displayName, $externalId);
-        } catch (\PDOException $e) {
-            throw self::translate($e);
+        } catch (DuplicateValue $e) {
+            throw new UniquenessViolation('A unique value is already taken.', 0, $e);
         }
     }
 

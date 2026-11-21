@@ -34,6 +34,7 @@ final class Database
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
+        $this->pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, [SqliteStatement::class]);
         $this->pdo->exec('PRAGMA foreign_keys = ON');
 
         // Authorization codes and refresh tokens, stored as hashes. Access tokens are signed JWTs and are not stored:

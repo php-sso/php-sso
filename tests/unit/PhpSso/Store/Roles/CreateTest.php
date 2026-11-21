@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\Store\Roles;
 
 use PhpSso\Store\Roles;
-use PDOException;
+use PhpSso\Store\DuplicateValue;
+use PhpSso\Store\UnknownReference;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
@@ -49,7 +50,7 @@ final class CreateTest extends TestCase
         $data->roles->create('Editor', '');
 
         // Assert
-        $this->expectException(PDOException::class);
+        $this->expectException(DuplicateValue::class);
 
         // Act
         $data->roles->create('editor', '');
@@ -61,7 +62,7 @@ final class CreateTest extends TestCase
         $data = new TestData();
 
         // Assert
-        $this->expectException(PDOException::class);
+        $this->expectException(UnknownReference::class);
 
         // Act
         $data->roles->create('editor', '', false, ['missing']);

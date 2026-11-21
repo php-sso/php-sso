@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\OAuth\RefreshTokens;
 
 use PhpSso\Store\Sqlite\Database;
-use PhpSso\OAuth\RefreshTokens;
+use PhpSso\Store\Sqlite\SqliteRefreshTokens;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\OAuthServer\Grant\RefreshTokenRecord;
 
-#[CoversMethod(RefreshTokens::class, 'save')]
+#[CoversMethod(SqliteRefreshTokens::class, 'save')]
 final class SaveTest extends TestCase
 {
     public function testItKeepsEveryFieldIncludingWhenThePersonSignedIn(): void
     {
         // Arrange
-        $store = new RefreshTokens(new Database(':memory:'));
+        $store = new SqliteRefreshTokens(new Database(':memory:'));
         $token = $this->token();
 
         // Act

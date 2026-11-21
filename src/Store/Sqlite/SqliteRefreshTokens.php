@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace PhpSso\OAuth;
+namespace PhpSso\Store\Sqlite;
 
-use PhpSso\Store\Sqlite\Database;
 use PDO;
 use PhpSso\OAuthServer\Grant\RefreshTokenRecord;
 use PhpSso\OAuthServer\Grant\RefreshTokenStore;
@@ -13,7 +12,7 @@ use PhpSso\OAuthServer\Grant\RefreshTokenStore;
  * Refresh tokens in SQLite, plus the list of revoked token families. A family is everything issued from one
  * authorization code: its refresh tokens and its access tokens, which carry the family id.
  */
-final class RefreshTokens implements RefreshTokenStore
+final class SqliteRefreshTokens implements RefreshTokenStore
 {
     private PDO $pdo;
 

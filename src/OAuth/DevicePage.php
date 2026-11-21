@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace PhpSso\OAuth;
 
-use PhpSso\Store\Sqlite\Database;
+use PhpSso\Store\DeviceFailures;
 use PhpSso\Pages;
-use PDO;
 use PhpSso\OAuthServer\Device\DeviceVerifier;
 use PhpSso\OAuthServer\Exception\OAuthException;
 use Laminas\Diactoros\Response\RedirectResponse;
@@ -23,11 +22,8 @@ final class DevicePage
     private const MAX_FAILURES = 10;
     private const WINDOW_SECONDS = 600;
 
-    private PDO $pdo;
-
-    public function __construct(private Pages $pages, private DeviceVerifier $verifier, Database $db)
+    public function __construct(private Pages $pages, private DeviceVerifier $verifier, private DeviceFailures $failures)
     {
-        $this->pdo = $db->pdo;
     }
 
     /** @param array<string, mixed> $user the signed-in person */
@@ -103,14 +99,11 @@ final class DevicePage
 
     private function failures(string $userSub): int
     {
-        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM device_failures WHERE user_sub = ? AND created_at > ?');
-        $stmt->execute([$userSub, time() - self::WINDOW_SECONDS]);
-
-        return (int) $stmt->fetchColumn();
+        return $this->failures->count($userSub, time() - self::WINDOW_SECONDS);
     }
 
     private function recordFailure(string $userSub): void
     {
-        $this->pdo->prepare('INSERT INTO device_failures (user_sub, created_at) VALUES (?, ?)')->execute([$userSub, time()]);
+        $this->failures->record($userSub, time());
     }
 }

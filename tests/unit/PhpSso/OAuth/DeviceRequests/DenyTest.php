@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\OAuth\DeviceRequests;
 
 use PhpSso\Store\Sqlite\Database;
-use PhpSso\OAuth\DeviceRequests;
+use PhpSso\Store\Sqlite\SqliteDeviceRequests;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\OAuthServer\Grant\DeviceAuthorizationRecord;
 use PhpSso\OAuthServer\Grant\DeviceStatus;
 
-#[CoversMethod(DeviceRequests::class, 'deny')]
+#[CoversMethod(SqliteDeviceRequests::class, 'deny')]
 final class DenyTest extends TestCase
 {
     public function testItDeniesAPendingRequestButNotAnApprovedOne(): void
     {
         // Arrange
-        $store = new DeviceRequests(new Database(':memory:'));
+        $store = new SqliteDeviceRequests(new Database(':memory:'));
         $store->save($this->request('dev-1', 'usr-1'));
         $store->save($this->request('dev-2', 'usr-2'));
         $store->approve('dev-2', 'user-1', null);

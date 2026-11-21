@@ -38,11 +38,12 @@ interface Roles
     /**
      * @param list<string> $clientIds the clients that receive it, when it is not for every client
      *
-     * @throws \PDOException when there is already a role with that name (case does not matter)
+     * @throws DuplicateValue when there is already a role with that name (case does not matter)
+     * @throws UnknownReference when it is limited to a client that does not exist
      */
     public function create(string $name, string $description, bool $allClients = true, array $clientIds = []): int;
 
-    /** @throws \PDOException when there is already another role with that name */
+    /** @throws DuplicateValue when there is already another role with that name */
     public function update(int $id, string $name, string $description): void;
 
     /**

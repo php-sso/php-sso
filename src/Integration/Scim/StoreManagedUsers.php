@@ -11,12 +11,12 @@ use PhpSso\ScimServer\UserPage;
 use PhpSso\Store\ScimUsers;
 use PhpSso\Store\Users;
 use PhpSso\Store\UserState;
+use PhpSso\Store\DuplicateValue;
+use PhpSso\ScimServer\UniquenessViolation;
 
 /** Which people each provisioning client manages, kept in the `scim_users` table next to the application's users. */
 final class StoreManagedUsers implements ManagedUsers
 {
-    use TranslatesConstraintErrors;
-
     public function __construct(private ScimUsers $scimUsers)
     {
     }
@@ -47,8 +47,8 @@ final class StoreManagedUsers implements ManagedUsers
     {
         try {
             $this->scimUsers->attach($clientId, $sub, $userName, $externalId, $givenName, $familyName);
-        } catch (\PDOException $e) {
-            throw self::translate($e);
+        } catch (DuplicateValue $e) {
+            throw new UniquenessViolation('A unique value is already taken.', 0, $e);
         }
     }
 
@@ -56,8 +56,8 @@ final class StoreManagedUsers implements ManagedUsers
     {
         try {
             $this->scimUsers->update($sub, $userName, $externalId, $givenName, $familyName);
-        } catch (\PDOException $e) {
-            throw self::translate($e);
+        } catch (DuplicateValue $e) {
+            throw new UniquenessViolation('A unique value is already taken.', 0, $e);
         }
     }
 

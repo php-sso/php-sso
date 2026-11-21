@@ -84,7 +84,7 @@ final class DomainsTest extends TestCase
         $second = fn () => $this->add($connections, 'beta', ['acme.com']);
 
         // Assert
-        $this->expectException(\PDOException::class);
+        $this->expectException(\PhpSso\Store\DuplicateValue::class);
         $second();
     }
 

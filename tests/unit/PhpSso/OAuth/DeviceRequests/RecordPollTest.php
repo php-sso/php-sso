@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\OAuth\DeviceRequests;
 
 use PhpSso\Store\Sqlite\Database;
-use PhpSso\OAuth\DeviceRequests;
+use PhpSso\Store\Sqlite\SqliteDeviceRequests;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\OAuthServer\Grant\DeviceAuthorizationRecord;
 use PhpSso\OAuthServer\Grant\DeviceStatus;
 
-#[CoversMethod(DeviceRequests::class, 'recordPoll')]
+#[CoversMethod(SqliteDeviceRequests::class, 'recordPoll')]
 final class RecordPollTest extends TestCase
 {
     public function testItRemembersThePollAndTheIntervalNowRequired(): void
     {
         // Arrange
-        $store = new DeviceRequests(new Database(':memory:'));
+        $store = new SqliteDeviceRequests(new Database(':memory:'));
         $store->save($this->request());
 
         // Act

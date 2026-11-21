@@ -2,15 +2,14 @@
 
 declare(strict_types=1);
 
-namespace PhpSso\OAuth;
+namespace PhpSso\Store\Sqlite;
 
-use PhpSso\Store\Sqlite\Database;
 use PDO;
 use PhpSso\OAuthServer\Grant\AuthorizationCodeRecord;
 use PhpSso\OAuthServer\Grant\AuthorizationCodeStore;
 
 /** Authorization codes in SQLite. Only the hash of a code is stored. */
-final class AuthorizationCodes implements AuthorizationCodeStore
+final class SqliteAuthorizationCodes implements AuthorizationCodeStore
 {
     private PDO $pdo;
 

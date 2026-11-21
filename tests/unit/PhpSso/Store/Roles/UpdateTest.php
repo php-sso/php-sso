@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\Store\Roles;
 
 use PhpSso\Store\Roles;
-use PDOException;
+use PhpSso\Store\DuplicateValue;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
@@ -53,7 +53,7 @@ final class UpdateTest extends TestCase
         $id = $data->roles->create('writer', '');
 
         // Assert
-        $this->expectException(PDOException::class);
+        $this->expectException(DuplicateValue::class);
 
         // Act
         $data->roles->update($id, 'Editor', '');
