@@ -1,0 +1,59 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}groups{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block title %}{{ group ? 'Edit ' ~ group.name : 'New group' }}{% endblock %}
+{% block body %}
+<div class="page-head">
+  {% if group %}
+    <div><h1>{{ m.chip(group.name) }}</h1><p class="sub">{{ member_total }} {{ member_total == 1 ? 'member' : 'members' }}</p></div>
+  {% else %}
+    <div><h1>New group</h1><p class="sub">Once it's created you can add people to it.</p></div>
+  {% endif %}
+</div>
+
+{% if group %}
+<nav class="tabs" aria-label="Group sections">
+  <a href="/admin/groups/{{ group.id }}/edit"{{ tab == 'details' ? ' class="here" aria-current="page"' }}>Details</a>
+  <a href="/admin/groups/{{ group.id }}/members"{{ tab == 'members' ? ' class="here" aria-current="page"' }}>Members</a>
+  <a href="/admin/groups/{{ group.id }}/danger"{{ tab == 'danger' ? ' class="here" aria-current="page"' }}>Danger</a>
+</nav>
+{% endif %}
+
+{% if scim %}
+  <div class="zone plain">
+    <div>
+      <h2>Provisioned automatically</h2>
+      <p>This group is managed by <a href="/admin/scim/{{ scim.id }}/edit">{{ scim.name }}</a> (SCIM). Its name and members are set there, and a change made here is overwritten the next time it syncs.</p>
+    </div>
+  </div>
+{% endif %}
+
+{% if tab == 'details' %}
+<form method="post" action="{{ group ? '/admin/groups/' ~ group.id : '/admin/groups' }}" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+
+  <div class="section">
+    <header><h2>Details</h2><p>The name is what apps receive, so renaming a group can change what they allow.</p></header>
+    <div class="fields">
+      {{ m.input('name', 'Name', item.name, errors, 'text', 'Letters, digits and . _ : -', 'autocomplete="off" required') }}
+      {{ m.input('description', 'Description', item.description, errors, 'text', 'Optional. Shown to administrators only.') }}
+    </div>
+  </div>
+
+  <div class="formbar inline">
+    <button class="btn">{{ group ? 'Save changes' : 'Create group' }}</button>
+    <a class="btn ghost" href="/admin/groups">Cancel</a>
+  </div>
+</form>
+{% elseif tab == 'danger' %}
+  <div class="zone">
+    <div><h2>Delete this group</h2><p>The people in it stay, but lose this group. Apps that check for it will stop recognising them.</p></div>
+    {{ m.confirm_button('/admin/groups/' ~ group.id ~ '/delete', csrf, 'Delete group', 'Delete ' ~ group.name ~ '?', member_total ~ ' ' ~ (member_total == 1 ? 'person' : 'people') ~ ' will lose this group. This cannot be undone.') }}
+  </div>
+{% elseif rel %}
+{% include 'admin/_relation.html.twig' with {r: rel} %}
+{% endif %}
+
+{% endblock %}

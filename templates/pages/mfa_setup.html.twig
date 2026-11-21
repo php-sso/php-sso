@@ -1,0 +1,32 @@
+{% extends 'layout.html.twig' %}
+{% import '_macros.html.twig' as f %}
+{% block title %}Set up two-step verification{% endblock %}
+{% block page_name %}{{ user ? 'account' : 'login' }}{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Set up two-step verification</h1>
+  {% block intro %}<p class="muted">{{ required ? 'Your organisation requires this before you can sign in.' : 'Besides your password, you will enter a code from an app on your phone.' }}</p>{% endblock %}
+  {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+  <ol class="steps">
+    <li>
+      {% if qr %}
+        Scan this QR code with an authenticator app (such as Google Authenticator, Microsoft Authenticator, Authy or 1Password):
+        <div class="qr" role="img" aria-label="QR code for setting up two-step verification">{{ qr|raw }}</div>
+        <span class="hint">Cannot scan it? Choose a time-based key and enter this one instead:</span>
+        <code class="secret">{{ secret }}</code>
+      {% else %}
+        Add this account to an authenticator app (such as Google Authenticator, Microsoft Authenticator, Authy or 1Password) by entering this key:
+        <code class="secret">{{ secret }}</code>
+      {% endif %}
+      <span class="hint">On a phone you can <a href="{{ uri }}">open it in your authenticator app</a>. Choose a time-based key.</span>
+    </li>
+    <li>Enter the 6-digit code the app shows.</li>
+  </ol>
+  <form method="post" action="{{ action }}" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    {{ f.field('code', 'Code', '', '', 'text', 'autocomplete="one-time-code" inputmode="numeric" autofocus required') }}
+    <button class="btn block">Turn on</button>
+  </form>
+  {% block after_form %}{% if cancel_href %}<p class="muted"><a href="{{ cancel_href }}">Cancel</a></p>{% endif %}{% endblock %}
+</section>
+{% endblock %}

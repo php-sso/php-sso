@@ -1,0 +1,12 @@
+{# Tabs of the Sign-in protection page. `tab` is the one shown. #}
+<nav class="tabs" aria-label="Sign-in protection sections">
+  <a href="/admin/security"{{ tab == 'activity' ? ' class="here" aria-current="page"' }}>Activity</a>
+  <a href="/admin/security/limits"{{ tab == 'limits' ? ' class="here" aria-current="page"' }}>Limits</a>
+  <a href="/admin/security/mfa"{{ tab == 'mfa' ? ' class="here" aria-current="page"' }}>Two-step verification</a>
+  <a href="/admin/security/social"{{ tab == 'social' ? ' class="here" aria-current="page"' }}>Social sign-in</a>
+  <a href="/admin/security/saml"{{ tab == 'saml' ? ' class="here" aria-current="page"' }}>SAML</a>
+  <a href="/admin/security/scim"{{ tab == 'scim' ? ' class="here" aria-current="page"' }}>SCIM</a>
+  <a href="/admin/security/accounts"{{ tab == 'accounts' ? ' class="here" aria-current="page"' }}>Accounts</a>
+  <a href="/admin/security/consents"{{ tab == 'consents' ? ' class="here" aria-current="page"' }}>Notices</a>
+  <a href="/admin/ip-rules"{{ tab == 'ip-rules' ? ' class="here" aria-current="page"' }}>IP rules</a>
+</nav>

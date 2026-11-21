@@ -1,0 +1,36 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}security{% endblock %}
+{% block title %}Notices{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Sign-in protection</h1><p class="sub">Require people to accept a notice before they can sign in. The text itself lives on your own site: add a short message and a link.</p></div>
+  <a class="btn" href="/admin/consents/new">{{ i.icon('plus') }}New notice</a>
+</div>
+{% include 'admin/_security_tabs.html.twig' %}
+
+{% if consents %}
+  <table class="list">
+    <thead><tr><th>Notice</th><th class="hide-sm">Link</th><th>Accepted</th><th>Status</th><th><span class="sr">Actions</span></th></tr></thead>
+    <tbody>
+    {% for c in consents %}
+      <tr>
+        <td><a class="row-link" href="/admin/consents/{{ c.id }}/edit">{{ c.name }}</a> <span class="muted">version {{ c.version }}</span></td>
+        <td class="hide-sm">{% if c.url %}<a href="{{ c.url }}" target="_blank" rel="noopener noreferrer">{{ c.url|length > 40 ? c.url|slice(0, 40) ~ '...' : c.url }}</a>{% else %}<span class="muted">No link</span>{% endif %}</td>
+        <td>{{ c.accepted }} of {{ users_total }}</td>
+        <td><span class="pill {{ c.enabled ? 'ok' : 'idle' }}">{{ c.enabled ? 'Required' : 'Off' }}</span></td>
+        <td class="act">
+          {% if c.enabled %}
+            {{ m.confirm_button('/admin/consents/' ~ c.id ~ '/bump', csrf, 'Ask everyone again', 'Ask everyone again?', 'Everyone, including people who accepted "' ~ c.name ~ '" before, must accept it again at their next visit. Do this after you changed the text on your site.', 'btn ghost') }}
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">Changing the message or link here does not ask anyone again. Use "Ask everyone again" after the text on your site changed in a way people should agree to.</p>
+{% else %}
+  <div class="empty"><h2>No notices yet</h2><p>Add a notice, for example terms of use or an acceptable use policy, and people must accept it before they can sign in.</p><a class="btn" href="/admin/consents/new">New notice</a></div>
+{% endif %}
+{% endblock %}

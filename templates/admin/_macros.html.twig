@@ -1,0 +1,28 @@
+{# Shared form pieces. Macros can't see the template context, so everything is passed in. #}
+{% macro input(name, label, value, errors, type = 'text', hint = '', attrs = '') %}
+<div class="field{{ errors[name] is defined ? ' has-error' }}">
+  <label for="{{ name }}">{{ label }}</label>
+  <input type="{{ type }}" id="{{ name }}" name="{{ name }}" value="{{ value }}" {{ attrs|raw }}>
+  {% if hint %}<div class="hint">{{ hint }}</div>{% endif %}
+  {% if errors[name] is defined %}<div class="err" role="alert">{{ errors[name] }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro error(errors, key) %}{% if errors[key] is defined %}<div class="err" role="alert">{{ errors[key] }}</div>{% endif %}{% endmacro %}
+
+{# A POST button that asks for confirmation (in a dialog) before submitting. #}
+{% macro confirm_button(action, csrf, label, title, message, class = 'btn danger') %}
+<form method="post" action="{{ action }}">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <button class="{{ class }}" data-confirm="{{ message }}" data-confirm-title="{{ title }}" data-confirm-label="{{ label }}">{{ label }}</button>
+</form>
+{% endmacro %}
+
+{# One row of a checklist: a checkbox, the name, and what it means underneath. `field` is the form field it belongs to. #}
+{% macro check_row(field, value, meaning, checked) %}
+<label class="check-row"><input type="checkbox" name="{{ field }}[]" value="{{ value }}"{{ checked ? ' checked' }}><span class="check-text"><b class="mono">{{ value }}</b>{% if meaning %}<small>{{ meaning }}</small>{% endif %}</span></label>
+{% endmacro %}
+
+{% macro avatar(name, size = '') %}<span class="avatar {{ size }}" style="--h: {{ hue(name) }}" aria-hidden="true">{{ initials(name) }}</span>{% endmacro %}
+
+{% macro chip(name) %}<span class="chip" style="--h: {{ hue(name) }}">{{ name }}</span>{% endmacro %}

@@ -1,0 +1,36 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}users{% endblock %}
+{% block title %}Users{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Users</h1><p class="sub">People who can sign in through this server.</p></div>
+  <a class="btn" href="/admin/users/new">{{ i.icon('plus') }}New user</a>
+</div>
+
+{% if users %}
+  <table class="list">
+    <thead><tr><th>Person</th><th class="hide-sm">Email</th><th>Groups</th></tr></thead>
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td>
+          <div class="ident">
+            {{ m.avatar(u.name) }}
+            <span>
+              <a class="row-link" href="/admin/users/{{ u.sub|url_encode }}/edit">{{ u.name }}</a>{% if u.is_admin %}<span class="tag">Admin</span>{% endif %}{% if u.locked_at %}<span class="pill bad">Locked</span>{% endif %}
+              <span class="meta">{{ u.username }}</span>
+            </span>
+          </div>
+        </td>
+        <td class="hide-sm">{{ u.email }}</td>
+        <td>{% for g in u.groups %}{{ m.chip(g) }}{% else %}<span class="muted">None</span>{% endfor %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="empty"><h2>No users yet</h2><p>Add the first person who should be able to sign in.</p><a class="btn" href="/admin/users/new">New user</a></div>
+{% endif %}
+{% endblock %}

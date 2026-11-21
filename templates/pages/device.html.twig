@@ -1,0 +1,32 @@
+{% extends 'layout.html.twig' %}
+{% import '_macros.html.twig' as f %}
+{% block title %}Connect a device{% endblock %}
+{% block page_name %}device{% endblock %}
+{% block content %}
+<section class="card narrow">
+  {% if step == 'enter' %}
+    <h1>Connect a device</h1>
+    <p class="muted">Enter the code shown on the device you want to sign in.</p>
+    {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+    <form method="post" action="/device" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      {{ f.field('user_code', 'Code', user_code, '', 'text', 'autocomplete="off" autocapitalize="characters" spellcheck="false" autofocus required') }}
+      <button class="btn block">Continue</button>
+    </form>
+  {% elseif step == 'confirm' %}
+    <h1>Allow {{ client_name }}?</h1>
+    <p>{{ user.name }}, <b>{{ client_name }}</b> is asking to sign in as you. Only continue if the code on the device is <b>{{ user_code }}</b>.</p>
+    {% if scopes %}<p class="muted">It will be able to see: {{ scopes|join(', ') }}.</p>{% endif %}
+    <form method="post" action="/device" class="actions">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <input type="hidden" name="user_code" value="{{ user_code }}">
+      <button class="btn" name="action" value="approve">Allow</button>
+      <button class="btn ghost" name="action" value="deny">Decline</button>
+    </form>
+  {% else %}
+    <h1>{{ approved ? 'Device connected' : 'Request declined' }}</h1>
+    <p>{{ approved ? 'You can go back to the device now. It will sign in by itself.' : client_name ~ ' was not given access.' }}</p>
+    <p><a class="btn ghost" href="/account">Back to your account</a></p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}security{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block title %}{{ connection ? 'Edit ' ~ connection.name : 'New connection' }}{% endblock %}
+{% block body %}
+<div class="page-head">
+  {% if connection %}
+    <div><h1>{{ connection.name }}</h1><p class="sub">{{ people }} {{ people == 1 ? 'person has' : 'people have' }} signed in through it.</p></div>
+  {% else %}
+    <div><h1>New connection</h1><p class="sub">An identity provider your customer or company runs.</p></div>
+  {% endif %}
+</div>
+
+{% if details %}
+<div class="section">
+  <header><h2>Give this to their administrator</h2><p>They register this site as an application in their identity provider, with these values. Or send them the metadata address, which most providers can read.</p></header>
+  <div class="fields">
+    <div class="field"><label>Entity ID (audience)</label><div class="mono">{{ details.entity_id }}</div></div>
+    <div class="field"><label>Reply address (ACS URL)</label><div class="mono">{{ details.acs_url }}</div></div>
+    <div class="field"><label>Metadata</label><div class="mono"><a href="{{ details.metadata_url }}" target="_blank" rel="noopener noreferrer">{{ details.metadata_url }}</a></div><div class="hint">Name ID: any format. Send the person's email address as the <code>email</code> attribute, and their name as <code>displayName</code> if you can.</div></div>
+  </div>
+</div>
+{% endif %}
+
+<form method="post" action="{{ connection ? '/admin/saml/' ~ connection.id : '/admin/saml' }}" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+
+  <div class="section">
+    <header><h2>Their identity provider</h2><p>All of this comes from their administrator, usually as a metadata file or a settings page.</p></header>
+    <div class="fields">
+      {{ m.input('name', 'Name', item.name, errors, 'text', 'Shown to people connected through it, for example Acme.', 'autocomplete="off" required') }}
+      {{ m.input('idp_entity_id', 'Entity ID (issuer)', item.idp_entity_id, errors, 'text', 'Looks like https://idp.acme.com/metadata.', 'autocomplete="off" required') }}
+      {{ m.input('idp_sso_url', 'Sign-in address (SSO URL)', item.idp_sso_url, errors, 'url', 'Where we send people to sign in. Must start with https://.', 'autocomplete="off" required') }}
+      <div class="field{{ errors.idp_certificate is defined ? ' has-error' }}">
+        <label for="idp_certificate">Signing certificate</label>
+        <textarea id="idp_certificate" name="idp_certificate" rows="6" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----">{{ item.idp_certificate }}</textarea>
+        <div class="hint">The X.509 certificate their provider signs answers with. Answers not signed with it are refused.{% if cert_expires %} This one is valid until {{ cert_expires|date('j M Y') }}.{% endif %}</div>
+        {{ m.error(errors, 'idp_certificate') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>Email domains</h2><p>People who type an address at one of these go straight to this provider, and it is the only one that may vouch for such addresses.</p></header>
+    <div class="fields">
+      <div class="field{{ errors.domains is defined ? ' has-error' }}">
+        <label for="domains">Domains</label>
+        <textarea id="domains" name="domains" rows="3" spellcheck="false" placeholder="acme.com">{{ item.domains }}</textarea>
+        <div class="hint">One per line. People at these domains can no longer sign in with a password here, because their company's provider decides who they are and whether they still work there. A domain can belong to one connection.</div>
+        {{ m.error(errors, 'domains') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>First-time sign-ins</h2><p>What happens when someone signs in through this provider and is not connected to anyone yet. Both only work for addresses at the domains above (and the allowed domains on the Accounts tab).</p></header>
+    <div class="fields">
+      <div class="field">
+        <label class="option"><input type="checkbox" name="link_existing" {{ item.link_existing ? 'checked' }}><div><b>Connect to the person with the same email</b><span>For people who already have an account here. They must have a verified email address here too.</span></div></label>
+      </div>
+      <div class="field">
+        <label class="option"><input type="checkbox" name="create_users" {{ item.create_users ? 'checked' }}><div><b>Create an account for new people</b><span>Without a password, no administrator rights, and no group.</span></div></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>Status</h2><p>Switched off, people at these domains sign in with a password again, if they have one.</p></header>
+    <div class="fields">
+      <div class="field">
+        <label class="option"><input type="checkbox" name="enabled" {{ item.enabled ? 'checked' }}><div><b>On</b><span>People at the domains above are sent to this provider.</span></div></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="formbar inline">
+    <button class="btn">{{ connection ? 'Save changes' : 'Add connection' }}</button>
+    <a class="btn ghost" href="/admin/security/saml">Cancel</a>
+  </div>
+</form>
+
+{% if connection %}
+  <div class="zone">
+    <div><h2>Delete this connection</h2><p>The people who signed in through it keep their accounts, but can no longer sign in this way. Without a password they will not be able to sign in at all until you give them another way.</p></div>
+    {{ m.confirm_button('/admin/saml/' ~ connection.id ~ '/delete', csrf, 'Delete connection', 'Delete ' ~ connection.name ~ '?', 'This cannot be undone.') }}
+  </div>
+{% endif %}
+{% endblock %}

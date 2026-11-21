@@ -1,0 +1,7 @@
+{% macro field(name, label, value, error = '', type = 'text', attrs = '') %}
+<div class="field{{ error ? ' has-error' }}">
+  <label for="f-{{ name }}">{{ label }}</label>
+  <input id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}" {{ attrs|raw }}{{ error ? ' aria-invalid=true' }}>
+  {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+</div>
+{% endmacro %}

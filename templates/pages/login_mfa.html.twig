@@ -1,0 +1,17 @@
+{% extends 'layout.html.twig' %}
+{% import '_macros.html.twig' as f %}
+{% block title %}Two-step verification{% endblock %}
+{% block page_name %}login{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Two-step verification</h1>
+  {% block intro %}<p class="muted">Enter the 6-digit code from your authenticator app. If you lost your phone, enter one of your recovery codes instead.</p>{% endblock %}
+  {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="/login/mfa" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    {{ f.field('code', 'Code', '', '', 'text', 'autocomplete="one-time-code" autocapitalize="off" spellcheck="false" autofocus required') }}
+    <button class="btn block">Verify</button>
+  </form>
+  {% block after_form %}<p class="muted"><a href="/login">Use a different account</a></p>{% endblock %}
+</section>
+{% endblock %}

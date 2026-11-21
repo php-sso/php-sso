@@ -1,0 +1,55 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}scopes{% endblock %}
+{% block title %}Scopes{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Scopes</h1><p class="sub">What an app can ask for. What a scope allows is up to the app that receives it.</p></div>
+  <a class="btn" href="/admin/scopes/new">{{ i.icon('plus') }}New scope</a>
+</div>
+
+<div class="notice" role="note">
+  The built-in scopes release facts about the person (their name, email, groups or roles) and are set up in the server's configuration.
+  The scopes you add release nothing: they are a name that goes into the access token, such as <span class="mono">invoices:read</span>,
+  and the app or service that receives the token decides what it means. An app can only ask for one after you allow it on the app's page.
+</div>
+
+<table class="list">
+  <thead><tr><th>Scope</th><th>Meaning</th><th class="hide-sm">Allowed for</th><th><span class="sr">Actions</span></th></tr></thead>
+  <tbody>
+  {% for s in scopes %}
+    <tr>
+      {% if s.builtin %}
+        <td><b class="mono">{{ s.name }}</b> <span class="pill">Built in</span></td>
+        <td>{{ s.description }}</td>
+        <td class="hide-sm"><span class="muted">Chosen per app</span></td>
+        <td></td>
+      {% else %}
+        <td><a class="row-link mono" href="/admin/scopes/{{ s.name|url_encode }}/edit">{{ s.name }}</a> <span class="pill ok">Custom</span></td>
+        <td>{{ s.description ?: '' }}{% if not s.description %}<span class="muted">No description</span>{% endif %}</td>
+        <td class="hide-sm">{% if s.clients %}{{ s.clients|length }} {{ s.clients|length == 1 ? 'app' : 'apps' }}{% else %}<span class="muted">No app yet</span>{% endif %}</td>
+        <td class="actions">
+          <details class="rowmenu">
+            <summary aria-label="Actions for {{ s.name }}" aria-haspopup="menu">{{ i.icon('dots') }}</summary>
+            <ul class="menu" role="menu">
+              <li role="none"><a role="menuitem" href="/admin/scopes/{{ s.name|url_encode }}/edit">{{ i.icon('edit') }}Edit</a></li>
+              {% if s.clients %}
+                <li role="none"><a role="menuitem" class="danger" href="/admin/scopes/{{ s.name|url_encode }}/danger">{{ i.icon('trash') }}Remove...</a></li>
+              {% else %}
+                <li role="none">
+                  <form method="post" action="/admin/scopes/{{ s.name|url_encode }}/delete">
+                    <input type="hidden" name="_csrf" value="{{ csrf }}">
+                    <button role="menuitem" class="danger" data-confirm="Access tokens already issued with it keep working until they expire." data-confirm-title="Remove scope {{ s.name }}?" data-confirm-label="Remove">{{ i.icon('trash') }}Remove</button>
+                  </form>
+                </li>
+              {% endif %}
+            </ul>
+          </details>
+        </td>
+      {% endif %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

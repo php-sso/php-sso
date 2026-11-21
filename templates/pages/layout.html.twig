@@ -1,0 +1,30 @@
+{#- Base of every page people see. Override blocks in a theme with {% extends '@sso/layout.html.twig' %}. -#}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_name }}{% endblock %} - {{ app_name }}</title>
+  {% block styles %}
+  <link rel="stylesheet" href="{{ asset('pages.css') }}">
+  {% if has_theme_asset('theme.css') %}<link rel="stylesheet" href="{{ theme_asset('theme.css') }}">{% endif %}
+  {% endblock %}
+  {% block head %}{% endblock %}
+</head>
+<body class="page-{% block page_name %}page{% endblock %}">
+  {% block impersonation %}{% if impersonation is defined and impersonation %}
+  <div class="impersonation" role="status">
+    <span>You are signed in as <b>{{ impersonation.name }}</b>. {{ impersonation.by }} is testing, so changes to the account are switched off.</span>
+    <form method="post" action="/impersonate/stop"><input type="hidden" name="_csrf" value="{{ impersonation.csrf }}"><button>Stop and go back</button></form>
+  </div>
+  {% endif %}{% endblock %}
+  <header class="site-head">
+    {% block brand %}<a class="brand" href="/">{% block logo %}<span class="mark" aria-hidden="true"></span>{% endblock %}<span class="brand-name">{{ app_name }}</span></a>{% endblock %}
+    {% block nav %}{% endblock %}
+  </header>
+  <main class="site-main">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-foot">{% block footer %}{% endblock %}</footer>
+</body>
+</html>

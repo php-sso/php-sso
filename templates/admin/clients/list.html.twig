@@ -1,0 +1,29 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}clients{% endblock %}
+{% block title %}Clients{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Clients</h1><p class="sub">Apps that let people sign in with this server.</p></div>
+  <a class="btn" href="/admin/clients/new">{{ i.icon('plus') }}New client</a>
+</div>
+
+{% if clients %}
+  <table class="list">
+    <thead><tr><th>App</th><th>Type</th><th>Who can sign in</th><th class="hide-sm">Redirect URI</th></tr></thead>
+    <tbody>
+    {% for c in clients %}
+      <tr>
+        <td><div class="ident">{{ m.avatar(c.name) }}<span><a class="row-link" href="/admin/clients/{{ c.client_id|url_encode }}/edit">{{ c.name }}</a><span class="meta mono">{{ c.client_id }}</span></span></div></td>
+        <td>{{ c.confidential ? 'Confidential' : 'Public' }}</td>
+        <td>{% if not c.restricted %}<span class="muted">Everyone</span>{% else %}{% set a = access[c.client_id] ?? {} %}{% for g in (a.groups ?? [])|slice(0, 3) %}{{ m.chip(g) }}{% endfor %}{% if (a.groups ?? [])|length > 3 %}<span class="muted">+{{ (a.groups|length) - 3 }}</span> {% endif %}{% if a.people ?? 0 %}<span class="muted">{{ a.people }} {{ a.people == 1 ? 'person' : 'people' }}</span>{% endif %}{% if not (a.groups ?? []) and not (a.people ?? 0) %}<span class="muted">Nobody yet</span>{% endif %}{% endif %}</td>
+        <td class="hide-sm"><code class="uri" title="{{ c.redirect_uris|join(', ') }}">{{ c.redirect_uris|first }}</code>{% if c.redirect_uris|length > 1 %}<span class="meta">and {{ c.redirect_uris|length - 1 }} more</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="empty"><h2>No clients yet</h2><p>Register an app to let its users sign in here.</p><a class="btn" href="/admin/clients/new">New client</a></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}roles{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block title %}{{ role ? 'Edit ' ~ role.name : 'New role' }}{% endblock %}
+{% block body %}
+<div class="page-head">
+  {% if role %}
+    <div><h1>{{ m.chip(role.name) }}</h1><p class="sub">{{ role.all_clients ? 'Available in every client' : 'Available in ' ~ role.client_count ~ (role.client_count == 1 ? ' client' : ' clients') }}</p></div>
+  {% else %}
+    <div><h1>New role</h1><p class="sub">Once it's created you can give it to groups and users.</p></div>
+  {% endif %}
+</div>
+
+{% if role %}
+<nav class="tabs" aria-label="Role sections">
+  <a href="/admin/roles/{{ role.id }}/edit"{{ tab == 'details' ? ' class="here" aria-current="page"' }}>Details</a>
+  <a href="/admin/roles/{{ role.id }}/groups"{{ tab == 'groups' ? ' class="here" aria-current="page"' }}>Groups</a>
+  <a href="/admin/roles/{{ role.id }}/users"{{ tab == 'users' ? ' class="here" aria-current="page"' }}>Users</a>
+  <a href="/admin/roles/{{ role.id }}/danger"{{ tab == 'danger' ? ' class="here" aria-current="page"' }}>Danger</a>
+</nav>
+{% endif %}
+
+{% if tab == 'details' %}
+<form method="post" action="{{ role ? '/admin/roles/' ~ role.id : '/admin/roles' }}" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+
+  <div class="section">
+    <header><h2>Details</h2><p>The name is what apps receive, so renaming a role can change what they allow. The role is the same in every app that receives it.</p></header>
+    <div class="fields">
+      {{ m.input('name', 'Name', item.name, errors, 'text', 'Letters, digits and . _ : -', 'autocomplete="off" spellcheck="false" maxlength="64" required') }}
+      {{ m.input('description', 'Description', item.description, errors, 'text', 'Optional. Shown to administrators only.') }}
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>Available in</h2><p>Which apps receive this role in the <span class="mono">roles</span> claim, when they ask for the <span class="mono">roles</span> scope. Who has the role is the same for all of them.</p></header>
+    <div class="fields wide availability">
+      <div class="options">
+        <label class="option"><input type="radio" name="availability" value="all" {{ item.all_clients ? 'checked' }}><div><b>Every client</b><span>Also clients you add later.</span></div></label>
+        <label class="option"><input type="radio" name="availability" value="selected" {{ item.all_clients ? '' : 'checked' }}><div><b>Only selected clients</b><span>Choose them below.</span></div></label>
+      </div>
+      <div class="availability-clients">
+        {% if all_clients|length > 1 %}
+          <p class="pick-all" data-pick-all hidden><button type="button" class="linkish" data-pick="all">Select all</button> · <button type="button" class="linkish" data-pick="none">Select none</button></p>
+        {% endif %}
+        <div class="pick-grid">
+          {% for c in all_clients %}
+            <label class="pick" title="{{ c.client_id }}"><input type="checkbox" name="clients[]" value="{{ c.client_id }}" {{ c.client_id in item.client_ids ? 'checked' }}><span>{{ c.name }}</span></label>
+          {% else %}
+            <p class="hint">There are no clients yet.</p>
+          {% endfor %}
+        </div>
+      {{ m.error(errors, 'clients') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="formbar inline">
+    <button class="btn">{{ role ? 'Save changes' : 'Create role' }}</button>
+    <a class="btn ghost" href="/admin/roles">Cancel</a>
+  </div>
+</form>
+{% elseif tab == 'groups' %}
+{% include 'admin/_relation.html.twig' with {r: rel_groups} %}
+{% elseif tab == 'users' %}
+{% include 'admin/_relation.html.twig' with {r: rel_users} %}
+{% elseif tab == 'danger' %}
+  <div class="zone">
+    <div><h2>Delete this role</h2><p>Everyone loses it, in every app. Apps stop receiving it from the next token on, which is at most an hour for users who are signed in.</p></div>
+    {{ m.confirm_button('/admin/roles/' ~ role.id ~ '/delete', csrf, 'Delete role', 'Delete ' ~ role.name ~ '?', 'Users who have it, directly or through a group, lose it. This cannot be undone.') }}
+  </div>
+{% endif %}
+{% endblock %}

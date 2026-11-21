@@ -1,0 +1,321 @@
+{
+    "alias": "php-sso",
+    "description": "php-sso (php-sso/oauth-server), throwaway test instance",
+    "server": {
+        "discoveryUrl": "http://sso:9000/.well-known/openid-configuration"
+    },
+    "client": {
+        "client_id": "conformance-1",
+        "client_secret": "conformance-secret-1"
+    },
+    "client2": {
+        "client_id": "conformance-2",
+        "client_secret": "conformance-secret-2"
+    },
+    "client_secret_post": {
+        "client_id": "conformance-1",
+        "client_secret": "conformance-secret-1"
+    },
+    "browser": [
+        {
+            "match": "http://sso:9000/authorize*",
+            "tasks": [
+                {
+                    "task": "Enter the username",
+                    "optional": true,
+                    "match": "http://sso:9000/login",
+                    "commands": [
+                        [
+                            "text",
+                            "name",
+                            "username",
+                            "conformance"
+                        ],
+                        [
+                            "click",
+                            "css",
+                            "form button"
+                        ]
+                    ]
+                },
+                {
+                    "task": "Enter the password",
+                    "optional": true,
+                    "match": "http://sso:9000/login/password",
+                    "commands": [
+                        [
+                            "text",
+                            "name",
+                            "password",
+                            "conformance-pass"
+                        ],
+                        [
+                            "click",
+                            "css",
+                            "form button"
+                        ]
+                    ]
+                },
+                {
+                    "task": "Verify Complete",
+                    "match": "*/test/*/callback*",
+                    "commands": [
+                        [
+                            "wait",
+                            "id",
+                            "submission_complete",
+                            10
+                        ]
+                    ]
+                }
+            ]
+        }
+    ],
+    "override": {
+        "oidcc-prompt-login": {
+            "browser": [
+                {
+                    "match": "http://sso:9000/authorize*",
+                    "tasks": [
+                        {
+                            "task": "Enter the username",
+                            "optional": true,
+                            "match": "http://sso:9000/login",
+                            "commands": [
+                                [
+                                    "wait",
+                                    "xpath",
+                                    "//*",
+                                    10,
+                                    "Sign in",
+                                    "update-image-placeholder-optional"
+                                ],
+                                [
+                                    "text",
+                                    "name",
+                                    "username",
+                                    "conformance"
+                                ],
+                                [
+                                    "click",
+                                    "css",
+                                    "form button"
+                                ]
+                            ]
+                        },
+                        {
+                            "task": "Enter the password",
+                            "optional": true,
+                            "match": "http://sso:9000/login/password",
+                            "commands": [
+                                [
+                                    "text",
+                                    "name",
+                                    "password",
+                                    "conformance-pass"
+                                ],
+                                [
+                                    "click",
+                                    "css",
+                                    "form button"
+                                ]
+                            ]
+                        },
+                        {
+                            "task": "Verify Complete",
+                            "match": "*/test/*/callback*",
+                            "commands": [
+                                [
+                                    "wait",
+                                    "id",
+                                    "submission_complete",
+                                    10
+                                ]
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "oidcc-max-age-1": {
+            "browser": [
+                {
+                    "match": "http://sso:9000/authorize*",
+                    "tasks": [
+                        {
+                            "task": "Enter the username",
+                            "optional": true,
+                            "match": "http://sso:9000/login",
+                            "commands": [
+                                [
+                                    "wait",
+                                    "xpath",
+                                    "//*",
+                                    10,
+                                    "Sign in",
+                                    "update-image-placeholder-optional"
+                                ],
+                                [
+                                    "text",
+                                    "name",
+                                    "username",
+                                    "conformance"
+                                ],
+                                [
+                                    "click",
+                                    "css",
+                                    "form button"
+                                ]
+                            ]
+                        },
+                        {
+                            "task": "Enter the password",
+                            "optional": true,
+                            "match": "http://sso:9000/login/password",
+                            "commands": [
+                                [
+                                    "text",
+                                    "name",
+                                    "password",
+                                    "conformance-pass"
+                                ],
+                                [
+                                    "click",
+                                    "css",
+                                    "form button"
+                                ]
+                            ]
+                        },
+                        {
+                            "task": "Verify Complete",
+                            "match": "*/test/*/callback*",
+                            "commands": [
+                                [
+                                    "wait",
+                                    "id",
+                                    "submission_complete",
+                                    10
+                                ]
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "oidcc-ensure-registered-redirect-uri": {
+            "browser": [
+                {
+                    "match": "http://sso:9000/authorize*",
+                    "tasks": [
+                        {
+                            "task": "Expect an error page, not a redirect",
+                            "match": "http://sso:9000/authorize*",
+                            "commands": [
+                                [
+                                    "wait",
+                                    "xpath",
+                                    "//*",
+                                    10,
+                                    "redirect_uri",
+                                    "update-image-placeholder"
+                                ]
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "oidcc-ensure-redirect-uri-in-authorization-request": {
+            "browser": [
+                {
+                    "match": "http://sso:9000/authorize*",
+                    "tasks": [
+                        {
+                            "task": "Expect an error page, not a redirect",
+                            "match": "http://sso:9000/authorize*",
+                            "commands": [
+                                [
+                                    "wait",
+                                    "xpath",
+                                    "//*",
+                                    10,
+                                    "redirect_uri",
+                                    "update-image-placeholder"
+                                ]
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "oidcc-redirect-uri-query-added": {
+            "browser": [
+                {
+                    "match": "http://sso:9000/authorize*",
+                    "tasks": [
+                        {
+                            "task": "Expect an error page, not a redirect",
+                            "match": "http://sso:9000/authorize*",
+                            "commands": [
+                                [
+                                    "wait",
+                                    "xpath",
+                                    "//*",
+                                    10,
+                                    "redirect_uri",
+                                    "update-image-placeholder"
+                                ]
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "oidcc-redirect-uri-query-mismatch": {
+            "browser": [
+                {
+                    "match": "http://sso:9000/authorize*",
+                    "tasks": [
+                        {
+                            "task": "Expect an error page, not a redirect",
+                            "match": "http://sso:9000/authorize*",
+                            "commands": [
+                                [
+                                    "wait",
+                                    "xpath",
+                                    "//*",
+                                    10,
+                                    "redirect_uri",
+                                    "update-image-placeholder"
+                                ]
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "oidcc-ensure-request-object-with-redirect-uri": {
+            "browser": [
+                {
+                    "match": "http://sso:9000/authorize*",
+                    "tasks": [
+                        {
+                            "task": "Expect an error page: the redirect_uri only exists inside the request object, which is not supported",
+                            "match": "http://sso:9000/authorize*",
+                            "commands": [
+                                [
+                                    "wait",
+                                    "xpath",
+                                    "//*",
+                                    10,
+                                    "invalid_request",
+                                    "update-image-placeholder"
+                                ]
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

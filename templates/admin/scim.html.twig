@@ -1,0 +1,33 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}security{% endblock %}
+{% block title %}SCIM{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Sign-in protection</h1><p class="sub">Let a company's system create, update and deactivate its people here automatically, with SCIM.</p></div>
+  <a class="btn" href="/admin/scim/new">{{ i.icon('plus') }}New client</a>
+</div>
+{% include 'admin/_security_tabs.html.twig' %}
+
+{% if clients %}
+  <table class="list">
+    <thead><tr><th>Client</th><th class="hide-sm">Email domains</th><th>People</th><th>Groups</th><th class="hide-sm">Last used</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for c in clients %}
+      <tr>
+        <td><a class="row-link" href="/admin/scim/{{ c.id }}/edit">{{ c.name }}</a></td>
+        <td class="hide-sm">{{ c.domains|join(', ') }}</td>
+        <td>{{ c.people }}</td>
+        <td>{{ c.groups }}</td>
+        <td class="hide-sm">{{ c.last_used_at ? ago(c.last_used_at) : 'Never' }}</td>
+        <td><span class="pill {{ c.enabled ? 'ok' : 'idle' }}">{{ c.enabled ? 'On' : 'Off' }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">Point the company's provisioning at <span class="mono">{{ url }}</span> with the client's token.</p>
+{% else %}
+  <div class="empty"><h2>No SCIM clients yet</h2><p>Add the system that will provision people (Okta, Entra, or another) and the email domains it may manage. You get a token to give to it.</p><a class="btn" href="/admin/scim/new">New client</a></div>
+{% endif %}
+{% endblock %}

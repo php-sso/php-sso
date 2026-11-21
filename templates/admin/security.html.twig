@@ -1,0 +1,161 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}security{% endblock %}
+{% block title %}Sign-in protection{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Sign-in protection</h1><p class="sub">Limit failed password attempts, require a second step and decide who may sign in.</p></div>
+</div>
+{% include 'admin/_security_tabs.html.twig' %}
+
+{% if tab == 'activity' %}
+{% if not limits.enabled %}
+  <div class="notice error" role="status">Limiting is off. Nothing stops someone from trying passwords as fast as they like.</div>
+{% endif %}
+
+<section class="block" id="failing">
+  <header class="block-head"><h2>Failed attempts right now</h2></header>
+  {% if rows %}
+    <table class="list">
+      <thead><tr><th>Who</th><th>Failed attempts</th><th>Status</th><th>Clears</th><th><span class="sr">Actions</span></th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr>
+          <td>
+            {% if r.type == 'account' %}
+              {% if r.person %}<a class="row-link" href="/admin/users/{{ r.sub|url_encode }}/edit">{{ r.person.name }}</a> <span class="muted">{{ r.person.username }}</span>{% else %}<span class="name">{{ r.label }}</span> <span class="muted">removed user</span>{% endif %}
+            {% elseif r.type == 'identifier' %}
+              <span class="name">{{ r.label }}</span> <span class="muted">no such user</span>
+            {% else %}
+              <span class="mono">{{ r.label }}</span> <span class="muted">IP address</span>
+            {% endif %}
+          </td>
+          <td>{{ r.failures }} of {{ r.limit }}</td>
+          <td>{% if r.person and r.person.locked_at %}<span class="pill bad">Locked by admin</span>{% else %}<span class="pill {{ r.locked ? 'bad' : 'idle' }}">{{ r.locked ? 'Locked' : (limits.enabled ? 'Counting' : 'Not enforced') }}</span>{% endif %}</td>
+          <td>{{ until(r.until) }}</td>
+          <td class="act">
+            {% if r.type == 'account' and r.person and r.person.sub != admin.sub %}
+            <form method="post" action="/admin/users/{{ r.sub|url_encode }}/{{ r.person.locked_at ? 'unlock' : 'lock' }}">
+              <input type="hidden" name="_csrf" value="{{ csrf }}">
+              <input type="hidden" name="back" value="activity">
+              {% if r.person.locked_at %}
+                <button class="btn ghost sm" data-confirm="{{ r.person.name }} can sign in again, with their current password." data-confirm-title="Unlock this account?" data-confirm-label="Unlock">Unlock</button>
+              {% else %}
+                <button class="btn danger sm" data-confirm="{{ r.person.name }} is signed out of every app and cannot sign in until you unlock the account." data-confirm-title="Lock this account?" data-confirm-label="Lock account">Lock</button>
+              {% endif %}
+            </form>
+            {% endif %}
+            <form method="post" action="/admin/security/reset">
+              <input type="hidden" name="_csrf" value="{{ csrf }}">
+              <input type="hidden" name="type" value="{{ r.type }}">
+              <input type="hidden" name="value" value="{{ r.key }}">
+              <button class="btn ghost sm" data-confirm="The failed attempts of {{ r.person ? r.person.name : r.label }} stop counting, so {{ r.type == 'ip' ? 'this address' : 'they' }} can try signing in again right away. They stay in the sign-in history." data-confirm-title="Reset failed attempts?" data-confirm-label="Reset">Reset</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="quiet">No failed attempts in the last {{ limits.window_seconds // 60 }} minutes.</p>
+  {% endif %}
+</section>
+
+
+{% elseif tab == 'limits' %}
+{% if not limits.enabled %}
+  <div class="notice error" role="status">Limiting is off. Nothing stops someone from trying passwords as fast as they like.</div>
+{% endif %}
+
+<form method="post" action="/admin/security/settings" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+
+  <div class="section">
+    <header><h2>Limits</h2><p>Past a limit, sign-in is refused until old failures leave the window.</p></header>
+    <div class="fields">
+      <div class="field">
+        <label class="option"><input type="checkbox" name="enabled" {{ form.enabled ? 'checked' }}><div><b>Limit failed attempts</b><span>Turn this off only while you investigate. Without it, passwords can be guessed without limit.</span></div></label>
+      </div>
+      {{ m.input('per_identifier', 'Attempts per person', form.per_identifier, errors, 'number', 'Failed passwords for one username, email address or account.', 'min="1" max="100" inputmode="numeric"') }}
+      {{ m.input('per_ip', 'Attempts per IP address', form.per_ip, errors, 'number', 'Failed passwords from one address, whoever they were for. Offices and VPNs share one address, so keep this higher.', 'min="1" max="1000" inputmode="numeric"') }}
+      {{ m.input('window_minutes', 'Window (minutes)', form.window_minutes, errors, 'number', 'How long a failed attempt counts.', 'min="1" max="1440" inputmode="numeric"') }}
+    </div>
+  </div>
+
+  <div class="formbar inline">
+    <button class="btn">Save settings</button>
+  </div>
+</form>
+
+{% elseif tab == 'mfa' %}
+<form method="post" action="/admin/security/mfa" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <div class="section">
+    <header><h2>Two-step verification</h2><p>An authenticator app on top of the password.</p></header>
+    <div class="fields">
+      {% set options = [['optional', 'Optional', 'People choose. Anyone who sets it up is always asked for a code.'], ['admins', 'Required for administrators', 'Administrators must set it up at their next sign-in.'], ['everyone', 'Required for everyone', 'Everyone must set it up at their next sign-in.']] %}
+      {% for o in options %}
+      <div class="field">
+        <label class="option"><input type="radio" name="policy" value="{{ o[0] }}" {{ mfa_policy == o[0] ? 'checked' }}><div><b>{{ o[1] }}</b><span>{{ o[2] }}</span></div></label>
+      </div>
+      {% endfor %}
+      {% if mfa_policy != 'everyone' and not admin_enrolled %}<p class="hint">You have not set it up yet. Do that on <a href="/account#mfa">your account page</a> before you require it, so you are not asked in the middle of something else.</p>{% endif %}
+    </div>
+  </div>
+  <div class="formbar inline"><button class="btn">Save</button></div>
+</form>
+
+{% elseif tab == 'social' %}
+<section class="block" id="social">
+  <header class="block-head"><h2>Social sign-in</h2></header>
+  <table class="list">
+    <thead><tr><th>Provider</th><th>Status</th><th>Redirect address to register there</th></tr></thead>
+    <tbody>
+    {% for p in social_providers %}
+      <tr>
+        <td><span class="name">{{ p.label }}</span> <span class="muted">{{ p.key }}</span></td>
+        <td><span class="pill {{ p.enabled ? 'ok' : 'idle' }}">{{ p.enabled ? 'On' : 'Not configured' }}</span></td>
+        <td class="mono">{{ p.redirect_uri }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="quiet" style="margin-top: 8px">Providers are set up in config/config.php (<code>login.social.providers</code>) with a client id and secret from the provider.</p>
+</section>
+
+<form method="post" action="/admin/security/social" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <div class="section">
+    <header><h2>First-time sign-ins</h2><p>What happens when someone signs in with an account that is not connected to anyone yet. Both rely on the provider vouching for the email address.</p></header>
+    <div class="fields">
+      <div class="field">
+        <label class="option"><input type="checkbox" name="link_by_verified_email" {{ social_form.link_by_verified_email ? 'checked' }}><div><b>Connect to the person with the same email</b><span>Only if the provider verified the address, and so did we. Anyone who controls that address at the provider gets into that account, so only turn it on for providers you trust to verify email.</span></div></label>
+      </div>
+      <div class="field">
+        <label class="option"><input type="checkbox" name="create_users" {{ social_form.create_users ? 'checked' }}><div><b>Create an account for new people</b><span>Without a password, no administrator rights, and no group. Restrict it with the allowed email domains on the Accounts tab.</span></div></label>
+      </div>
+    </div>
+  </div>
+  <div class="formbar inline"><button class="btn">Save</button></div>
+</form>
+
+{% elseif tab == 'accounts' %}
+<form method="post" action="/admin/security/accounts" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <div class="section">
+    <header><h2>Allowed email domains</h2><p>Where automatically made accounts may come from. It applies when someone signs in with an outside account (social or SAML) and an account would be created for them or connected to an existing one by email, and when a provisioning client (SCIM) creates a person or changes their email address. It does not apply to people you create here, or to accounts that already exist.</p></header>
+    <div class="fields">
+      <div class="field{{ errors.allowed_domains is defined ? ' has-error' }}">
+        <label for="allowed_domains">Allowed email domains</label>
+        <textarea id="allowed_domains" name="allowed_domains" rows="3" spellcheck="false" placeholder="example.com">{{ social_form.allowed_domains }}</textarea>
+        <div class="hint">One per line. Empty means any domain. This is separate from the domains a SAML connection claims: those decide where people are sent to sign in.</div>
+        {{ m.error(errors, 'allowed_domains') }}
+      </div>
+    </div>
+  </div>
+  <div class="formbar inline"><button class="btn">Save</button></div>
+</form>
+
+{% endif %}
+{% endblock %}

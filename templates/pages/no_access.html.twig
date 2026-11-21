@@ -1,0 +1,10 @@
+{% extends 'layout.html.twig' %}
+{% block title %}No access{% endblock %}
+{% block page_name %}no-access{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>No access</h1>
+  <p>{{ user.name }}, your account is not allowed to sign in to <b>{{ client_name }}</b>.</p>
+  <p class="muted">Ask an administrator to add you to a group that can use it, or <a href="/logout">sign in as someone else</a>.</p>
+</section>
+{% endblock %}

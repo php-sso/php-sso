@@ -1,0 +1,94 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}dashboard{% endblock %}
+{% block title %}Dashboard{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Dashboard</h1><p class="sub">Who is signed in, who tried to, and what is set up.</p></div>
+</div>
+
+<nav class="stats" aria-label="Totals">
+  <a href="#sessions"><b>{{ sessions|length }}</b><span>Signed in now</span></a>
+  <a href="#attempts" class="{{ failed_24h ? 'warn' : '' }}"><b>{{ failed_24h }}</b><span>Failed sign-ins, 24 h</span></a>
+  <a href="/admin/security" class="{{ locked_now ? 'warn' : '' }}"><b>{{ locked_now }}</b><span>Locked out now</span></a>
+  <a href="/admin/users"><b>{{ counts.users }}</b><span>Users</span></a>
+  <a href="/admin/groups"><b>{{ counts.groups }}</b><span>Groups</span></a>
+  <a href="/admin/clients"><b>{{ counts.clients }}</b><span>Clients</span></a>
+</nav>
+
+<section class="block" id="sessions">
+  <header class="block-head"><h2>Signed in now</h2></header>
+  {% if sessions %}
+    <table class="list">
+      <thead><tr><th>Person</th><th>Device</th><th class="hide-sm">IP address</th><th>Last active</th><th class="hide-sm">Signed in</th><th><span class="sr">Actions</span></th></tr></thead>
+      <tbody>
+      {% for s in sessions %}
+        <tr>
+          <td><div class="ident">{{ m.avatar(s.name, 'sm') }}<span><a class="row-link" href="/admin/users/{{ s.sub|url_encode }}/edit">{{ s.name }}</a>{% if s.id == current_sid %}<span class="tag">You</span>{% endif %}{% if s.impersonated_by_name %}<span class="tag">Impersonated by {{ s.impersonated_by_name }}</span>{% endif %}</span></div></td>
+          <td>{{ device(s.user_agent) }}</td>
+          <td class="hide-sm mono">{{ s.ip ?: '-' }}</td>
+          <td>{{ ago(s.last_seen) }}</td>
+          <td class="hide-sm">{{ ago(s.created_at) }}</td>
+          <td class="act">
+            <form method="post" action="/admin/sessions/{{ s.id }}/end">
+              <input type="hidden" name="_csrf" value="{{ csrf }}">
+              <button class="btn ghost sm" data-confirm="{{ s.id == current_sid ? 'You will be signed out of the admin panel, and the tokens issued during this session are revoked.' : s.name ~ ' is signed out of this server at once, and the tokens issued during this session are revoked, so apps can no longer refresh them. Apps that support back-channel logout are told right away. Others stay signed in until their own session ends, and an access token already issued keeps working until it expires (up to 1 hour).' }}" data-confirm-title="End this session?" data-confirm-label="End session">End session</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="quiet">Nobody is signed in.</p>
+  {% endif %}
+</section>
+
+<section class="block" id="attempts">
+  <header class="block-head">
+    <h2>Sign-in attempts</h2>
+    <div class="seg" role="group" aria-label="Filter attempts" data-attempt-filter hidden>
+      <button type="button" data-show="all" aria-pressed="true">All</button>
+      <button type="button" data-show="bad" aria-pressed="false">Failed</button>
+    </div>
+  </header>
+  {% if attempts %}
+    <table class="list" id="attempt-table">
+      <thead><tr><th>Result</th><th>Username</th><th>Device</th><th class="hide-sm">IP address</th><th>When</th></tr></thead>
+      <tbody>
+      {% for a in attempts %}
+        <tr data-result="{{ a.success ? 'ok' : 'bad' }}">
+          <td><span class="pill {{ a.success ? 'ok' : 'bad' }}">{{ a.success ? 'Signed in' : (a.throttled ? 'Locked' : (a.blocked ? 'Blocked' : (a.factor == 'code' ? 'Wrong code' : 'Failed'))) }}</span></td>
+          <td>{% if a.user_sub %}<a class="row-link" href="/admin/users/{{ a.user_sub|url_encode }}/edit">{{ a.username }}</a>{% else %}<span class="name">{{ a.username ?: '(empty)' }}</span> <span class="muted">unknown user</span>{% endif %}</td>
+          <td>{{ device(a.user_agent) }}</td>
+          <td class="hide-sm mono">{{ a.ip ?: '-' }}</td>
+          <td>{{ ago(a.created_at) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="quiet" id="attempt-empty" hidden>No failed attempts in the latest {{ attempts|length }}.</p>
+  {% else %}
+    <p class="quiet">No sign-in attempts yet.</p>
+  {% endif %}
+</section>
+
+<section class="block">
+  <header class="block-head"><h2>Directory</h2></header>
+  <div class="glance">
+    <div>
+      <h3><a href="/admin/groups">Groups</a></h3>
+      <p>{% for g in groups|slice(0, 8) %}<a href="/admin/groups/{{ g.id }}/edit">{{ m.chip(g.name) }}</a>{% else %}<span class="muted">None yet. <a href="/admin/groups/new">Create one</a>.</span>{% endfor %}{% if groups|length > 8 %} <span class="muted">+{{ groups|length - 8 }} more</span>{% endif %}</p>
+    </div>
+    <div>
+      <h3><a href="/admin/clients">Clients</a></h3>
+      <ul>{% for c in clients|slice(0, 5) %}<li><a href="/admin/clients/{{ c.client_id|url_encode }}/edit">{{ c.name }}</a> <span class="muted">{{ c.confidential ? 'confidential' : 'public' }}</span></li>{% else %}<li class="muted">None yet. <a href="/admin/clients/new">Register an app</a>.</li>{% endfor %}</ul>
+    </div>
+    <div>
+      <h3><a href="/admin/users">Administrators</a></h3>
+      <ul>{% for a in admins|slice(0, 5) %}<li><a href="/admin/users/{{ a.sub|url_encode }}/edit">{{ a.name }}</a> <span class="muted">{{ a.username }}</span></li>{% endfor %}</ul>
+    </div>
+  </div>
+</section>
+{% endblock %}

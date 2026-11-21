@@ -1,0 +1,28 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}groups{% endblock %}
+{% block title %}Groups{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Groups</h1><p class="sub">Named sets of people. Apps read them from the groups claim.</p></div>
+  <a class="btn" href="/admin/groups/new">{{ i.icon('plus') }}New group</a>
+</div>
+
+{% if groups %}
+  <table class="list">
+    <thead><tr><th>Group</th><th class="hide-sm">Description</th><th>Members</th></tr></thead>
+    <tbody>
+    {% for g in groups %}
+      <tr>
+        <td><span class="chip" style="--h: {{ hue(g.name) }}"><a class="row-link" href="/admin/groups/{{ g.id }}/edit">{{ g.name }}</a></span></td>
+        <td class="hide-sm">{{ g.description ?: '' }}{% if not g.description %}<span class="muted">No description</span>{% endif %}</td>
+        <td>{{ g.members }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="empty"><h2>No groups yet</h2><p>Groups let apps decide what each person may do, for example staff or finance.</p><a class="btn" href="/admin/groups/new">New group</a></div>
+{% endif %}
+{% endblock %}

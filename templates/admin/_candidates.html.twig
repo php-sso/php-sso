@@ -1,0 +1,19 @@
+{#- Search results of the relation picker's "add" box: used inline (no JavaScript) and as the live-search fragment. -#}
+{% import 'admin/_macros.html.twig' as m %}
+{% if r.candidates %}
+  <ul class="candidates" role="listbox" aria-label="Results">
+    {% for c in r.candidates %}
+      <li role="option" aria-selected="false">
+        {{ m.avatar(c.name, 'sm') }}
+        <div><b>{{ c.name }}</b>{% if c.detail %}<span class="meta">{{ c.detail }}</span>{% endif %}</div>
+        <form method="post" action="/admin/rel/{{ r.name }}/{{ r.owner }}/add">
+          <input type="hidden" name="_csrf" value="{{ csrf }}">
+          <input type="hidden" name="item" value="{{ c.id }}">
+          <button class="btn sm">Add</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% elseif r.find %}
+  <p class="hint">Nothing else matches "{{ r.find }}". Anything already added is not listed.</p>
+{% endif %}

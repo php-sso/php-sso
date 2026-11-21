@@ -1,0 +1,13 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}security{% endblock %}
+{% block title %}IP rules{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Sign-in protection</h1><p class="sub">Limit failed password attempts, require a second step and decide who may sign in.</p></div>
+  <a class="btn ghost" href="/admin/access-test">{{ i.icon('flask') }}Test an address</a>
+</div>
+{% set tab = 'ip-rules' %}
+{% include 'admin/_security_tabs.html.twig' %}
+{% include 'admin/_ip_rules.html.twig' %}
+{% endblock %}

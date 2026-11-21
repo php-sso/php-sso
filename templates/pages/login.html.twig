@@ -1,0 +1,23 @@
+{% extends 'layout.html.twig' %}
+{% import '_macros.html.twig' as f %}
+{% block title %}Sign in{% endblock %}
+{% block page_name %}login{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Sign in</h1>
+  {% block intro %}{% endblock %}
+  {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="/login" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    {{ f.field('username', identifier.label, username, '', identifier.type, 'autocomplete="username" autofocus required') }}
+    <button class="btn block">Continue</button>
+  </form>
+  {% if social %}
+    <div class="social">
+      <p class="muted">or</p>
+      {% for p in social %}<a class="btn ghost block" href="/login/social/{{ p.key }}">Continue with {{ p.label }}</a>{% endfor %}
+    </div>
+  {% endif %}
+  {% block after_form %}{% endblock %}
+</section>
+{% endblock %}

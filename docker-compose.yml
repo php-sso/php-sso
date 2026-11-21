@@ -1,0 +1,59 @@
+services:
+  sso:
+    container_name: php-sso-server
+    build: .
+    # Installs dependencies on first start (into ./vendor on the host), then serves.
+    command: sh -c "[ -d vendor ] || composer install --no-interaction --no-progress; php -S 0.0.0.0:9000 -t public"
+    user: "${UID:-1000}:${GID:-1000}"
+    ports:
+      - "9000:9000"
+    environment:
+      SSO_PUBLIC_URL: http://localhost:9000
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}   # only used when seeding an empty database
+      SSO_DEMO_DATA: "1"                            # demo user, group and client; never in production
+      SSO_DEBUG: "1"                                # show theme errors instead of falling back
+      PHP_CLI_SERVER_WORKERS: "4"                   # php -S is single-threaded; back-channel logout calls the client, which calls back
+    volumes:
+      - .:/app
+
+  # Tiny demo app that logs in through the SSO server.
+  client:
+    container_name: php-sso-client
+    build: .
+    command: php -S 0.0.0.0:9001 -t client/public client/public/index.php
+    user: "${UID:-1000}:${GID:-1000}"
+    ports:
+      - "9001:9001"
+    environment:
+      SSO_PUBLIC_URL: http://localhost:9000   # issuer; used by the browser
+      SSO_INTERNAL_URL: http://sso:9000       # used for server-to-server calls
+      CLIENT_URL: http://localhost:9001
+      CLIENT_ID: demo-client
+      CLIENT_SECRET: demo-secret
+      CLIENT_SESSION_NAME: client_session
+      PHP_CLI_SERVER_WORKERS: "4"
+    volumes:
+      - .:/app
+    depends_on:
+      - sso
+
+  # A second demo app, to see single sign-on across apps: sign in on one, and the other needs no password.
+  client2:
+    container_name: php-sso-client2
+    build: .
+    command: php -S 0.0.0.0:9002 -t client/public client/public/index.php
+    user: "${UID:-1000}:${GID:-1000}"
+    ports:
+      - "9002:9002"
+    environment:
+      SSO_PUBLIC_URL: http://localhost:9000
+      SSO_INTERNAL_URL: http://sso:9000
+      CLIENT_URL: http://localhost:9002
+      CLIENT_ID: demo-client-2
+      CLIENT_SECRET: demo-secret-2
+      CLIENT_SESSION_NAME: client2_session
+      PHP_CLI_SERVER_WORKERS: "4"
+    volumes:
+      - .:/app
+    depends_on:
+      - sso

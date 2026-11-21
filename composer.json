@@ -1,0 +1,52 @@
+{
+    "name": "php-sso/php-sso",
+    "description": "An OpenID Connect provider with SCIM provisioning and SAML sign-in, built on php-sso/oauth-server, php-sso/scim-server and php-sso/saml.",
+    "keywords": [
+        "sso",
+        "single-sign-on",
+        "openid-connect",
+        "oidc",
+        "oauth2",
+        "scim",
+        "saml",
+        "identity-provider"
+    ],
+    "type": "project",
+    "license": "MIT",
+    "homepage": "https://github.com/php-sso/php-sso",
+    "support": {
+        "issues": "https://github.com/php-sso/php-sso/issues",
+        "source": "https://github.com/php-sso/php-sso"
+    },
+    "require": {
+        "ext-openssl": "*",
+        "ext-pdo_sqlite": "*",
+        "laminas/laminas-diactoros": "^3.0",
+        "laminas/laminas-httphandlerrunner": "^2.10",
+        "php": "^8.3",
+        "php-sso/oauth-server": "^1.0",
+        "php-sso/saml": "^1.0",
+        "php-sso/scim-server": "^1.0",
+        "psr/http-client": "^1.0",
+        "twig/twig": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PhpSso\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    }
+}

@@ -1,0 +1,202 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}clients{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block title %}{{ client ? 'Edit ' ~ client.name : 'New client' }}{% endblock %}
+{% block body %}
+<div class="page-head">
+  {% if client %}
+    <div class="titleblock">{{ m.avatar(client.name, 'lg') }}<div><h1>{{ client.name }}</h1><p class="sub mono">{{ client.client_id }}</p></div></div>
+  {% else %}
+    <div><h1>New client</h1><p class="sub">Register an app that will sign people in through this server. You can fill in the rest once it exists.</p></div>
+  {% endif %}
+</div>
+
+{% if new_secret %}
+<dialog id="secret-dialog" class="secret-dialog" open aria-labelledby="secret-title">
+  <h2 id="secret-title">Save the client secret</h2>
+  <p>This is the only time it is shown. Put it in the app's configuration now. If you lose it, generate a new one from this client's page.</p>
+  <div class="secret-box">
+    <code>{{ new_secret }}</code>
+    <button type="button" class="btn ghost" data-copy="{{ new_secret }}">Copy</button>
+  </div>
+  <form method="dialog"><button class="btn" autofocus>I've saved it</button></form>
+</dialog>
+{% endif %}
+
+{% if client %}
+<nav class="tabs" aria-label="Client sections">
+  <a href="/admin/clients/{{ client.client_id|url_encode }}/edit"{{ tab == 'settings' ? ' class="here" aria-current="page"' }}>Settings</a>
+  <a href="/admin/clients/{{ client.client_id|url_encode }}/access"{{ tab == 'access' ? ' class="here" aria-current="page"' }}>Access</a>
+  <a href="/admin/clients/{{ client.client_id|url_encode }}/roles"{{ tab == 'roles' ? ' class="here" aria-current="page"' }}>Roles</a>
+  <a href="/admin/clients/{{ client.client_id|url_encode }}/ip-rules"{{ tab == 'ip-rules' ? ' class="here" aria-current="page"' }}>IP rules</a>
+  <a href="/admin/clients/{{ client.client_id|url_encode }}/danger"{{ tab == 'danger' ? ' class="here" aria-current="page"' }}>Danger</a>
+</nav>
+{% endif %}
+
+{% if tab == 'settings' %}
+<form method="post" action="{{ client ? '/admin/clients/' ~ client.client_id|url_encode : '/admin/clients' }}" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+
+  <div class="section">
+    <header><h2>Application</h2><p>Who this client is and how it authenticates.</p></header>
+    <div class="fields">
+      {{ m.input('client_id', 'Client ID', item.client_id, errors, 'text', client
+        ? 'Lowercase letters, digits, - and _. The app sends this with every request, so it stops working until you update it there. Refresh tokens it holds stop working too.'
+        : 'Lowercase letters, digits, - and _. The app sends this with every request.', 'autocomplete="off" spellcheck="false" maxlength="64" data-slug required') }}
+      {{ m.input('name', 'Name', item.name, errors, 'text', 'Shown to administrators.', 'required') }}
+
+      <div class="field">
+        <label class="lbl">Type</label>
+        <div class="options">
+          <label class="option"><input type="radio" name="type" value="confidential" {{ item.confidential ? 'checked' }}><div><b>Confidential</b><span>A server-side app that can keep a secret. You get a client secret.</span></div></label>
+          <label class="option"><input type="radio" name="type" value="public" {{ item.confidential ? '' : 'checked' }}><div><b>Public</b><span>A single-page or mobile app. No secret, and PKCE is required.</span></div></label>
+        </div>
+        {% if client %}
+          <div class="hint">Switching to public deletes the secret. Switching to confidential creates a new one, shown once after you save. Either way the app has to be updated.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if client %}
+  <div class="section">
+    <header><h2>Sign-in</h2><p>Where people may be sent back to, and what the app may do.</p></header>
+    <div class="fields">
+      <div class="field{{ errors.redirect_uris is defined ? ' has-error' }}">
+        <label for="redirect_uris">Redirect URIs</label>
+        <textarea id="redirect_uris" name="redirect_uris" required spellcheck="false">{{ item.redirect_uris_text }}</textarea>
+        <div class="hint">One per line. Each must match exactly what the app sends.</div>
+        {{ m.error(errors, 'redirect_uris') }}
+      </div>
+      <div class="field{{ errors.grants is defined ? ' has-error' }}">
+        <label class="lbl">Allowed grants</label>
+        {% set grant_help = {
+          'authorization_code': 'The standard browser sign-in flow (with PKCE).',
+          'refresh_token': 'Lets the app renew access without asking the person to sign in again.',
+          'client_credentials': 'For servers acting on their own, with no person involved. Needs a confidential client.',
+          'urn:ietf:params:oauth:grant-type:device_code': 'For devices without a browser or keyboard: people approve them on their phone.'
+        } %}
+        <div class="checklist">
+          {% for grant in grants %}
+            {{ m.check_row('grants', grant, grant_help[grant], grant in item.grants) }}
+          {% endfor %}
+        </div>
+        {{ m.error(errors, 'grants') }}
+      </div>
+      {% set allowed_scopes = item.scopes is null ? scope_builtin : item.scopes %}
+      <div class="field{{ errors.scopes is defined ? ' has-error' }}">
+        <div class="scope-group">
+          <div class="scope-group-head"><label class="lbl">Allowed scopes</label><span class="count" data-pick-count>{{ scope_names|filter(s => s in allowed_scopes)|length }} of {{ scope_names|length }} allowed</span></div>
+          <div class="scope-tools">
+            <input class="scope-filter" type="search" placeholder="Search scopes" aria-label="Search the scopes" data-pick-filter hidden autocomplete="off">
+            <details class="rowmenu">
+              <summary aria-label="Scope options" aria-haspopup="menu">{{ i.icon('dots') }}</summary>
+              <ul class="menu" role="menu">
+                <li role="none" data-js-only hidden><button type="button" role="menuitem" data-pick="all">Select all</button></li>
+                <li role="none" data-js-only hidden><button type="button" role="menuitem" data-pick="none">Select none</button></li>
+                <li role="none"><a role="menuitem" href="/admin/scopes">Manage scopes</a></li>
+              </ul>
+            </details>
+          </div>
+          <div class="checklist scrolls">
+            {% for scope in scope_names %}
+              {{ m.check_row('scopes', scope, scope_info[scope] is defined ? scope_info[scope] : '', scope in allowed_scopes) }}
+            {% endfor %}
+          </div>
+          <p class="hint" data-pick-empty hidden>No scope matches that.</p>
+        </div>
+        <div class="hint">What the app may ask for. A server using client credentials is limited to these. A scope you add is never allowed until you tick it here.</div>
+        {{ m.error(errors, 'scopes') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>Sign-out</h2><p>How this app learns that someone signed out, and where it sends them afterwards.</p></header>
+    <div class="fields">
+      <div class="field{{ errors.backchannel_logout_uri is defined ? ' has-error' }}">
+        <label for="backchannel_logout_uri">Back-channel logout URL</label>
+        <input id="backchannel_logout_uri" name="backchannel_logout_uri" type="url" value="{{ item.backchannel_logout_uri }}" spellcheck="false" placeholder="https://app.example.com/backchannel-logout">
+        <div class="hint">Optional. When someone's session ends, this server sends a signed logout token to this address so the app can end its own session. It must be reachable from this server.</div>
+        {{ m.error(errors, 'backchannel_logout_uri') }}
+      </div>
+      <div class="field{{ errors.post_logout_redirect_uris is defined ? ' has-error' }}">
+        <label for="post_logout_redirect_uris">Post-logout redirect URIs</label>
+        <textarea id="post_logout_redirect_uris" name="post_logout_redirect_uris" spellcheck="false">{{ item.post_logout_redirect_uris_text }}</textarea>
+        <div class="hint">One per line. Where the app may send people after it asks this server to sign them out. Each must match exactly.</div>
+        {{ m.error(errors, 'post_logout_redirect_uris') }}
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+
+  <div class="formbar inline">
+    <button class="btn">{{ client ? 'Save changes' : 'Create client' }}</button>
+    <a class="btn ghost" href="/admin/clients">Cancel</a>
+  </div>
+</form>
+{% elseif tab == 'access' %}
+<section class="section relation" id="access">
+  <header><h2>Who can sign in</h2><p>People without access see a "no access" page when the app sends them here.</p></header>
+  <div class="fields wide">
+    <form method="post" action="/admin/clients/{{ client.client_id|url_encode }}/access" data-autosubmit>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="options">
+        <label class="option"><input type="radio" name="access" value="everyone" {{ client.restricted ? '' : 'checked' }}><div><b>Everyone</b><span>Any person with an account on this server.</span></div></label>
+        <label class="option"><input type="radio" name="access" value="restricted" {{ client.restricted ? 'checked' }}><div><b>Only selected groups and users</b><span>Members of the groups you add, and the people you add by name.</span></div></label>
+      </div>
+      <button class="btn ghost sm" data-autosubmit-fallback style="margin-top:10px">Apply</button>
+    </form>
+    {% if client.restricted and rel_groups.total == 0 and rel_users.total == 0 %}
+      <div class="notice error" role="status" style="margin-top:14px">Nobody can sign in yet. Add a group or a user below.</div>
+    {% endif %}
+  </div>
+</section>
+{% if client.restricted %}
+  {% include 'admin/_relation.html.twig' with {r: rel_groups} %}
+  {% include 'admin/_relation.html.twig' with {r: rel_users} %}
+{% endif %}
+{% elseif tab == 'roles' %}
+<section class="section" id="roles">
+  <header><h2>Roles this app receives</h2><p>Roles are defined once under <a href="/admin/roles">Roles</a> and given to groups and users there. When this app asks for the <span class="mono">roles</span> scope it receives the ones below. The app decides what each allows.</p></header>
+  <div class="fields wide">
+    {% if roles %}
+      <table class="list">
+        <thead><tr><th>Role</th><th class="hide-sm">Description</th><th>Available</th><th>Groups</th><th>Users</th></tr></thead>
+        <tbody>
+        {% for r in roles %}
+          <tr>
+            <td><span class="chip" style="--h: {{ hue(r.name) }}"><a class="row-link" href="/admin/roles/{{ r.id }}/edit">{{ r.name }}</a></span></td>
+            <td class="hide-sm">{% if r.description %}{{ r.description }}{% else %}<span class="muted">No description</span>{% endif %}</td>
+            <td>{{ r.all_clients ? 'Every client' : 'This client' }}</td>
+            <td>{{ r.group_count }}</td>
+            <td>{{ r.user_count }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="hint">This client receives no roles yet. <a href="/admin/roles/new">Create a role</a>, or make an existing one available here.</p>
+    {% endif %}
+  </div>
+</section>
+{% elseif tab == 'ip-rules' %}
+{% include 'admin/_ip_rules.html.twig' %}
+{% elseif tab == 'danger' %}
+
+{% if client.confidential %}
+  <div class="zone plain">
+    <div><h2>Client secret</h2><p>Stored hashed, so it can't be shown again. Generating a new one stops the current secret working immediately.</p></div>
+    {{ m.confirm_button('/admin/clients/' ~ client.client_id|url_encode ~ '/secret', csrf, 'Generate new secret', 'Generate a new secret?', client.name ~ ' stops being able to sign people in until you give it the new secret.', 'btn ghost') }}
+  </div>
+{% endif %}
+
+  <div class="zone">
+    <div><h2>Delete this client</h2><p>The app can no longer sign anyone in. Access tokens it already holds keep working until they expire, at most an hour.</p></div>
+    {{ m.confirm_button('/admin/clients/' ~ client.client_id|url_encode ~ '/delete', csrf, 'Delete client', 'Delete ' ~ client.name ~ '?', 'Nobody will be able to sign in to ' ~ client.name ~ ' through this server. This cannot be undone.') }}
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}roles{% endblock %}
+{% block title %}Roles{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Roles</h1><p class="sub">What a user may do inside an app. Apps read them from the roles claim.</p></div>
+  <a class="btn" href="/admin/roles/new">{{ i.icon('plus') }}New role</a>
+</div>
+
+{% if roles %}
+  <table class="list">
+    <thead><tr><th>Role</th><th class="hide-sm">Description</th><th>Available in</th><th>Groups</th><th>Users</th></tr></thead>
+    <tbody>
+    {% for r in roles %}
+      <tr>
+        <td><span class="chip" style="--h: {{ hue(r.name) }}"><a class="row-link" href="/admin/roles/{{ r.id }}/edit">{{ r.name }}</a></span></td>
+        <td class="hide-sm">{{ r.description ?: '' }}{% if not r.description %}<span class="muted">No description</span>{% endif %}</td>
+        <td>{% if r.all_clients %}Every client{% else %}{{ r.client_count }} {{ r.client_count == 1 ? 'client' : 'clients' }}{% endif %}</td>
+        <td>{{ r.group_count }}</td>
+        <td>{{ r.user_count }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="empty"><h2>No roles yet</h2><p>Roles are names an app can check, for example editor or admin. Define one here, give it to groups or users, and choose which apps receive it.</p><a class="btn" href="/admin/roles/new">New role</a></div>
+{% endif %}
+{% endblock %}

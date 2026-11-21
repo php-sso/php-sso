@@ -1,0 +1,76 @@
+{# Rules table and add form. `base` is the page the rules live on; with a client, only that client's rules show. #}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% set scope = client ? client.name : 'sign-in' %}
+<div class="notice" role="note">
+  Deny rules always win. {% if allow_active %}Allow rules exist, so <b>only</b> addresses that match one of them can {{ client ? 'sign in to ' ~ client.name : 'sign in' }}.{% else %}With no allow rules, every address that is not denied may {{ client ? 'sign in to ' ~ client.name : 'sign in' }}.{% endif %}
+  {% if client %}{% if ignores_general %}The general <a href="/admin/ip-rules">IP rules</a> do not apply to this client.{% else %}The general <a href="/admin/ip-rules">IP rules</a> apply as well.{% endif %}{% else %}Rules apply to sign-in, the admin panel, the account pages and requests for tokens. Each client can add its own rules on its IP rules tab, or ignore these general rules.{% endif %}
+</div>
+
+{% if client %}
+<form method="post" action="/admin/clients/{{ client.client_id|url_encode }}/ip-rules/scope" class="setting-row">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <label class="option"><input type="checkbox" name="ignore_general" value="1"{{ ignores_general ? ' checked' }}><div><b>Ignore the general IP rules</b><span>Judge {{ client.name }} by its own rules only, for example to keep it open while the general rules limit everything else.</span></div></label>
+  <button class="btn ghost">Save</button>
+</form>
+{% if not ignores_general %}
+<section class="block">
+  <header class="block-head"><h2>Inherited from the general rules</h2><a class="row-link" href="/admin/ip-rules">Manage</a></header>
+  {% if inherited %}
+    <table class="list">
+      <thead><tr><th>Rule</th><th>Address or range</th><th class="hide-sm">Note</th></tr></thead>
+      <tbody>
+      {% for r in inherited %}
+        <tr>
+          <td><span class="pill {{ r.type == 'allow' ? 'ok' : 'bad' }}">{{ r.type == 'allow' ? 'Allow' : 'Deny' }}</span></td>
+          <td class="mono">{{ r.cidr }}</td>
+          <td class="hide-sm">{{ r.note ?: '' }}{% if not r.note %}<span class="muted">No note</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="quiet">There are no general rules, so nothing is inherited.</p>
+  {% endif %}
+</section>
+{% endif %}
+<header class="block-head"><h2>Rules for {{ client.name }}</h2></header>
+{% endif %}
+
+{% if rules %}
+  <table class="list">
+    <thead><tr><th>Rule</th><th>Address or range</th><th class="hide-sm">Note</th><th><span class="sr">Actions</span></th></tr></thead>
+    <tbody>
+    {% for r in rules %}
+      <tr>
+        <td><span class="pill {{ r.type == 'allow' ? 'ok' : 'bad' }}">{{ r.type == 'allow' ? 'Allow' : 'Deny' }}</span></td>
+        <td class="mono">{{ r.cidr }}</td>
+        <td class="hide-sm">{{ r.note ?: '' }}{% if not r.note %}<span class="muted">No note</span>{% endif %}</td>
+        <td>{{ m.confirm_button(base ~ '/' ~ r.id ~ '/delete', csrf, 'Remove', 'Remove rule for ' ~ r.cidr ~ '?', r.type == 'allow' ? 'If this is the last allow rule, access opens up to every address that is not denied.' : 'Addresses in this range can sign in again, unless an allow rule excludes them.', 'btn ghost') }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="empty"><h2>No rules yet</h2><p>{{ client ? 'Every address can sign in to ' ~ client.name ~ (ignores_general ? '.' : ' unless the general rules say otherwise.') : 'Everyone can sign in from any address.' }} Add a rule below to change that.</p></div>
+{% endif %}
+
+<form method="post" action="{{ client ? '/admin/clients/' ~ client.client_id|url_encode ~ '/ip-rules' : '/admin/ip-rules' }}" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <div class="section spaced">
+    <header><h2>Add a rule</h2><p>Use a single address or a range in CIDR notation. IPv4 and IPv6 both work. Your address is <span class="mono">{{ my_ip ?: 'unknown' }}</span>.</p></header>
+    <div class="fields">
+      <div class="field{{ errors.type is defined ? ' has-error' }}">
+        <label for="type">Rule</label>
+        <select id="type" name="type">
+          <option value="deny"{{ item.type == 'deny' ? ' selected' }}>Deny: block these addresses</option>
+          <option value="allow"{{ item.type == 'allow' ? ' selected' }}>Allow: only these addresses may sign in</option>
+        </select>
+        {{ m.error(errors, 'type') }}
+      </div>
+      {{ m.input('cidr', 'Address or range', item.cidr, errors, 'text', 'For example 203.0.113.7 or 10.0.0.0/8', 'autocomplete="off" required') }}
+      {{ m.input('note', 'Note', item.note, errors, 'text', 'Optional. Why this rule exists.') }}
+    </div>
+  </div>
+  <div class="formbar inline"><button class="btn">{{ i.icon('plus') }}Add rule</button></div>
+</form>

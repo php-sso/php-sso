@@ -1,0 +1,123 @@
+{% extends 'layout.html.twig' %}
+{% import '_macros.html.twig' as f %}
+{% block title %}Your account{% endblock %}
+{% block page_name %}account{% endblock %}
+{% block nav %}
+<nav class="site-nav" aria-label="Account">
+  {% if user.is_admin %}<a href="/admin">Admin panel</a>{% endif %}
+  <a href="/logout">Sign out</a>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="stack">
+  <div class="page-title">
+    <h1>Your account</h1>
+    <p class="muted">Signed in as <b>{{ user.username }}</b>{% if groups %} · {{ groups|join(', ') }}{% endif %}</p>
+  </div>
+
+  {% if flash %}<div class="notice {{ flash.type }}" role="status">{{ flash.message }}</div>{% endif %}
+
+  {% block profile %}
+  <section class="card" id="profile">
+    <header><h2>Profile</h2><p class="muted">The name and email address apps receive when you sign in to them.</p></header>
+    <form method="post" action="/account/profile" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      {{ f.field('name', 'Name', values.name, errors.profile.name ?? '', 'text', 'autocomplete="name" required') }}
+      {{ f.field('email', 'Email address', values.email, errors.profile.email ?? '', 'email', 'autocomplete="email" required') }}
+      <p class="hint">If you change your email address, it has to be verified again.</p>
+      <button class="btn">Save profile</button>
+    </form>
+  </section>
+  {% endblock %}
+
+  {% block password %}
+  <section class="card" id="password">
+    <header><h2>Password</h2><p class="muted">Changing it signs you out of your other sessions.</p></header>
+    <form method="post" action="/account/password" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      {{ f.field('current_password', 'Current password', '', errors.password.current_password ?? '', 'password', 'autocomplete="current-password" required') }}
+      {{ f.field('new_password', 'New password', '', errors.password.new_password ?? '', 'password', 'autocomplete="new-password" required') }}
+      {{ f.field('confirm_password', 'Repeat new password', '', errors.password.confirm_password ?? '', 'password', 'autocomplete="new-password" required') }}
+      <button class="btn">Change password</button>
+    </form>
+  </section>
+  {% endblock %}
+
+  {% block social %}
+  {% if social.linked or social.available %}
+  <section class="card" id="social">
+    <header><h2>Connected accounts</h2><p class="muted">Accounts at other services you can use to sign in here.</p></header>
+    {% if social.linked %}
+      <ul class="sessions">
+        {% for c in social.linked %}
+          <li>
+            <div><b>{{ c.label }}</b>
+              <span class="muted">{{ c.email ?: 'no email shared' }} · connected {{ ago(c.created_at) }}{% if c.last_login_at %} · used {{ ago(c.last_login_at) }}{% endif %}</span></div>
+            {% if social.can_unlink %}
+              <form method="post" action="/account/social/{{ c.provider }}/unlink">
+                <input type="hidden" name="_csrf" value="{{ csrf }}">
+                <button class="btn ghost sm">Disconnect</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+      {% if not social.can_unlink %}<p class="hint">This is your only way to sign in, so it cannot be disconnected.</p>{% endif %}
+    {% endif %}
+    {% for p in social.available %}
+      <form method="post" action="/account/social/{{ p.key }}/link">
+        <input type="hidden" name="_csrf" value="{{ csrf }}">
+        <button class="btn ghost">Connect {{ p.label }}</button>
+      </form>
+    {% endfor %}
+  </section>
+  {% endif %}
+  {% endblock %}
+
+  {% block mfa %}
+  <section class="card" id="mfa">
+    <header><h2>Two-step verification</h2><p class="muted">Besides your password, you enter a code from an authenticator app when you sign in.</p></header>
+    {% if mfa.enrolled %}
+      <p>It is <b>on</b>. You have {{ mfa.codes_left }} unused recovery {{ mfa.codes_left == 1 ? 'code' : 'codes' }}.</p>
+      {% if errors.mfa.code is defined %}<div class="notice error" role="alert">{{ errors.mfa.code }}</div>{% endif %}
+      <form method="post" action="/account/mfa/recovery" novalidate>
+        <input type="hidden" name="_csrf" value="{{ csrf }}">
+        {{ f.field('code', 'Code from your app', '', '', 'text', 'autocomplete="one-time-code" inputmode="numeric" required') }}
+        <button class="btn" name="do" value="recovery">Get new recovery codes</button>
+        {% if not mfa.required %}<button class="btn ghost" name="do" value="disable" formaction="/account/mfa/disable">Turn off</button>{% endif %}
+      </form>
+      {% if mfa.required %}<p class="hint">Your organisation requires two-step verification, so it cannot be turned off.</p>{% endif %}
+    {% else %}
+      <p>It is <b>off</b>.{% if mfa.required %} Your organisation requires it: you will be asked to set it up when you sign in next.{% endif %}</p>
+      <a class="btn" href="/account/mfa/setup">Set up</a>
+    {% endif %}
+  </section>
+  {% endblock %}
+
+  {% block sessions %}
+  <section class="card" id="sessions">
+    <header><h2>Where you're signed in</h2><p class="muted">Browsers that are signed in to your account right now. Signing one out also revokes what it gave to apps.</p></header>
+    <ul class="sessions">
+      {% for s in sessions %}
+        <li>
+          <div><b>{{ device(s.user_agent) }}</b>{% if s.id == current_sid %}<span class="tag">This browser</span>{% endif %}
+            <span class="muted">{{ s.ip ?: 'unknown IP' }} · active {{ ago(s.last_seen) }}</span></div>
+          {% if s.id != current_sid %}
+            <form method="post" action="/account/sessions/{{ s.id }}/end">
+              <input type="hidden" name="_csrf" value="{{ csrf }}">
+              <button class="btn ghost sm">Sign out</button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    {% if sessions|length > 1 %}
+      <form method="post" action="/account/sessions/end-others">
+        <input type="hidden" name="_csrf" value="{{ csrf }}">
+        <button class="btn ghost">Sign out everywhere else</button>
+      </form>
+    {% endif %}
+  </section>
+  {% endblock %}
+</div>
+{% endblock %}

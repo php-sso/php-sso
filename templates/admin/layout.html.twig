@@ -1,0 +1,81 @@
+{%- import 'admin/_icons.html.twig' as i -%}
+{%- import 'admin/_macros.html.twig' as m -%}
+{%- set section = block('section')|trim -%}
+{%- set width = block('width')|trim -%}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Admin{% endblock %} - SSO admin</title>
+  <link rel="preload" href="{{ asset('fonts/bricolage-grotesque-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{ asset('admin.css') }}">
+</head>
+<body data-section="{% block section %}{% endblock %}">
+<div class="app">
+  <aside class="rail">
+    <a class="brand" href="/admin" data-tip="SSO admin" aria-label="SSO admin: dashboard">{{ i.icon('key') }}</a>
+    <nav aria-label="Sections">
+      <a href="/admin" data-tip="Dashboard" aria-label="Dashboard" {{ section == 'dashboard' ? 'aria-current=page' : '' }}>{{ i.icon('overview') }}</a>
+      <a href="/admin/clients" data-tip="Clients ({{ counts.clients }})" aria-label="Clients, {{ counts.clients }}" {{ section == 'clients' ? 'aria-current=page' : '' }}>{{ i.icon('clients') }}</a>
+      <a href="/admin/users" data-tip="Users ({{ counts.users }})" aria-label="Users, {{ counts.users }}" {{ section == 'users' ? 'aria-current=page' : '' }}>{{ i.icon('users') }}</a>
+      <a href="/admin/groups" data-tip="Groups ({{ counts.groups }})" aria-label="Groups, {{ counts.groups }}" {{ section == 'groups' ? 'aria-current=page' : '' }}>{{ i.icon('groups') }}</a>
+      <a href="/admin/roles" data-tip="Roles ({{ counts.roles }})" aria-label="Roles, {{ counts.roles }}" {{ section == 'roles' ? 'aria-current=page' : '' }}>{{ i.icon('roles') }}</a>
+      <a href="/admin/scopes" data-tip="Scopes" aria-label="Scopes" {{ section == 'scopes' ? 'aria-current=page' : '' }}>{{ i.icon('scopes') }}</a>
+      <a href="/admin/security" data-tip="Sign-in protection" aria-label="Sign-in protection" {{ section == 'security' ? 'aria-current=page' : '' }}>{{ i.icon('lock') }}</a>
+    </nav>
+    <div class="rail-user">
+      <a href="/admin/access-test" data-tip="Access test" aria-label="Access test" {{ section == 'access-test' ? 'aria-current=page' : '' }}>{{ i.icon('flask') }}</a>
+      <details class="usermenu">
+        <summary class="who" data-tip="{{ admin.name }}" aria-label="Account menu for {{ admin.username }}" aria-haspopup="menu">{{ m.avatar(admin.name, 'sm') }}</summary>
+        <ul class="menu" role="menu">
+          <li class="who-is" role="presentation"><b>{{ admin.name }}</b><span>{{ admin.username }}</span></li>
+          <li role="none"><a role="menuitem" href="/account#profile">{{ i.icon('user') }}Edit profile</a></li>
+          <li role="none"><a role="menuitem" href="/logout">{{ i.icon('logout') }}Log out</a></li>
+        </ul>
+      </details>
+    </div>
+  </aside>
+
+  <div class="main {{ width }}">
+    <header class="topbar">
+      <button type="button" class="searchbtn" data-open-palette aria-haspopup="dialog">
+        {{ i.icon('search') }}<span>Search users, groups and clients</span><kbd>Ctrl K</kbd>
+      </button>
+      <details class="newmenu">
+        <summary class="btn" aria-label="Create new">{{ i.icon('plus') }}New<svg class="icon caret" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary>
+        <ul class="menu">
+          <li><a href="/admin/users/new">{{ i.icon('users') }}User</a></li>
+          <li><a href="/admin/groups/new">{{ i.icon('groups') }}Group</a></li>
+          <li><a href="/admin/clients/new">{{ i.icon('clients') }}Client</a></li>
+          <li><a href="/admin/roles/new">{{ i.icon('roles') }}Role</a></li>
+          <li><a href="/admin/scopes/new">{{ i.icon('scopes') }}Scope</a></li>
+        </ul>
+      </details>
+    </header>
+    <main class="content {% block width %}{% endblock %}">
+      {% if flash %}<div class="notice {{ flash.type }}" role="status">{{ flash.message }}</div>{% endif %}
+      {% block body %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<dialog id="palette" aria-label="Search">
+  <div class="pal-input">{{ i.icon('search') }}<input type="text" id="palette-input" placeholder="Search or jump to…" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="palette-results" aria-autocomplete="list"></div>
+  <ul id="palette-results" role="listbox" aria-label="Results"></ul>
+  <div class="pal-foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> close</span></div>
+</dialog>
+
+<dialog id="confirm-dialog" aria-labelledby="confirm-title">
+  <h2 id="confirm-title" data-title>Are you sure?</h2>
+  <p data-message></p>
+  <form method="dialog">
+    <button class="btn ghost" value="cancel">Cancel</button>
+    <button class="btn danger" value="ok" data-ok>Confirm</button>
+  </form>
+</dialog>
+
+<script type="application/json" id="search-index">{{ search_index|raw }}</script>
+<script src="{{ asset('admin.js') }}" defer></script>
+</body>
+</html>

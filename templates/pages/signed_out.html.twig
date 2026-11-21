@@ -1,0 +1,10 @@
+{% extends 'layout.html.twig' %}
+{% block title %}Signed out{% endblock %}
+{% block page_name %}signed-out{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>You're signed out</h1>
+  <p class="muted">Apps you signed in to may keep their own session until it ends.</p>
+  <p><a class="btn" href="/login">Sign in again</a></p>
+</section>
+{% endblock %}

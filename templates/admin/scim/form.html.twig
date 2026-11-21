@@ -1,0 +1,107 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}security{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block title %}{{ client ? 'Edit ' ~ client.name : 'New SCIM client' }}{% endblock %}
+{% block body %}
+<div class="page-head">
+  {% if client %}
+    <div><h1>{{ client.name }}</h1><p class="sub">{{ client.people }} {{ client.people == 1 ? 'person' : 'people' }} and {{ client.groups }} {{ client.groups == 1 ? 'group' : 'groups' }} provisioned{% if client.last_used_at %}, last used {{ ago(client.last_used_at) }}{% endif %}.</p></div>
+  {% else %}
+    <div><h1>New SCIM client</h1><p class="sub">A system that provisions people here.</p></div>
+  {% endif %}
+</div>
+
+{% if new_token %}
+<div class="notice" role="status">
+  <b>Token (shown once)</b>
+  <div class="mono" style="margin: 6px 0; word-break: break-all">{{ new_token }}</div>
+  Give it to the company's provisioning system as a bearer token. It is not stored, so if you lose it, make a new one.
+</div>
+{% endif %}
+
+{% if client %}
+<div class="section">
+  <header><h2>Give this to their administrator</h2><p>In Okta, Entra or another provider, add SCIM provisioning with these values.</p></header>
+  <div class="fields">
+    <div class="field"><label>Base URL</label><div class="mono">{{ url }}</div></div>
+    <div class="field"><label>Authentication</label><div>Bearer token (the one shown when it was made).</div><div class="hint">It supports users and groups: create, update, deactivate (users) and look up by <code>userName</code> or group <code>displayName</code>. People are matched on <code>userName</code>, and need an email address in <code>emails</code>.</div></div>
+  </div>
+</div>
+{% endif %}
+
+<form method="post" action="{{ client ? '/admin/scim/' ~ client.id : '/admin/scim' }}" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+
+  <div class="section">
+    <header><h2>Client</h2><p>One per system that provisions people.</p></header>
+    <div class="fields">
+      {{ m.input('name', 'Name', item.name, errors, 'text', 'For example Acme Okta.', 'autocomplete="off" required') }}
+      <div class="field{{ errors.domains is defined ? ' has-error' }}">
+        <label for="domains">Email domains it may manage</label>
+        <textarea id="domains" name="domains" rows="3" spellcheck="false" placeholder="acme.com">{{ item.domains }}</textarea>
+        <div class="hint">One per line. This token can only create and change people whose email address is at one of these. It never touches administrators or people it did not create.</div>
+        {{ m.error(errors, 'domains') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>Behaviour</h2><p>People it creates have no password and no administrator rights. They sign in some other way: social, SAML, or a password you give them. Its groups only contain people it manages.</p></header>
+    <div class="fields">
+      <div class="field">
+        <label class="option"><input type="radio" name="on_delete" value="deactivate" {{ item.on_delete != 'delete' ? 'checked' }}><div><b>When it deletes a person: deactivate them</b><span>Locks the account and ends their sessions. The record, and what apps know of them, stays. Deactivating (active: false) always does this.</span></div></label>
+        <label class="option"><input type="radio" name="on_delete" value="delete" {{ item.on_delete == 'delete' ? 'checked' }}><div><b>When it deletes a person: delete the account</b><span>Removes them and their group memberships, and revokes their tokens. This cannot be undone.</span></div></label>
+      </div>
+      <div class="field">
+        <label class="option"><input type="checkbox" name="adopt_existing" {{ item.adopt_existing ? 'checked' }}><div><b>Take over existing accounts with the same email</b><span>For people who already have an account here (not an administrator). Without this, creating someone whose address is already in use is refused.</span></div></label>
+      </div>
+      {{ m.input('group_prefix', 'Group name prefix', item.group_prefix, errors, 'text', 'Optional, for example acme:. Put in front of the names of the groups it creates, so they stay apart from yours. Apps see acme:Engineering.', 'autocomplete="off" maxlength="30"') }}
+      <div class="field">
+        <label class="option"><input type="checkbox" name="adopt_groups" {{ item.adopt_groups ? 'checked' }}><div><b>Take over existing groups with the same name</b><span>Without this, creating a group whose name already exists is refused. With it, the group becomes this client's and its members are replaced by the client's. Groups decide what people may do in apps, so be careful.</span></div></label>
+      </div>
+      <div class="field">
+        <label class="option"><input type="checkbox" name="enabled" {{ item.enabled ? 'checked' }}><div><b>On</b><span>Switched off, its token stops working.</span></div></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="formbar inline">
+    <button class="btn">{{ client ? 'Save changes' : 'Add client' }}</button>
+    <a class="btn ghost" href="/admin/security/scim">Cancel</a>
+  </div>
+</form>
+
+{% if client %}
+<section class="block">
+  <header class="block-head"><h2>Recent requests</h2></header>
+  {% if events %}
+    <table class="list">
+      <thead><tr><th>When</th><th>Request</th><th>Result</th><th class="hide-sm">Detail</th></tr></thead>
+      <tbody>
+      {% for e in events %}
+        <tr>
+          <td>{{ ago(e.at) }}</td>
+          <td class="mono">{{ e.method }} {{ e.path }}</td>
+          <td><span class="pill {{ e.status < 300 ? 'ok' : (e.status < 500 ? 'idle' : 'bad') }}">{{ e.status }}</span></td>
+          <td class="hide-sm">{{ e.detail }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="quiet">Nothing yet. Requests from the provider show up here.</p>
+  {% endif %}
+</section>
+
+<div class="zone plain">
+  <div><h2>Make a new token</h2><p>The current token stops working at once. Do this if it was exposed, or lost.</p></div>
+  {{ m.confirm_button('/admin/scim/' ~ client.id ~ '/token', csrf, 'New token', 'Make a new token?', 'The provisioning system stops working until it is given the new token.', 'btn ghost') }}
+</div>
+<div class="zone">
+  <div><h2>Delete this client</h2><p>Its token stops working. The people it created stay, and nobody manages them any more.</p></div>
+  {{ m.confirm_button('/admin/scim/' ~ client.id ~ '/delete', csrf, 'Delete client', 'Delete ' ~ client.name ~ '?', 'This cannot be undone.') }}
+</div>
+{% endif %}
+{% endblock %}

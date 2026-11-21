@@ -1,0 +1,54 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}security{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block title %}{{ consent ? 'Edit ' ~ consent.name : 'New notice' }}{% endblock %}
+{% block body %}
+<div class="page-head">
+  {% if consent %}
+    <div><h1>{{ consent.name }}</h1><p class="sub">Version {{ consent.version }}</p></div>
+  {% else %}
+    <div><h1>New notice</h1><p class="sub">People must accept it before they can sign in.</p></div>
+  {% endif %}
+</div>
+
+<form method="post" action="{{ consent ? '/admin/consents/' ~ consent.id : '/admin/consents' }}" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+
+  <div class="section">
+    <header><h2>What people see</h2><p>Keep it short and point to the full text on your own site.</p></header>
+    <div class="fields">
+      {{ m.input('name', 'Name', item.name, errors, 'text', 'Shown as the title, for example Terms of use.', 'autocomplete="off" required') }}
+      <div class="field{{ errors.message is defined ? ' has-error' }}">
+        <label for="message">Message</label>
+        <textarea id="message" name="message" rows="4">{{ item.message }}</textarea>
+        <div class="hint">Plain text. Optional when there is a link.</div>
+        {{ m.error(errors, 'message') }}
+      </div>
+      {{ m.input('url', 'Link to the full text', item.url, errors, 'url', 'Optional. Opens in a new tab, for example https://example.com/terms.', 'autocomplete="off"') }}
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>Status</h2><p>Switched off, it is not asked of anyone.</p></header>
+    <div class="fields">
+      <div class="field">
+        <label class="option"><input type="checkbox" name="enabled" {{ item.enabled ? 'checked' }}><div><b>Required</b><span>People who have not accepted it are asked at their next sign-in or visit.</span></div></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="formbar inline">
+    <button class="btn">{{ consent ? 'Save changes' : 'Add notice' }}</button>
+    <a class="btn ghost" href="/admin/security/consents">Cancel</a>
+  </div>
+</form>
+
+{% if consent %}
+  <div class="zone">
+    <div><h2>Delete this notice</h2><p>Only possible while nobody has accepted it. Otherwise it stays as a record, and you switch it off.</p></div>
+    {{ m.confirm_button('/admin/consents/' ~ consent.id ~ '/delete', csrf, 'Delete notice', 'Delete ' ~ consent.name ~ '?', 'This cannot be undone.') }}
+  </div>
+{% endif %}
+{% endblock %}

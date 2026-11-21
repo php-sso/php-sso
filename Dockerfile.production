@@ -1,0 +1,27 @@
+# Production image: Apache + PHP, dependencies baked in, runs as an unprivileged user on port 8080.
+#   docker build -f Dockerfile.production -t php-sso:local .
+# Mount a volume at /app/var (database and signing keys) and, optionally, a theme folder at /theme.
+
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-progress --no-scripts --prefer-dist --optimize-autoloader
+
+FROM php:8.4-apache
+RUN a2dismod -f status autoindex >/dev/null \
+    && : > /etc/apache2/ports.conf && rm -f /etc/apache2/sites-enabled/*.conf \
+    && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+COPY docker/apache.conf /etc/apache2/sites-enabled/sso.conf
+
+WORKDIR /app
+COPY --from=vendor /app/vendor ./vendor
+COPY composer.json ./
+COPY config ./config
+COPY src ./src
+COPY templates ./templates
+COPY public ./public
+RUN mkdir -p var && chown www-data:www-data var
+
+USER www-data
+VOLUME /app/var
+EXPOSE 8080

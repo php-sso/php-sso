@@ -1,0 +1,160 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}users{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block title %}{{ user ? 'Edit ' ~ user.name : 'New user' }}{% endblock %}
+{% block body %}
+<div class="page-head">
+  {% if user %}
+    <div class="titleblock">{{ m.avatar(user.name, 'lg') }}<div><h1>{{ user.name }}</h1><p class="sub">{{ user.username }}</p></div></div>
+  {% else %}
+    <div><h1>New user</h1><p class="sub">They can sign in as soon as you save.</p></div>
+  {% endif %}
+</div>
+
+{% if user %}
+<nav class="tabs" aria-label="User sections">
+  <a href="/admin/users/{{ user.sub|url_encode }}/edit"{{ tab == 'details' ? ' class="here" aria-current="page"' }}>Details</a>
+  <a href="/admin/users/{{ user.sub|url_encode }}/groups"{{ tab == 'groups' ? ' class="here" aria-current="page"' }}>Groups</a>
+  <a href="/admin/users/{{ user.sub|url_encode }}/notices"{{ tab == 'notices' ? ' class="here" aria-current="page"' }}>Notices</a>
+  <a href="/admin/users/{{ user.sub|url_encode }}/danger"{{ tab == 'danger' ? ' class="here" aria-current="page"' }}>Danger</a>
+</nav>
+{% endif %}
+
+{% if lock %}
+  <div class="zone plain">
+    <div>
+      <h2>{{ lock.locked ? 'Locked out of signing in' : 'Failed sign-in attempts' }}</h2>
+      <p>{{ lock.failures }} failed {{ lock.failures == 1 ? 'attempt' : 'attempts' }} in the last {{ limits.window_seconds // 60 }} min (the limit is {{ lock.limit }}).
+        {% if not limits.enabled %}Limiting is off, so nothing is blocked.{% elseif lock.locked %}They can try again {{ until(lock.until) }}, or you can let them in now.{% else %}They are not locked out.{% endif %}</p>
+    </div>
+    {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/reset-lock', csrf, 'Reset attempts', 'Reset failed attempts?', 'The failed attempts of ' ~ user.name ~ ' stop counting, so they can try signing in again right away. They stay in the sign-in history.', 'btn ghost') }}
+  </div>
+{% endif %}
+
+{% if scim %}
+  <div class="zone plain">
+    <div>
+      <h2>Provisioned automatically</h2>
+      <p>This person is managed by <a href="/admin/scim/{{ scim.id }}/edit">{{ scim.name }}</a> (SCIM). Their name, email and whether they can sign in are set there, and a change made here is overwritten the next time it syncs.</p>
+    </div>
+  </div>
+{% endif %}
+
+{% if mfa and mfa.enrolled %}
+  <div class="zone plain">
+    <div>
+      <h2>Two-step verification is on</h2>
+      <p>{{ mfa.codes_left }} unused recovery {{ mfa.codes_left == 1 ? 'code' : 'codes' }} left. If {{ user.name }} lost their phone and codes, reset it: they are signed out everywhere and set it up again at their next sign-in (when it is required).</p>
+    </div>
+    {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/reset-mfa', csrf, 'Reset two-step', 'Reset two-step verification?', user.name ~ ' loses their authenticator app and recovery codes and is signed out everywhere. Only do this once you are sure it is really them asking.', 'btn ghost') }}
+  </div>
+{% endif %}
+
+{% if connections %}
+  <div class="zone plain">
+    <div>
+      <h2>Connected accounts</h2>
+      <p>{% for c in connections %}<b>{{ c.label }}</b> {{ c.email ? '(' ~ c.email ~ ')' }}{{ not loop.last ? ', ' }}{% endfor %}. They can sign in with these. Disconnecting one does not sign them out.</p>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+      {% for c in connections %}{{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/connections/' ~ c.provider ~ '/unlink', csrf, 'Disconnect ' ~ c.label, 'Disconnect ' ~ c.label ~ '?', user.name ~ ' can no longer sign in with this ' ~ c.label ~ ' account' ~ (user.password_hash is null and connections|length == 1 ? ', and they have no password, so they will not be able to sign in at all until you connect another way' : '') ~ '.', 'btn ghost') }}{% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+{% if tab == 'details' %}
+<form method="post" action="{{ user ? '/admin/users/' ~ user.sub|url_encode : '/admin/users' }}" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+
+  <div class="section">
+    <header><h2>Identity</h2><p>How this person appears to apps that ask for their profile.</p></header>
+    <div class="fields">
+      {{ m.input('username', 'Username', item.username, errors, 'text', username_hint, 'autocomplete="off" required') }}
+      {{ m.input('name', 'Full name', item.name, errors, 'text', '', 'required') }}
+      {{ m.input('email', 'Email', item.email, errors, 'email', '', 'required') }}
+      <div class="field">
+        <label class="option"><input type="checkbox" name="email_verified" {{ item.email_verified ? 'checked' }}><div><b>Email is verified</b><span>Apps see this as the email_verified claim.</span></div></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>Password</h2><p>{{ user ? 'Only fill this in to change it.' : 'Share it with the person securely.' }}</p></header>
+    <div class="fields">
+      {{ m.input('password', user ? 'New password' : 'Password', '', errors, 'password', 'At least 8 characters.', 'autocomplete="new-password"' ~ (user ? '' : ' required')) }}
+      {% if not user or user.password_hash is not null %}
+      <div class="field">
+        <label class="option"><input type="checkbox" name="must_change_password" {{ item.must_change_password ? 'checked' }}><div><b>Must choose a new password at next sign-in</b><span>They are asked before they can continue, and their other sessions end when they do. Setting a password above does not end this: only they can.</span></div></label>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>Administration</h2><p>Allow this person to sign in to this admin panel.</p></header>
+    <div class="fields">
+      <div class="field{{ errors.is_admin is defined ? ' has-error' }}">
+        <label class="option"><input type="checkbox" name="is_admin" {{ item.is_admin ? 'checked' }}><div><b>Administrator</b><span>Can manage users, groups and clients.{{ user and user.sub == admin.sub ? ' You cannot remove your own rights.' }}</span></div></label>
+        {{ m.error(errors, 'is_admin') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="formbar inline">
+    <button class="btn">{{ user ? 'Save changes' : 'Create user' }}</button>
+    <a class="btn ghost" href="/admin/users">Cancel</a>
+  </div>
+</form>
+{% elseif tab == 'notices' %}
+<section class="block">
+{% if consent_status %}
+    <table class="list">
+      <thead><tr><th>Notice</th><th>Status</th><th>Accepted</th><th><span class="sr">Actions</span></th></tr></thead>
+      <tbody>
+      {% for c in consent_status %}
+        <tr>
+          <td><span class="name">{{ c.name }}</span> <span class="muted">version {{ c.version }}</span></td>
+          <td><span class="pill {{ c.state == 'accepted' ? 'ok' : (c.state == 'outdated' ? 'bad' : 'idle') }}">{{ c.state == 'accepted' ? 'Accepted' : (c.state == 'outdated' ? 'Asked again' : 'Not accepted') }}</span></td>
+          <td>{% if c.accepted_at %}Version {{ c.accepted_version }} on {{ c.accepted_at|date('j M Y') }}{% else %}<span class="muted">Never</span>{% endif %}</td>
+          <td class="act">
+            {% if c.state == 'accepted' %}{{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/consents/' ~ c.id ~ '/ask-again', csrf, 'Ask again', 'Ask ' ~ user.name ~ ' again?', user.name ~ ' must accept "' ~ c.name ~ '" again at their next visit. What they accepted before stays on record.', 'btn ghost sm') }}{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="quiet">There are no notices to accept yet. They are managed under Sign-in protection.</p>
+  {% endif %}
+</section>
+{% elseif tab == 'danger' %}
+  {% if not impersonation_refusal %}
+  <div class="zone">
+    <div><h2>Browse as {{ user.name }}</h2><p>Sign this browser in as {{ user.name }} to see the apps the way they do. You are signed out of the admin panel meanwhile, and the session is recorded as started by you.</p></div>
+    {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/impersonate', csrf, 'Impersonate', 'Browse as ' ~ user.name ~ '?', 'This browser is signed in as ' ~ user.name ~ ' until you stop with the banner on top of the pages. You are signed out of the admin panel meanwhile, and the session is recorded as started by you.', 'btn ghost') }}
+  </div>
+  {% endif %}
+{% if user.sub == admin.sub %}
+  <p class="quiet">You cannot lock or delete your own account.</p>
+{% else %}
+  <div class="zone">
+    {% if user.locked_at %}
+      <div><h2>Unlock this account</h2><p>{{ user.name }} is locked: they cannot sign in and have no sessions left. Unlock when you are sure the account is safe.</p></div>
+      {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/unlock', csrf, 'Unlock', 'Unlock this account?', user.name ~ ' can sign in again, with their current password.', 'btn') }}
+    {% else %}
+      <div><h2>Lock this account</h2><p>Use this when you suspect someone else is using the account. It signs {{ user.name }} out everywhere and blocks sign-in until you unlock it.</p></div>
+      {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/lock', csrf, 'Lock account', 'Lock this account?', user.name ~ ' is signed out of every app and cannot sign in until you unlock the account.') }}
+    {% endif %}
+  </div>
+  <div class="zone">
+    <div><h2>Delete this user</h2><p>They can no longer sign in, their sessions end and the tokens issued to apps are revoked. Apps that already hold an access token keep it until it expires, at most an hour.</p></div>
+    {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/delete', csrf, 'Delete user', 'Delete ' ~ user.name ~ '?', user.username ~ ' will be removed from all groups and can no longer sign in. This cannot be undone.') }}
+  </div>
+{% endif %}
+{% elseif rel %}
+{% include 'admin/_relation.html.twig' with {r: rel} %}
+{% endif %}
+
+{% endblock %}

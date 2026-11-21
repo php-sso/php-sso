@@ -1,0 +1,113 @@
+/* Built-in theme for login, account and error pages. Override the variables below, or any rule, from a theme's assets/theme.css. */
+@font-face { font-family: "Bricolage Grotesque"; src: url("fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Instrument Sans"; src: url("fonts/instrument-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+
+:root {
+  --bg: #f1f4f3;
+  --surface: #ffffff;
+  --text: #17262e;
+  --muted: #586b75;
+  --line: #dbe2e0;
+  --primary: #0e6b7d;
+  --primary-strong: #0a5565;
+  --primary-text: #ffffff;
+  --tint: #e7eceb;
+  --danger: #b3392f;
+  --danger-tint: #f7e4e1;
+  --ok: #1d7a55;
+  --ok-tint: #dff0e8;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1a22; --surface: #12252f; --text: #e6eef0; --muted: #94a9b2; --line: #223943; --tint: #19303b;
+    --primary: #4fb4c6; --primary-strong: #7ccddb; --primary-text: #06222b;
+    --danger: #ff8a7a; --danger-tint: #3a1f1f; --ok: #5cc596; --ok-tint: #143528;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); font: 400 15px/1.5 var(--font-body); }
+h1, h2 { font-family: var(--font-display); margin: 0; line-height: 1.2; }
+h1 { font-size: 26px; font-weight: 650; }
+h2 { font-size: 17px; font-weight: 650; }
+a { color: var(--primary); }
+a:hover { color: var(--primary-strong); }
+p { margin: 0 0 12px; }
+b { font-weight: 650; }
+.muted, .hint { color: var(--muted); font-size: 13.5px; }
+.hint { margin: -2px 0 14px; }
+
+.site-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px clamp(16px, 4vw, 40px); }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font: 650 17px/1 var(--font-display); }
+.brand .mark { width: 22px; height: 22px; border-radius: 6px; background: var(--primary); }
+.site-nav { display: flex; gap: 18px; font-size: 14px; }
+.site-main { flex: 1; width: 100%; max-width: 640px; margin: 0 auto; padding: 8px 16px 48px; }
+.site-foot { padding: 16px; text-align: center; color: var(--muted); font-size: 13px; }
+.site-foot:empty { display: none; }
+.page-login .site-main, .page-no-access .site-main, .page-error .site-main { max-width: 420px; padding-top: 6vh; }
+
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.page-title { margin-bottom: 4px; }
+.page-title p { margin: 4px 0 0; }
+.card { padding: 22px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.card > header { margin-bottom: 14px; }
+.card > header p { margin: 3px 0 0; }
+.card h1 { margin-bottom: 16px; }
+
+.field { margin-bottom: 14px; }
+.field label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13.5px; }
+.field input { width: 100%; height: 36px; padding: 0 11px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.field input:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; border-color: var(--primary); }
+.field.has-error input { border-color: var(--danger); }
+.err { margin-top: 4px; color: var(--danger); font-size: 13px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 16px; font: 600 14px/1 var(--font-body); color: var(--primary-text); background: var(--primary); border: 1px solid var(--primary); border-radius: var(--radius); cursor: pointer; text-decoration: none; }
+.btn:hover { background: var(--primary-strong); border-color: var(--primary-strong); color: var(--primary-text); }
+.btn.ghost { color: var(--text); background: transparent; border-color: var(--line); }
+.btn.ghost:hover { background: var(--tint); border-color: var(--muted); color: var(--text); }
+.btn.sm { height: 28px; padding: 0 11px; font-size: 13px; }
+.btn.block { width: 100%; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.notice { margin-bottom: 16px; padding: 9px 14px; border-left: 4px solid; border-radius: var(--radius); background: var(--surface); font-weight: 500; }
+.notice.success { border-color: var(--ok); background: var(--ok-tint); }
+.notice.error { border-color: var(--danger); background: var(--danger-tint); }
+.stack > .notice { margin-bottom: 0; }
+
+.tag { display: inline-block; margin-left: 8px; padding: 0 7px; border-radius: 5px; background: var(--tint); color: var(--muted); font-size: 12px; font-weight: 600; }
+.sessions { list-style: none; margin: 0 0 14px; padding: 0; }
+.sessions li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.sessions li:first-child { border-top: 0; }
+.sessions li > div { display: flex; flex-direction: column; }
+.sessions li form { margin: 0; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+/* ---- Two-step verification ---------------------------------------------------- */
+.secret { display: block; margin: 8px 0; padding: 10px 12px; border: 1px solid var(--line, #ddd); border-radius: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; letter-spacing: .06em; word-break: break-all; user-select: all; }
+.codes { list-style: none; margin: 12px 0; padding: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; border: 1px solid var(--line, #ddd); border-radius: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; letter-spacing: .04em; }
+.steps { padding-left: 1.2em; }
+.steps li { margin-bottom: 14px; }
+
+/* ---- Sign in with another provider ---------------------------------------------- */
+.social { margin-top: 16px; display: grid; gap: 8px; text-align: center; }
+.social p { margin: 0; }
+
+/* ---- QR code for two-step setup (white in every theme, so scanners can read it) ---- */
+.qr { width: 220px; max-width: 100%; margin: 10px auto; padding: 6px; background: #fff; border-radius: 8px; line-height: 0; }
+.qr svg { display: block; width: 100%; height: auto; }
+
+/* The notice people must accept before they are signed in. */
+.consent-text { white-space: normal; margin: 0 0 12px; }
+.consent-check { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0; cursor: pointer; }
+.consent-check input { width: auto; height: auto; margin-top: 3px; }
+
+.impersonation { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; padding: 10px 16px; background: #b45309; color: #fff; font-size: 14px; }
+.impersonation form { margin: 0; }
+.impersonation button { font: inherit; font-weight: 600; padding: 4px 12px; border: 1px solid #fff; border-radius: 6px; background: transparent; color: #fff; cursor: pointer; }
+.impersonation button:hover { background: #fff; color: #b45309; }

@@ -1,0 +1,75 @@
+{#-
+  The relation picker: search to add, a paged and filterable list, remove, and remove-all.
+  Include with {% include 'admin/_relation.html.twig' with {r: view} %}; `view` comes from RelationPicker::view().
+-#}
+{% import 'admin/_macros.html.twig' as m %}
+{% set endpoint = '/admin/rel/' ~ r.name ~ '/' ~ r.owner %}
+{% set kfind = r.key ~ '_find' %}
+{% set kfilter = r.key ~ '_m' %}
+{% set kpage = r.key ~ '_page' %}
+<section class="section relation" id="{{ r.anchor }}">
+  <header><h2>{{ r.title }}</h2><p>{{ r.intro }}</p></header>
+  <div class="fields wide">
+    <div class="field">
+      <label for="find-{{ r.key }}">{{ r.add }}</label>
+      <form method="get" action="{{ r.pageUrl }}#{{ r.anchor }}" class="findform" data-find data-endpoint="{{ endpoint }}/candidates">
+        <input type="search" id="find-{{ r.key }}" name="{{ kfind }}" value="{{ r.find }}" placeholder="{{ r.placeholder }}" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="results-{{ r.key }}">
+        <button class="btn ghost" data-find-submit>Search</button>
+      </form>
+      <div id="results-{{ r.key }}" class="results" aria-live="polite">{% if r.find %}{% include 'admin/_candidates.html.twig' with {r: r, csrf: r.csrf} %}{% endif %}</div>
+    </div>
+
+    <div class="field">
+      <div class="listhead">
+        <span class="lbl">{{ r.list }} <span class="muted">({{ r.total }})</span></span>
+        {% if r.total > 8 or r.query %}
+          <form method="get" action="{{ r.pageUrl }}#{{ r.anchor }}" class="filterform">
+            <input type="search" name="{{ kfilter }}" value="{{ r.query }}" placeholder="Filter" aria-label="Filter {{ r.many }}" autocomplete="off">
+          </form>
+        {% endif %}
+      </div>
+      {% if r.rows %}
+        <ul class="memberlist">
+          {% for u in r.rows %}
+            <li>
+              {{ m.avatar(u.name, 'sm') }}
+              <div><a href="{{ u.url }}">{{ u.name }}</a>{% if u.detail %}<span class="meta">{{ u.detail }}</span>{% endif %}</div>
+              <form method="post" action="{{ endpoint }}/remove">
+                <input type="hidden" name="_csrf" value="{{ r.csrf }}">
+                <input type="hidden" name="item" value="{{ u.id }}">
+                <button class="btn ghost sm" aria-label="Remove {{ u.name }}">Remove</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+        <div class="listfoot">
+          <span class="muted">Showing {{ r.from }}-{{ r.to }} of {{ r.matching }}{{ r.query ? ' matching' }}</span>
+          <form method="post" action="{{ endpoint }}/remove-all">
+            <input type="hidden" name="_csrf" value="{{ r.csrf }}">
+            <input type="hidden" name="m" value="{{ r.query }}">
+            {% set what = r.query ? r.matching ~ ' ' ~ (r.matching == 1 ? r.one : r.many) ~ ' matching "' ~ r.query ~ '"' : 'Everything (' ~ r.total ~ ')' %}
+            <button class="btn danger sm" data-confirm="{{ what|capitalize }} will be removed from {{ r.ownerName }}. The {{ r.many }} themselves are not deleted." data-confirm-title="Remove {{ r.many }}?" data-confirm-label="Remove">{{ r.query ? 'Remove these ' ~ r.matching : 'Remove all' }}</button>
+          </form>
+        </div>
+        {% if r.pages > 1 %}
+          <nav class="pager" aria-label="Pages">
+            {% set base = r.pageUrl ~ '?' ~ (r.query ? kfilter ~ '=' ~ r.query|url_encode ~ '&' : '') %}
+            {% if r.page > 1 %}<a href="{{ base }}{{ kpage }}={{ r.page - 1 }}#{{ r.anchor }}" rel="prev">Previous</a>{% else %}<span class="off">Previous</span>{% endif %}
+            <ol>
+              {% for n in r.links %}
+                {% if n is null %}<li class="gap" aria-hidden="true">...</li>
+                {% elseif n == r.page %}<li><span class="here" aria-current="page">{{ n }}</span></li>
+                {% else %}<li><a href="{{ base }}{{ kpage }}={{ n }}#{{ r.anchor }}" aria-label="Page {{ n }}">{{ n }}</a></li>{% endif %}
+              {% endfor %}
+            </ol>
+            {% if r.page < r.pages %}<a href="{{ base }}{{ kpage }}={{ r.page + 1 }}#{{ r.anchor }}" rel="next">Next</a>{% else %}<span class="off">Next</span>{% endif %}
+          </nav>
+        {% endif %}
+      {% elseif r.query %}
+        <p class="hint">Nothing matches "{{ r.query }}".</p>
+      {% else %}
+        <p class="hint">{{ r.empty }}</p>
+      {% endif %}
+    </div>
+  </div>
+</section>

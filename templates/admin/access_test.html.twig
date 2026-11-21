@@ -1,0 +1,72 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}access-test{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block title %}Access test{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Access test</h1><p class="sub">If someone signed in from this address, could they get in? Nothing is changed or recorded.</p></div>
+</div>
+
+<form method="get" action="/admin/access-test" novalidate>
+  <div class="section">
+    <header><h2>The question</h2><p>Leave the client or the person empty to skip those checks.</p></header>
+    <div class="fields">
+      {{ m.input('ip', 'IP address', input.ip, error ? {ip: error} : {}, 'text', 'Your address is ' ~ my_ip, 'autocomplete="off" required') }}
+      <div class="field">
+        <label for="client">Client</label>
+        <select id="client" name="client">
+          <option value="">Any (don't check a client)</option>
+          {% for c in client_options %}<option value="{{ c.client_id }}"{{ input.client == c.client_id ? ' selected' }}>{{ c.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="user">Person</label>
+        <select id="user" name="user">
+          <option value="">Anyone (don't check a person)</option>
+          {% for u in user_options %}<option value="{{ u.sub }}"{{ input.user == u.sub ? ' selected' }}>{{ u.name }} ({{ u.username }})</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="formbar inline"><button class="btn">{{ i.icon('flask') }}Run test</button></div>
+</form>
+
+{% if target %}
+<section class="block" style="margin-top: 28px" id="impersonate">
+  <header class="block-head"><h2>Browse as {{ target.name }}</h2></header>
+  {% if target_refusal %}
+    <p class="quiet">{{ target_refusal }}</p>
+  {% else %}
+    <p class="quiet">Sign this browser in as {{ target.name }}, then open an app: it sees them, with their groups and roles. Two-step verification is skipped. Changing the account (password, two-step, connections) is switched off, and the session is marked as started by you in the sign-in list. You leave through the banner on top of the pages, which also ends the session and revokes its tokens. You are signed out of the admin panel until then.</p>
+    <form method="post" action="/admin/access-test/impersonate" style="margin-top: 12px">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <input type="hidden" name="user" value="{{ target.sub }}">
+      <button class="btn" data-confirm="This browser is signed in as {{ target.name }} until you stop. The session is recorded as started by you." data-confirm-title="Browse as {{ target.name }}?" data-confirm-label="Sign in as them">Sign in as {{ target.name }}</button>
+    </form>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if result %}
+<section class="block" style="margin-top: 28px" id="result">
+  <div class="notice {{ result.allowed ? 'success' : 'error' }}" role="status">
+    <b>{{ result.allowed ? 'Allowed.' : 'Blocked.' }}</b>
+    {{ result.allowed ? 'Every check passed.' : 'At least one check failed, see below.' }}
+  </div>
+  <table class="list">
+    <thead><tr><th>Check</th><th>Result</th><th>Why</th></tr></thead>
+    <tbody>
+    {% for s in result.steps %}
+      <tr>
+        <td>{{ s.title }}</td>
+        <td><span class="pill {{ s.status == 'pass' ? 'ok' : (s.status == 'fail' ? 'bad' : '') }}">{{ s.status == 'pass' ? 'Pass' : (s.status == 'fail' ? 'Fail' : 'Skipped') }}</span></td>
+        <td>{{ s.detail }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

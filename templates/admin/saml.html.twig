@@ -1,0 +1,31 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}security{% endblock %}
+{% block title %}SAML{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Sign-in protection</h1><p class="sub">Let a company's people sign in with their own identity provider (Okta, Entra, and others) through SAML.</p></div>
+  <a class="btn" href="/admin/saml/new">{{ i.icon('plus') }}New connection</a>
+</div>
+{% include 'admin/_security_tabs.html.twig' %}
+
+{% if connections %}
+  <table class="list">
+    <thead><tr><th>Connection</th><th class="hide-sm">Email domains</th><th>People</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for c in connections %}
+      <tr>
+        <td><a class="row-link" href="/admin/saml/{{ c.id }}/edit">{{ c.name }}</a></td>
+        <td class="hide-sm">{{ c.domains|join(', ') }}</td>
+        <td>{{ c.people }}</td>
+        <td><span class="pill {{ c.enabled ? 'ok' : 'idle' }}">{{ c.enabled ? 'On' : 'Off' }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">People who type an email address at one of these domains are sent straight to that company's identity provider. They cannot sign in with a password here.</p>
+{% else %}
+  <div class="empty"><h2>No connections yet</h2><p>Add a company's identity provider and the email domains it vouches for. People at those domains then sign in through their company, with no password page.</p><a class="btn" href="/admin/saml/new">New connection</a></div>
+{% endif %}
+{% endblock %}

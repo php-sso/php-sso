@@ -1,0 +1,15 @@
+{% extends 'layout.html.twig' %}
+{% block title %}Sign out{% endblock %}
+{% block page_name %}logout-confirm{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Sign out?</h1>
+  <p>{{ user.name }}, {% if client_name %}<b>{{ client_name }}</b> asked to sign you out.{% else %}do you want to sign out?{% endif %}</p>
+  <form method="post" action="/end-session" class="actions">
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    {% for name, value in fields %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+    <button class="btn">Sign out</button>
+    <a class="btn ghost" href="/account">Stay signed in</a>
+  </form>
+</section>
+{% endblock %}

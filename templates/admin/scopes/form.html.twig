@@ -1,0 +1,67 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}scopes{% endblock %}
+{% block width %}narrow{% endblock %}
+{% block title %}{{ scope ? 'Edit ' ~ scope.name : 'New scope' }}{% endblock %}
+{% block body %}
+<div class="page-head">
+  {% if scope %}
+    <div><h1 class="mono">{{ scope.name }}</h1><p class="sub">{{ clients ? 'Allowed for ' ~ clients|length ~ (clients|length == 1 ? ' app' : ' apps') : 'Not allowed for any app yet' }}</p></div>
+  {% else %}
+    <div><h1>New scope</h1><p class="sub">A name an app can ask for, and that then goes into its access token. What it allows is up to whatever receives the token. No app can ask for it until you allow it on the app's page.</p></div>
+  {% endif %}
+</div>
+
+{% if scope %}
+<nav class="tabs" aria-label="Scope sections">
+  <a href="/admin/scopes/{{ scope.name|url_encode }}/edit"{{ tab == 'details' ? ' class="here" aria-current="page"' }}>Details</a>
+  <a href="/admin/scopes/{{ scope.name|url_encode }}/danger"{{ tab == 'danger' ? ' class="here" aria-current="page"' }}>Danger</a>
+</nav>
+{% endif %}
+
+{% if tab == 'details' %}
+<form method="post" action="{{ scope ? '/admin/scopes/' ~ scope.name|url_encode : '/admin/scopes' }}" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+
+  <div class="section">
+    <header><h2>Details</h2><p>{% if scope %}The name is what apps ask for and what tokens carry, so it cannot be changed. Add a new scope and remove this one instead.{% else %}Letters, digits and <span class="mono">. _ : -</span> only. Names are case-insensitive, so <span class="mono">Invoices:Read</span> cannot be added next to <span class="mono">invoices:read</span>. {% endif %}</p></header>
+    <div class="fields">
+      {% if scope %}
+        {{ m.input('name', 'Name', item.name, errors, 'text', '', 'readonly') }}
+      {% else %}
+        {{ m.input('name', 'Name', item.name, errors, 'text', 'For example invoices:read', 'autocomplete="off" spellcheck="false" maxlength="64" required autofocus') }}
+      {% endif %}
+      {{ m.input('description', 'Meaning', item.description, errors, 'text', 'Optional. What this lets an app do.', 'maxlength="255"') }}
+    </div>
+  </div>
+
+  {% if scope %}
+  <div class="section">
+    <header><h2>Allowed for</h2><p>The apps that may ask for this scope. Change it on the app's page, under Allowed scopes.</p></header>
+    <div class="fields wide">
+      {% if clients %}
+        <p>{% for c in clients %}<a href="/admin/clients/{{ c.client_id|url_encode }}/edit">{{ c.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+      {% else %}
+        <p class="hint">No app yet.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="formbar inline">
+    <button class="btn">{{ scope ? 'Save changes' : 'Create scope' }}</button>
+    <a class="btn ghost" href="/admin/scopes">Cancel</a>
+  </div>
+</form>
+{% elseif tab == 'danger' %}
+  <div class="zone">
+    {% if clients %}
+      <div><h2>Remove this scope</h2><p>It is still allowed for {{ clients|length }} {{ clients|length == 1 ? 'app' : 'apps' }}: {% for c in clients %}<a href="/admin/clients/{{ c.client_id|url_encode }}/edit">{{ c.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}. Take it off their allowed scopes first.</p></div>
+    {% else %}
+      <div><h2>Remove this scope</h2><p>No app may ask for it any more. Access tokens already issued with it keep working until they expire, which is at most an hour.</p></div>
+      {{ m.confirm_button('/admin/scopes/' ~ scope.name|url_encode ~ '/delete', csrf, 'Remove scope', 'Remove ' ~ scope.name ~ '?', 'Access tokens already issued with it keep working until they expire. This cannot be undone.') }}
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}
