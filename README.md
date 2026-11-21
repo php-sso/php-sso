@@ -26,19 +26,6 @@ The first start runs `composer install` into `./vendor` (the libraries come from
 `./var/keys`. The production image is built with `docker build -f Dockerfile.production -t php-sso:local .`.
 If your host user id is not 1000, set `UID` and `GID` in a `.env` file.
 
-### Working on a library together with this app
-
-To try a change to one of the libraries here before it is released, check it out next to this folder and point Composer at it
-(this changes your local `composer.json` and `composer.lock`, so do not commit them):
-
-```bash
-composer config repositories.local path ../oauth-server    # or ../scim-server, ../saml
-composer update php-sso/oauth-server
-```
-
-With Docker, also mount the checkout into the containers (for example `../oauth-server:/oauth-server:ro`), because Composer links to
-the folder instead of copying it.
-
 ## Endpoints
 
 | Endpoint | Purpose |
