@@ -20,6 +20,7 @@ COPY config ./config
 COPY src ./src
 COPY templates ./templates
 COPY public ./public
+COPY bin ./bin
 RUN mkdir -p var && chown www-data:www-data var
 
 USER www-data
