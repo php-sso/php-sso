@@ -103,7 +103,7 @@ are all edited with the same control: search to add, a paged and filterable list
 everything matching the filter. It searches on the server,
 so it stays fast with thousands of people, and every change applies immediately.
 
-Everything lives in `var/sso.sqlite`. On first start, an empty database is seeded from the `seed`
+Everything lives in `var/sso.sqlite` (the `storage` setting in `config/config.php`; the app only talks to the `PhpSso\Store\Storage` interface, so another backend is another implementation of it, chosen there). `bin/maintenance` removes expired data and can run from cron. On first start, an empty database is seeded from the `seed`
 section of `config/config.php`; after that the config is no longer read for users or clients.
 Delete `var/sso.sqlite` to start over.
 
@@ -370,8 +370,8 @@ they are signed in on.
 - `src/Sso.php`: HTTP endpoints (PSR-7 request in, response out)
 - `src/Admin/AdminController.php` + `templates/admin/`: the admin panel (Twig)
 - `src/Pages.php`, `src/Account/`, `templates/pages/`: themeable pages (login, account, errors)
-- `src/Store/`: users, groups and clients in SQLite
-- `src/OAuth/`: what `php-sso/oauth-server` needs from us: clients from the database, the access policy, the sign-in, "no access" and logout screens, the device page, and codes, refresh tokens, revoked tokens and device requests in SQLite
+- `src/Store/`: the storage interfaces (users, groups, clients, tokens and the rest) and `Storage`, the one door to them; `src/Store/Sqlite/` is the SQLite implementation, and the only place that knows about SQL
+- `src/OAuth/`: what `php-sso/oauth-server` needs from us: clients from the database, the access policy, the sign-in, "no access" and logout screens, the device page, and what it asks of the token stores
 - `src/Integration/Saml/`: what `php-sso/saml` needs from us: the company providers and the requests waiting for an answer, on top of the SQLite stores
 - `src/Integration/Scim/`: what `php-sso/scim-server` needs from us: the SCIM clients, the people and groups they manage, accounts, our groups and the request log, each on top of the SQLite stores
 - `src/Net/`: client address handling for the IP rules, and a small PSR-18 HTTP client for back-channel logout

@@ -39,19 +39,14 @@ use PhpSso\Auth\UserRules;
 use PhpSso\Auth\LoginFlow;
 use PhpSso\Auth\LoginThrottle;
 use PhpSso\Claims;
-use PhpSso\Store\Sqlite\Database;
 use PhpSso\Keys;
-use PhpSso\Store\Sqlite\SqliteAuthorizationCodes;
 use PhpSso\OAuth\BrowserErrors;
 use PhpSso\OAuth\ClientAuthThrottle;
 use PhpSso\OAuth\DevicePage;
-use PhpSso\Store\Sqlite\SqliteDeviceRequests;
 use PhpSso\OAuth\LogoutScreens;
-use PhpSso\Store\Sqlite\SqliteRevokedAccessTokens;
 use PhpSso\OAuth\SessionLinks;
 use PhpSso\OAuth\AuthorizationScreens;
 use PhpSso\OAuth\ClientAccess;
-use PhpSso\Store\Sqlite\SqliteRefreshTokens;
 use PhpSso\OAuth\RegisteredClients;
 use PhpSso\Pages;
 use PhpSso\Seeder;
@@ -63,7 +58,8 @@ use PhpSso\Store\Clients;
 use PhpSso\Store\Consents;
 use PhpSso\Store\IpRules;
 use PhpSso\Store\Groups;
-use PhpSso\Store\Relations;
+use PhpSso\Store\StorageFactory;
+use PhpSso\Store\StorageOptions;
 use PhpSso\Store\SamlConnections;
 use PhpSso\Store\SamlRequests;
 use PhpSso\Store\ScimClients;
@@ -93,49 +89,27 @@ use PhpSso\OAuthServer\Device\DeviceVerifier;
 use PhpSso\OAuthServer\Logout\LogoutSupport;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
-use PhpSso\Store\Sqlite\SqliteClients;
-use PhpSso\Store\Sqlite\SqliteConsents;
-use PhpSso\Store\Sqlite\SqliteGroups;
-use PhpSso\Store\Sqlite\SqliteHttpCache;
-use PhpSso\Store\Sqlite\SqliteIdentities;
-use PhpSso\Store\Sqlite\SqliteIpRules;
-use PhpSso\Store\Sqlite\SqliteLoginAttempts;
-use PhpSso\Store\Sqlite\SqliteMfaFactors;
-use PhpSso\Store\Sqlite\SqliteRelations;
-use PhpSso\Store\Sqlite\SqliteRoles;
-use PhpSso\Store\Sqlite\SqliteSamlConnections;
-use PhpSso\Store\Sqlite\SqliteSamlRequests;
-use PhpSso\Store\Sqlite\SqliteScimClients;
-use PhpSso\Store\Sqlite\SqliteScimEvents;
-use PhpSso\Store\Sqlite\SqliteScimGroups;
-use PhpSso\Store\Sqlite\SqliteScimUsers;
-use PhpSso\Store\Sqlite\SqliteScopes;
-use PhpSso\Store\Sqlite\SqliteSessions;
-use PhpSso\Store\Sqlite\SqliteSettings;
-use PhpSso\Store\Sqlite\SqliteUsers;
-use PhpSso\Store\Sqlite\SqliteClientAuthFailures;
-use PhpSso\Store\Sqlite\SqliteDeviceFailures;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $config = require dirname(__DIR__) . '/config/config.php';
 
-$db = new Database($config['database']);
+$storage = StorageFactory::create($config['storage'], new StorageOptions($config['session_idle_seconds'], array_keys($config['scopes'])));
 $keys = new Keys($config['keys_dir']);
 
-$users = new SqliteUsers($db);
+$users = $storage->users();
 $userRules = new UserRules($users, $config['login']['identifier']);
-$groups = new SqliteGroups($db);
-$clients = new SqliteClients($db);
-$roles = new SqliteRoles($db);
-$scopes = new SqliteScopes($db, array_keys($config['scopes']));
-$refreshTokens = new SqliteRefreshTokens($db);
-$sessions = new SqliteSessions($db, $config['session_idle_seconds']);
-$attempts = new SqliteLoginAttempts($db);
-$ipRules = new SqliteIpRules($db);
+$groups = $storage->groups();
+$clients = $storage->clients();
+$roles = $storage->roles();
+$scopes = $storage->scopes();
+$refreshTokens = $storage->refreshTokens();
+$sessions = $storage->sessions();
+$attempts = $storage->loginAttempts();
+$ipRules = $storage->ipRules();
 $ipPolicy = new IpPolicy($ipRules);
 $clientIp = new ClientIp($config['trusted_proxies']);
-$db->enforceUniqueEmail(IdentifierResolverFactory::usesEmail($config['login']['identifier']));
+$storage->enforceUniqueEmail(IdentifierResolverFactory::usesEmail($config['login']['identifier']));
 (new Seeder($users, $groups, $clients, $roles))->seed($config['seed']);
 
 $twig = new Environment(new FilesystemLoader(dirname(__DIR__) . '/templates'), [
@@ -166,10 +140,10 @@ $oauth = new AuthorizationServer(
     policy: new ClientAccess($clients),
     ui: new AuthorizationScreens($pages, $users),
     keys: $keys->provider,
-    codes: new SqliteAuthorizationCodes($db),
+    codes: $storage->authorizationCodes(),
     refreshTokens: $refreshTokens,
-    devices: new SqliteDeviceRequests($db),
-    revokedAccessTokens: new SqliteRevokedAccessTokens($db),
+    devices: $storage->deviceRequests(),
+    revokedAccessTokens: $storage->revokedAccessTokens(),
     logout: new LogoutSupport($sessionLinks, $sessionLinks, new LogoutScreens($pages, $users), new StreamHttpClient(), new RequestFactory()),
     responseFactory: new ResponseFactory(),
     streamFactory: new StreamFactory(),
@@ -184,27 +158,27 @@ $sessions->onEnded(static function (array $ended) use ($oauth): void {
     }
 });
 
-$consents = new SqliteConsents($db);
+$consents = $storage->consents();
 $requiredActions = new RequiredActions([new AcceptConsentsAction($consents), new ChangePasswordAction($users, $sessions)]);
 $loginFlow = new LoginFlow($sessions, $attempts, $requiredActions);
 $impersonation = new \PhpSso\Auth\Impersonation($sessions, $users);
-$settings = new SqliteSettings($db);
+$settings = $storage->settings();
 $throttle = new LoginThrottle($attempts, $settings, $config['login']['throttle']);
-$mfa = new Mfa(new SqliteMfaFactors($db), new SecretBox($config['keys_dir'] . '/mfa.key'), $settings, $config['app_name'], $config['login']['mfa']['policy']);
+$mfa = new Mfa($storage->mfaFactors(), new SecretBox($config['keys_dir'] . '/mfa.key'), $settings, $config['app_name'], $config['login']['mfa']['policy']);
 $mfaChallenge = new MfaChallenge($mfa, $throttle, $attempts);
-$socialProviders = SocialProviders::fromConfig($config['login']['social']['providers'], new HttpJson(new StreamHttpClient(5.0), new RequestFactory(), new StreamFactory()), new SqliteHttpCache($db));
-$identities = new SqliteIdentities($db);
-$samlConnections = new SqliteSamlConnections($db);
-$scimClients = new SqliteScimClients($db);
-$scimEvents = new SqliteScimEvents($db);
-$scimUsers = new SqliteScimUsers($db);
-$scimGroups = new SqliteScimGroups($db);
-$samlService = new SignIn(new StoreConnectionRepository($samlConnections), new StoreRequestStore(new SqliteSamlRequests($db)), $config['issuer']);
+$socialProviders = SocialProviders::fromConfig($config['login']['social']['providers'], new HttpJson(new StreamHttpClient(5.0), new RequestFactory(), new StreamFactory()), $storage->httpCache());
+$identities = $storage->identities();
+$samlConnections = $storage->samlConnections();
+$scimClients = $storage->scimClients();
+$scimEvents = $storage->scimEvents();
+$scimUsers = $storage->scimUsers();
+$scimGroups = $storage->scimGroups();
+$samlService = new SignIn(new StoreConnectionRepository($samlConnections), new StoreRequestStore($storage->samlRequests()), $config['issuer']);
 $accountMatcher = new AccountMatcher($identities, $users);
 $socialPolicy = new AccountPolicy($settings, $config['login']['social']);
 $social = new SocialLogin($socialProviders, $identities, $users, $socialPolicy, $config['issuer'], $accountMatcher, $samlConnections);
-$verifier = new DeviceVerifier(new SqliteDeviceRequests($db), new RegisteredClients($clients, $scopes->builtinNames()), new ClientAccess($clients), new SystemClock());
-$sso = new Sso($config, $oauth, $users, new AdminController($twig, $users, $groups, $clients, $roles, $sessions, $attempts, $ipRules, $ipPolicy, $clientIp, new AccessTester($ipPolicy, $clients, $users), new RelationPicker($twig, new SqliteRelations($db), $users, $groups, $clients, $roles), $userRules, $throttle, $mfa, $social, $consents, $samlConnections, $samlService, $scimClients, $scimEvents, $scimUsers, $scimGroups, $config['issuer'], $impersonation, $scopes), $sessions, $attempts, $clients, $pages, new AccountController($pages, $users, $sessions, $userRules, $mfa, $mfaChallenge, $clientIp, $social), new DevicePage($pages, $verifier, new SqliteDeviceFailures($db)), $clientIp, $ipPolicy, $loginFlow, new LoginController($pages, $loginFlow, IdentifierResolverFactory::create($config['login']['identifier'], $users), $users, $attempts, $clientIp, $throttle, $mfa, $socialProviders, $samlConnections), new MfaLoginController($pages, $loginFlow, $mfa, $mfaChallenge, $users, $clientIp), new SocialController($social, $loginFlow, $mfa, $clientIp), new SamlController($samlService, $samlConnections, $accountMatcher, $socialPolicy, $loginFlow, $mfa, $clientIp), new RequiredActionController($pages, $loginFlow, $requiredActions, $users, $clientIp), $requiredActions, new ClientAuthThrottle(new SqliteClientAuthFailures($db), $config['client_auth_throttle']), $impersonation);
+$verifier = new DeviceVerifier($storage->deviceRequests(), new RegisteredClients($clients, $scopes->builtinNames()), new ClientAccess($clients), new SystemClock());
+$sso = new Sso($config, $oauth, $users, new AdminController($twig, $users, $groups, $clients, $roles, $sessions, $attempts, $ipRules, $ipPolicy, $clientIp, new AccessTester($ipPolicy, $clients, $users), new RelationPicker($twig, $storage->relations(), $users, $groups, $clients, $roles), $userRules, $throttle, $mfa, $social, $consents, $samlConnections, $samlService, $scimClients, $scimEvents, $scimUsers, $scimGroups, $config['issuer'], $impersonation, $scopes), $sessions, $attempts, $clients, $pages, new AccountController($pages, $users, $sessions, $userRules, $mfa, $mfaChallenge, $clientIp, $social), new DevicePage($pages, $verifier, $storage->deviceFailures()), $clientIp, $ipPolicy, $loginFlow, new LoginController($pages, $loginFlow, IdentifierResolverFactory::create($config['login']['identifier'], $users), $users, $attempts, $clientIp, $throttle, $mfa, $socialProviders, $samlConnections), new MfaLoginController($pages, $loginFlow, $mfa, $mfaChallenge, $users, $clientIp), new SocialController($social, $loginFlow, $mfa, $clientIp), new SamlController($samlService, $samlConnections, $accountMatcher, $socialPolicy, $loginFlow, $mfa, $clientIp), new RequiredActionController($pages, $loginFlow, $requiredActions, $users, $clientIp), $requiredActions, new ClientAuthThrottle($storage->clientAuthFailures(), $config['client_auth_throttle']), $impersonation);
 
 // Provisioning clients call the SCIM endpoints with a bearer token: no cookie, no session.
 $request = ServerRequestFactory::fromGlobals();
@@ -231,5 +205,10 @@ ini_set('session.gc_maxlifetime', (string) $config['session_idle_seconds']);
 session_name('sso_session');
 session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
 session_start();
+
+// Housekeeping rides along with about one request in a hundred, after the response is sent; `bin/maintenance` does it on a schedule.
+if (random_int(1, 100) === 1) {
+    register_shutdown_function(static fn () => $storage->maintenance()->purgeExpired());
+}
 
 (new SapiEmitter())->emit($sso->handle($request));

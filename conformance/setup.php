@@ -9,17 +9,17 @@ declare(strict_types=1);
  * Everything here is a well-known test value. Never run this against a database that matters.
  */
 
-use PhpSso\Store\Sqlite\Database;
 use PhpSso\Store\Clients;
+use PhpSso\Store\StorageFactory;
+use PhpSso\Store\StorageOptions;
 use PhpSso\Store\Users;
-use PhpSso\Store\Sqlite\SqliteClients;
-use PhpSso\Store\Sqlite\SqliteUsers;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-$db = new Database(dirname(__DIR__) . '/var/sso.sqlite');
-$users = new SqliteUsers($db);
-$clients = new SqliteClients($db);
+$config = require dirname(__DIR__) . '/config/config.php';
+$storage = StorageFactory::create($config['storage'], new StorageOptions($config['session_idle_seconds'], array_keys($config['scopes'])));
+$users = $storage->users();
+$clients = $storage->clients();
 
 if ($users->findByUsername('conformance') === null) {
     $users->create(['username' => 'conformance', 'password' => 'conformance-pass', 'name' => 'Conformance Tester', 'email' => 'conformance@example.com', 'email_verified' => true, 'is_admin' => false]);

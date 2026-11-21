@@ -216,7 +216,6 @@ final class LoginFlow
         ($this->regenerateId)(); // prevent session fixation
         $_SESSION = ['user' => $user['sub'], 'sid' => $this->sessions->start($user['sub'], $ip, $userAgent, null, $amr)];
         $this->attempts->record($identifier, $user['sub'], true, $ip, $userAgent);
-        $this->sessions->prune();
 
         return is_string($returnTo) ? $returnTo : '/';
     }

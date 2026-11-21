@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 return [
     'issuer' => getenv('SSO_PUBLIC_URL') ?: 'http://localhost:9000',
-    'database' => dirname(__DIR__) . '/var/sso.sqlite',
+    // Where the data lives. `sqlite` keeps everything in one file; another backend is another driver (see PhpSso\Store\StorageFactory).
+    'storage' => ['driver' => 'sqlite', 'path' => dirname(__DIR__) . '/var/sso.sqlite'],
     'keys_dir' => dirname(__DIR__) . '/var/keys',
     'twig_cache' => dirname(__DIR__) . '/var/cache/twig',
 

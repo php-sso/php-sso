@@ -52,7 +52,4 @@ interface Sessions
 
     /** Live sessions, most recently active first, with the user's name. */
     public function active(): array;
-
-    /** Drops rows that ended or expired more than a week ago. */
-    public function prune(): void;
 }
