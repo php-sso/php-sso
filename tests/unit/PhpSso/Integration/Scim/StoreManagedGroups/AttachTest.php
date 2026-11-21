@@ -10,6 +10,7 @@ use PhpSso\Store\ScimGroups;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\ScimServer\Support;
+use PhpSso\Store\Sqlite\SqliteScimGroups;
 
 #[CoversMethod(StoreManagedGroups::class, 'attach')]
 final class AttachTest extends TestCase
@@ -18,7 +19,7 @@ final class AttachTest extends TestCase
     {
         // Arrange
         $app = new Support();
-        $managed = new StoreManagedGroups(new ScimGroups($app->data->db));
+        $managed = new StoreManagedGroups(new SqliteScimGroups($app->data->db));
         $id = $app->data->groups->create('engineering', 'Mine');
 
         // Act
@@ -35,7 +36,7 @@ final class AttachTest extends TestCase
     {
         // Arrange
         $app = new Support();
-        $managed = new StoreManagedGroups(new ScimGroups($app->data->db));
+        $managed = new StoreManagedGroups(new SqliteScimGroups($app->data->db));
         $managed->attach($app->clientId, $app->data->groups->create('one', ''), 'Same', null);
         $second = $app->data->groups->create('two', '');
 

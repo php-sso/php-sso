@@ -10,6 +10,8 @@ use PhpSso\Saml\ServiceProvider\SignIn;
 use PhpSso\Store\SamlConnections;
 use PhpSso\Store\SamlRequests;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteSamlConnections;
+use PhpSso\Store\Sqlite\SqliteSamlRequests;
 
 /** A company connection (acme.com) with a fake identity provider, and the service that talks to it. */
 final class Support
@@ -25,8 +27,8 @@ final class Support
     {
         $this->data = $data ?? new TestData();
         $this->idp = new IdpFixture();
-        $this->connections = new SamlConnections($this->data->db);
-        $this->requests = new SamlRequests($this->data->db);
+        $this->connections = new SqliteSamlConnections($this->data->db);
+        $this->requests = new SqliteSamlRequests($this->data->db);
         $this->service = new SignIn(new StoreConnectionRepository($this->connections), new StoreRequestStore($this->requests), $baseUrl);
         $this->id = $this->connections->create([
             'name' => 'Acme', 'idp_entity_id' => IdpFixture::ENTITY_ID, 'idp_sso_url' => IdpFixture::SSO_URL,

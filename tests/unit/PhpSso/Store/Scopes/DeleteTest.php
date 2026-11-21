@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Store\Scopes;
 
-use PhpSso\Database;
+use PhpSso\Store\Sqlite\Database;
 use PhpSso\Store\Scopes;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
+use PhpSso\Store\Sqlite\SqliteScopes;
 
 #[CoversMethod(Scopes::class, 'delete')]
 #[CoversMethod(Scopes::class, 'updateDescription')]
@@ -16,7 +17,7 @@ final class DeleteTest extends TestCase
     public function testAnAddedScopeCanBeRemoved(): void
     {
         // Arrange
-        $scopes = new Scopes(new Database(':memory:'), ['openid']);
+        $scopes = new SqliteScopes(new Database(':memory:'), ['openid']);
         $scopes->create('reports:read', '');
 
         // Act
@@ -30,7 +31,7 @@ final class DeleteTest extends TestCase
     public function testABuiltInScopeCannotBeRemoved(): void
     {
         // Arrange
-        $scopes = new Scopes(new Database(':memory:'), ['openid', 'email']);
+        $scopes = new SqliteScopes(new Database(':memory:'), ['openid', 'email']);
 
         // Act
         $removed = $scopes->delete('email');
@@ -43,7 +44,7 @@ final class DeleteTest extends TestCase
     public function testRemovingSomethingThatIsNotThereIsFalse(): void
     {
         // Arrange
-        $scopes = new Scopes(new Database(':memory:'), ['openid']);
+        $scopes = new SqliteScopes(new Database(':memory:'), ['openid']);
 
         // Act
         $removed = $scopes->delete('nope');
@@ -55,7 +56,7 @@ final class DeleteTest extends TestCase
     public function testTheMeaningOfAnAddedScopeCanBeChangedButNotOfABuiltInOne(): void
     {
         // Arrange
-        $scopes = new Scopes(new Database(':memory:'), ['openid']);
+        $scopes = new SqliteScopes(new Database(':memory:'), ['openid']);
         $scopes->create('reports:read', 'old');
 
         // Act

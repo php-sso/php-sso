@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\SessionLinks;
 
-use PhpSso\Database;
+use PhpSso\Store\Sqlite\Database;
 use PhpSso\OAuth\SessionLinks;
 use PhpSso\Store\Sessions;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
+use PhpSso\Store\Sqlite\SqliteSessions;
 
 #[CoversMethod(SessionLinks::class, 'terminate')]
 final class TerminateTest extends TestCase
@@ -18,7 +19,7 @@ final class TerminateTest extends TestCase
         // Arrange
         $db = new Database(':memory:');
         $db->pdo->exec("INSERT INTO users (sub, username, password_hash, name, email) VALUES ('u1', 'alice', 'x', 'Alice', 'a@example.com')");
-        $sessions = new Sessions($db, 3600);
+        $sessions = new SqliteSessions($db, 3600);
         $told = 0;
         $sessions->onEnded(static function () use (&$told): void {
             ++$told;

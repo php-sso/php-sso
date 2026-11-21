@@ -16,6 +16,7 @@ use Closure;
 use Laminas\Diactoros\Response\RedirectResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use PhpSso\Store\UserState;
 
 /**
  * The sign-in pages. Signing in takes two steps: say who you are (/login), then prove it (/login/password).
@@ -147,7 +148,7 @@ final class LoginController
         }
 
         // Said only after the right password, so it does not reveal which usernames exist.
-        if (Users::isLocked($user)) {
+        if (UserState::isLocked($user)) {
             $this->attempts->record($identifier, $user['sub'], false, $ip, $agent);
 
             return $form('This account is locked. Ask an administrator to unlock it.', 403);

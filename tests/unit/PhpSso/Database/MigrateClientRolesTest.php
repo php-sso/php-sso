@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Database;
 
-use PhpSso\Database;
+use PhpSso\Store\Sqlite\Database;
 use PhpSso\Store\Roles;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
+use PhpSso\Store\Sqlite\SqliteRoles;
 
 /** Roles used to belong to one client each. Opening an old database turns them into global roles. */
 #[CoversMethod(Database::class, '__construct')]
@@ -23,9 +24,9 @@ final class MigrateClientRolesTest extends TestCase
     {
         $this->path = sys_get_temp_dir() . '/sso-roles-test-' . bin2hex(random_bytes(4)) . '.sqlite';
         $db = new Database($this->path);
-        $users = new \PhpSso\Store\Users($db);
-        $groups = new \PhpSso\Store\Groups($db);
-        $clients = new \PhpSso\Store\Clients($db);
+        $users = new \PhpSso\Store\Sqlite\SqliteUsers($db);
+        $groups = new \PhpSso\Store\Sqlite\SqliteGroups($db);
+        $clients = new \PhpSso\Store\Sqlite\SqliteClients($db);
         $this->alice = $users->create(['username' => 'alice', 'password' => 'secret-pass', 'name' => 'Alice', 'email' => 'a@example.com', 'email_verified' => true, 'is_admin' => false]);
         $this->staff = $groups->create('staff', '');
         foreach (['app', 'other'] as $id) {
@@ -58,7 +59,7 @@ final class MigrateClientRolesTest extends TestCase
 
     private function roles(): Roles
     {
-        return new Roles(new Database($this->path));
+        return new SqliteRoles(new Database($this->path));
     }
 
     public function testARoleOfOneClientBecomesAGlobalRoleAvailableOnlyInThatClient(): void

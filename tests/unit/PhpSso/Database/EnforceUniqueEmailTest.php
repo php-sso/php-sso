@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Database;
 
-use PhpSso\Database;
+use PhpSso\Store\Sqlite\Database;
 use PDOException;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;

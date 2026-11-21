@@ -9,6 +9,7 @@ use PhpSso\Store\LoginAttempts;
 use PhpSso\Store\Sessions;
 use PhpSso\Store\Users;
 use Closure;
+use PhpSso\Store\UserState;
 
 /**
  * The end of every sign-in. Whatever proved who the person is (a password now; a second factor, a social account
@@ -200,7 +201,7 @@ final class LoginFlow
      */
     public function complete(array $user, string $identifier, string $ip, string $userAgent, ?array $amr = null): string
     {
-        if (Users::isLocked($user)) { // locked between the password and the end of the sign-in
+        if (UserState::isLocked($user)) { // locked between the password and the end of the sign-in
             unset($_SESSION['login']);
 
             return '/login';

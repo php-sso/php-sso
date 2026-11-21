@@ -10,6 +10,7 @@ use PhpSso\Store\ScimUsers;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\ScimServer\Support;
+use PhpSso\Store\Sqlite\SqliteScimUsers;
 
 #[CoversMethod(StoreManagedUsers::class, 'attach')]
 final class AttachTest extends TestCase
@@ -18,7 +19,7 @@ final class AttachTest extends TestCase
     {
         // Arrange
         $app = new Support();
-        $managed = new StoreManagedUsers(new ScimUsers($app->data->db));
+        $managed = new StoreManagedUsers(new SqliteScimUsers($app->data->db));
         $sub = $app->data->user('alice');
 
         // Act
@@ -35,7 +36,7 @@ final class AttachTest extends TestCase
     {
         // Arrange
         $app = new Support();
-        $managed = new StoreManagedUsers(new ScimUsers($app->data->db));
+        $managed = new StoreManagedUsers(new SqliteScimUsers($app->data->db));
         $managed->attach($app->clientId, $app->data->user('alice'), 'shared-name', null, null, null);
         $bob = $app->data->user('bob');
 

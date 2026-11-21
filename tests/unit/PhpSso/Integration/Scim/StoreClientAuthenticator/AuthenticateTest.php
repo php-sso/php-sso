@@ -10,6 +10,7 @@ use PhpSso\Store\ScimClients;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteScimClients;
 
 #[CoversMethod(StoreClientAuthenticator::class, 'authenticate')]
 final class AuthenticateTest extends TestCase
@@ -17,7 +18,7 @@ final class AuthenticateTest extends TestCase
     public function testItDescribesTheClientTheTokenBelongsTo(): void
     {
         // Arrange
-        $clients = new ScimClients((new TestData())->db);
+        $clients = new SqliteScimClients((new TestData())->db);
         $created = $clients->create('Acme Okta', ['Acme.com', 'acme.org'], true, 'delete', true, 'acme:', true);
         $authenticator = new StoreClientAuthenticator($clients);
 
@@ -33,7 +34,7 @@ final class AuthenticateTest extends TestCase
     public function testAnUnknownTokenBelongsToNoOne(): void
     {
         // Arrange
-        $authenticator = new StoreClientAuthenticator(new ScimClients((new TestData())->db));
+        $authenticator = new StoreClientAuthenticator(new SqliteScimClients((new TestData())->db));
 
         // Act
         $client = $authenticator->authenticate('scim_unknown');
@@ -45,7 +46,7 @@ final class AuthenticateTest extends TestCase
     public function testASwitchedOffClientIsNotAuthenticated(): void
     {
         // Arrange
-        $clients = new ScimClients((new TestData())->db);
+        $clients = new SqliteScimClients((new TestData())->db);
         $created = $clients->create('Acme Okta', ['acme.com'], false, 'deactivate', false);
         $authenticator = new StoreClientAuthenticator($clients);
 

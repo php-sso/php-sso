@@ -9,6 +9,7 @@ use PhpSso\ScimServer\ScimService;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\ScimServer\Support;
+use PhpSso\Store\UserState;
 
 #[CoversMethod(ScimService::class, 'create')]
 #[CoversMethod(ScimService::class, 'representation')]
@@ -56,7 +57,7 @@ final class CreateTest extends TestCase
         $user = $app->service->create($app->client(), Support::payload('alice@acme.com', ['active' => false]));
 
         // Assert
-        $this->assertTrue(\PhpSso\Store\Users::isLocked($app->data->users->find($user->sub)));
+        $this->assertTrue(\PhpSso\Store\UserState::isLocked($app->data->users->find($user->sub)));
         $this->assertFalse($user->active);
         $this->assertFalse($app->service->representation($user)['active']);
     }

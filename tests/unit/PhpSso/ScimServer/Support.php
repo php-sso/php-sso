@@ -27,6 +27,12 @@ use Laminas\Diactoros\ServerRequest;
 use Laminas\Diactoros\StreamFactory;
 use Psr\Http\Message\ServerRequestInterface;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteScimClients;
+use PhpSso\Store\Sqlite\SqliteScimEvents;
+use PhpSso\Store\Sqlite\SqliteScimGroups;
+use PhpSso\Store\Sqlite\SqliteScimUsers;
+use PhpSso\Store\Sqlite\SqliteSessions;
+use PhpSso\Store\Sqlite\SqliteSettings;
 
 /** A SCIM client for acme.com on an in-memory database, with the service and controller built on it. */
 final class Support
@@ -48,12 +54,12 @@ final class Support
     public function __construct(string $onDelete = 'deactivate', bool $adopt = false, array $domains = ['acme.com'], string $identifier = 'email', string $groupPrefix = '', bool $adoptGroups = false, array $allowedDomains = [])
     {
         $this->data = new TestData();
-        $this->clients = new ScimClients($this->data->db);
-        $this->scimUsers = new ScimUsers($this->data->db);
-        $this->events = new ScimEvents($this->data->db);
-        $this->sessions = new Sessions($this->data->db, 3600);
-        $this->scimGroups = new ScimGroups($this->data->db);
-        $this->policy = new AccountPolicy(new Settings($this->data->db), ['allowed_domains' => $allowedDomains]);
+        $this->clients = new SqliteScimClients($this->data->db);
+        $this->scimUsers = new SqliteScimUsers($this->data->db);
+        $this->events = new SqliteScimEvents($this->data->db);
+        $this->sessions = new SqliteSessions($this->data->db, 3600);
+        $this->scimGroups = new SqliteScimGroups($this->data->db);
+        $this->policy = new AccountPolicy(new SqliteSettings($this->data->db), ['allowed_domains' => $allowedDomains]);
         $this->authenticator = new StoreClientAuthenticator($this->clients);
         $managedUsers = new StoreManagedUsers($this->scimUsers);
         $managedGroups = new StoreManagedGroups($this->scimGroups);

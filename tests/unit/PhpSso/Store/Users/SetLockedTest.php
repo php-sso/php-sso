@@ -8,6 +8,7 @@ use PhpSso\Store\Users;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\UserState;
 
 #[CoversMethod(Users::class, 'setLocked')]
 #[CoversMethod(Users::class, 'isLocked')]
@@ -20,7 +21,7 @@ final class SetLockedTest extends TestCase
         $sub = $data->user('alice');
 
         // Act
-        $locked = Users::isLocked($data->users->find($sub));
+        $locked = UserState::isLocked($data->users->find($sub));
 
         // Assert
         $this->assertFalse($locked);
@@ -36,7 +37,7 @@ final class SetLockedTest extends TestCase
         $data->users->setLocked($sub, true);
 
         // Assert
-        $this->assertTrue(Users::isLocked($data->users->find($sub)));
+        $this->assertTrue(UserState::isLocked($data->users->find($sub)));
     }
 
     public function testUnlockingClearsTheLock(): void
@@ -50,6 +51,6 @@ final class SetLockedTest extends TestCase
         $data->users->setLocked($sub, false);
 
         // Assert
-        $this->assertFalse(Users::isLocked($data->users->find($sub)));
+        $this->assertFalse(UserState::isLocked($data->users->find($sub)));
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\AuthorizationCodes;
 
-use PhpSso\Database;
+use PhpSso\Store\Sqlite\Database;
 use PhpSso\OAuth\AuthorizationCodes;
 use PhpSso\OAuth\RefreshTokens;
 use PHPUnit\Framework\Attributes\CoversMethod;

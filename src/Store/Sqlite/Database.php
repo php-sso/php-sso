@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpSso;
+namespace PhpSso\Store\Sqlite;
 
 use PDO;
 

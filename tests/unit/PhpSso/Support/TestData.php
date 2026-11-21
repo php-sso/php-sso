@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Support;
 
-use PhpSso\Database;
+use PhpSso\Store\Sqlite\Database;
 use PhpSso\Store\Clients;
 use PhpSso\Store\Groups;
 use PhpSso\Store\Roles;
 use PhpSso\Store\Users;
+use PhpSso\Store\Sqlite\SqliteClients;
+use PhpSso\Store\Sqlite\SqliteGroups;
+use PhpSso\Store\Sqlite\SqliteRoles;
+use PhpSso\Store\Sqlite\SqliteUsers;
 
 /** Builds people, groups, clients and roles in an in-memory database for tests. */
 final class TestData
@@ -22,10 +26,10 @@ final class TestData
     public function __construct()
     {
         $this->db = new Database(':memory:');
-        $this->users = new Users($this->db);
-        $this->groups = new Groups($this->db);
-        $this->clients = new Clients($this->db);
-        $this->roles = new Roles($this->db);
+        $this->users = new SqliteUsers($this->db);
+        $this->groups = new SqliteGroups($this->db);
+        $this->clients = new SqliteClients($this->db);
+        $this->roles = new SqliteRoles($this->db);
     }
 
     /** A group with the given people in it. @param string[] $subs */

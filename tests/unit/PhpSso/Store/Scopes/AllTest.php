@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Store\Scopes;
 
-use PhpSso\Database;
+use PhpSso\Store\Sqlite\Database;
 use PhpSso\Store\Scopes;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
+use PhpSso\Store\Sqlite\SqliteScopes;
 
 #[CoversMethod(Scopes::class, 'all')]
 #[CoversMethod(Scopes::class, 'names')]
@@ -16,7 +17,7 @@ final class AllTest extends TestCase
 {
     private function scopes(): Scopes
     {
-        return new Scopes(new Database(':memory:'), ['openid', 'profile', 'roles']);
+        return new SqliteScopes(new Database(':memory:'), ['openid', 'profile', 'roles']);
     }
 
     public function testTheBuiltInScopesComeFirstWithTheirMeaning(): void
@@ -54,10 +55,10 @@ final class AllTest extends TestCase
     {
         // Arrange
         $db = new Database(':memory:');
-        (new Scopes($db, ['openid']))->create('reports:read', '');
+        (new SqliteScopes($db, ['openid']))->create('reports:read', '');
 
         // Act
-        $names = (new Scopes($db, ['openid']))->names();
+        $names = (new SqliteScopes($db, ['openid']))->names();
 
         // Assert
         $this->assertSame(['openid', 'reports:read'], $names);

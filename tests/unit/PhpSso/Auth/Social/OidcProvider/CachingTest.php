@@ -10,6 +10,7 @@ use PhpSso\Store\HttpCache;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteHttpCache;
 
 #[CoversMethod(OidcProvider::class, 'identify')]
 final class CachingTest extends TestCase
@@ -20,7 +21,7 @@ final class CachingTest extends TestCase
     protected function setUp(): void
     {
         $this->data = new TestData();
-        $this->cache = new HttpCache($this->data->db);
+        $this->cache = new SqliteHttpCache($this->data->db);
     }
 
     /** One sign-in, as a new request would do it: a fresh provider object sharing the saved answers. */

@@ -10,6 +10,7 @@ use PhpSso\Store\IpRules;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteIpRules;
 
 #[CoversMethod(AccessTester::class, 'evaluate')]
 final class EvaluateTest extends TestCase
@@ -21,7 +22,7 @@ final class EvaluateTest extends TestCase
     protected function setUp(): void
     {
         $this->data = new TestData();
-        $this->rules = new IpRules($this->data->db);
+        $this->rules = new SqliteIpRules($this->data->db);
         $this->tester = new AccessTester(new IpPolicy($this->rules), $this->data->clients, $this->data->users);
     }
 

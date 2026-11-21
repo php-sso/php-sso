@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Store\Scopes;
 
-use PhpSso\Database;
+use PhpSso\Store\Sqlite\Database;
 use PhpSso\Store\Scopes;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use PhpSso\Store\ScopeName;
+use PhpSso\Store\Sqlite\SqliteScopes;
 
 #[CoversMethod(Scopes::class, 'exists')]
 #[CoversMethod(Scopes::class, 'isBuiltin')]
@@ -17,7 +19,7 @@ final class ExistsTest extends TestCase
     public function testNamesAreComparedWithoutCase(): void
     {
         // Arrange
-        $scopes = new Scopes(new Database(':memory:'), ['openid', 'email']);
+        $scopes = new SqliteScopes(new Database(':memory:'), ['openid', 'email']);
         $scopes->create('reports:read', '');
 
         // Act
@@ -30,7 +32,7 @@ final class ExistsTest extends TestCase
     public function testOnlyTheConfiguredScopesAreBuiltIn(): void
     {
         // Arrange
-        $scopes = new Scopes(new Database(':memory:'), ['openid']);
+        $scopes = new SqliteScopes(new Database(':memory:'), ['openid']);
         $scopes->create('reports:read', '');
 
         // Act
@@ -65,7 +67,7 @@ final class ExistsTest extends TestCase
         // (the name and whether it is acceptable come from the data set)
 
         // Act
-        $result = Scopes::validName($name);
+        $result = ScopeName::isValid($name);
 
         // Assert
         $this->assertSame($valid, $result);

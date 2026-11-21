@@ -8,6 +8,7 @@ use PhpSso\Store\IpRules;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteIpRules;
 
 #[CoversMethod(IpRules::class, 'ignoresGeneral')]
 #[CoversMethod(IpRules::class, 'setIgnoresGeneral')]
@@ -18,7 +19,7 @@ final class IgnoresGeneralTest extends TestCase
         // Arrange
         $data = new TestData();
         $data->client('app');
-        $rules = new IpRules($data->db);
+        $rules = new SqliteIpRules($data->db);
 
         // Act
         $before = $rules->ignoresGeneral('app');

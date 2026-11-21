@@ -10,6 +10,8 @@ use PhpSso\Store\Settings;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteLoginAttempts;
+use PhpSso\Store\Sqlite\SqliteSettings;
 
 #[CoversMethod(LoginThrottle::class, 'lockedFor')]
 final class LockedForTest extends TestCase
@@ -20,8 +22,8 @@ final class LockedForTest extends TestCase
     protected function setUp(): void
     {
         $data = new TestData();
-        $this->attempts = new LoginAttempts($data->db);
-        $this->settings = new Settings($data->db);
+        $this->attempts = new SqliteLoginAttempts($data->db);
+        $this->settings = new SqliteSettings($data->db);
     }
 
     private function throttle(array $defaults = ['per_identifier' => 2, 'per_ip' => 3, 'window_seconds' => 600]): LoginThrottle

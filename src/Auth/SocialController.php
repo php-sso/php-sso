@@ -12,6 +12,7 @@ use PhpSso\Store\Users;
 use Laminas\Diactoros\Response\RedirectResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use PhpSso\Store\UserState;
 
 /**
  * The two addresses of a round trip to a provider: `/login/social/{provider}` sends the browser there, and
@@ -54,7 +55,7 @@ final class SocialController
 
         $identity = $result['identity'];
         $identifier = mb_substr($identity->provider . ':' . ($identity->email ?? $identity->subject), 0, 100);
-        if (Users::isLocked($result['user'])) {
+        if (UserState::isLocked($result['user'])) {
             $_SESSION['login_error'] = 'This account is locked. Ask an administrator to unlock it.';
 
             return new RedirectResponse('/login');

@@ -8,6 +8,7 @@ use PhpSso\Store\HttpCache;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteHttpCache;
 
 #[CoversMethod(HttpCache::class, 'get')]
 #[CoversMethod(HttpCache::class, 'put')]
@@ -17,7 +18,7 @@ final class GetTest extends TestCase
     public function testWhatWasSavedComesBackWhileItIsFresh(): void
     {
         // Arrange
-        $cache = new HttpCache((new TestData())->db);
+        $cache = new SqliteHttpCache((new TestData())->db);
         $cache->put('k', ['a' => 1], 1000);
 
         // Act
@@ -32,7 +33,7 @@ final class GetTest extends TestCase
     public function testSavingAgainReplacesTheOldAnswerAndItsAge(): void
     {
         // Arrange
-        $cache = new HttpCache((new TestData())->db);
+        $cache = new SqliteHttpCache((new TestData())->db);
         $cache->put('k', ['a' => 1], 1000);
 
         // Act
@@ -45,7 +46,7 @@ final class GetTest extends TestCase
     public function testAnUnknownKeyHasNothing(): void
     {
         // Arrange
-        $cache = new HttpCache((new TestData())->db);
+        $cache = new SqliteHttpCache((new TestData())->db);
 
         // Act
         $results = [$cache->get('nope', 3600), $cache->entry('nope')];
@@ -57,7 +58,7 @@ final class GetTest extends TestCase
     public function testEntryShowsAnOldAnswerToo(): void
     {
         // Arrange
-        $cache = new HttpCache((new TestData())->db);
+        $cache = new SqliteHttpCache((new TestData())->db);
         $cache->put('k', ['a' => 1], 10);
 
         // Act

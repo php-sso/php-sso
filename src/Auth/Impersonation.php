@@ -6,6 +6,7 @@ namespace PhpSso\Auth;
 
 use PhpSso\Store\Sessions;
 use PhpSso\Store\Users;
+use PhpSso\Store\UserState;
 
 /**
  * An administrator browsing as someone else, to see what that person sees. The person gets a login session of their
@@ -30,7 +31,7 @@ final class Impersonation
     {
         return match (true) {
             $target['sub'] === $admin['sub'] => 'That is you.',
-            Users::isLocked($target) => "{$target['name']} is locked. Unlock the account first.",
+            UserState::isLocked($target) => "{$target['name']} is locked. Unlock the account first.",
             (bool) $target['is_admin'] => 'Administrators cannot be impersonated.',
             default => null,
         };

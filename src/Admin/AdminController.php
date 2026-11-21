@@ -36,6 +36,7 @@ use Laminas\Diactoros\Response\TextResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Twig\Environment;
+use PhpSso\Store\ScopeName;
 
 /**
  * Admin panel for users, groups and clients. The caller has already checked that the
@@ -1561,7 +1562,7 @@ final class AdminController
         $input = ['name' => $this->text($body, 'name'), 'description' => $this->text($body, 'description')];
         $errors = [];
 
-        if (!Scopes::validName($input['name'])) {
+        if (!ScopeName::isValid($input['name'])) {
             $errors['name'] = 'Use letters, digits and . _ : - only (at most 64 characters), such as invoices:read.';
         } elseif ($this->scopes->exists($input['name'])) {
             $errors['name'] = 'There is already a scope with that name.';

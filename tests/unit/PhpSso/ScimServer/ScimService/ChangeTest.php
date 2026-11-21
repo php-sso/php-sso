@@ -10,6 +10,7 @@ use PhpSso\Store\Users;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\ScimServer\Support;
+use PhpSso\Store\UserState;
 
 #[CoversMethod(ScimService::class, 'replace')]
 #[CoversMethod(ScimService::class, 'patch')]
@@ -29,7 +30,7 @@ final class ChangeTest extends TestCase
 
         // Assert
         $this->assertFalse($result['user']->active);
-        $this->assertTrue(Users::isLocked($app->data->users->find($user->sub)));
+        $this->assertTrue(UserState::isLocked($app->data->users->find($user->sub)));
         $this->assertFalse($app->sessions->touch($session, $user->sub));
     }
 
@@ -44,7 +45,7 @@ final class ChangeTest extends TestCase
 
         // Assert
         $this->assertTrue($result['user']->active);
-        $this->assertFalse(Users::isLocked($app->data->users->find($user->sub)));
+        $this->assertFalse(UserState::isLocked($app->data->users->find($user->sub)));
     }
 
     public function testPatchChangesOnlyWhatItNames(): void
@@ -117,7 +118,7 @@ final class ChangeTest extends TestCase
         } catch (ScimException $e) {
             $this->assertSame(404, $e->status);
         }
-        $this->assertFalse(Users::isLocked($app->data->users->find($stranger)));
+        $this->assertFalse(UserState::isLocked($app->data->users->find($stranger)));
     }
 
     public function testAClientCannotTouchAnotherClientsPeople(): void
@@ -186,7 +187,7 @@ final class ChangeTest extends TestCase
         // Assert
         $kept = $app->data->users->find($user->sub);
         $this->assertNotNull($kept);
-        $this->assertTrue(Users::isLocked($kept));
+        $this->assertTrue(UserState::isLocked($kept));
         $this->assertNotNull($app->scimUsers->managedBy($user->sub));
     }
 

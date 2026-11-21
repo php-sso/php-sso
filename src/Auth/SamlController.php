@@ -18,6 +18,7 @@ use Laminas\Diactoros\Response\RedirectResponse;
 use Laminas\Diactoros\Response\TextResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use PhpSso\Store\UserState;
 
 /**
  * Signing in through a company's identity provider. `/login/saml/{id}` sends the browser there, `/saml/{id}/acs` is where
@@ -78,7 +79,7 @@ final class SamlController
             $_SESSION['return_to'] = $result->returnTo;
         }
         $identifier = mb_substr($identity->provider . ':' . ($identity->email ?? $identity->subject), 0, 100);
-        if (Users::isLocked($user)) {
+        if (UserState::isLocked($user)) {
             $_SESSION['login_error'] = 'This account is locked. Ask an administrator to unlock it.';
 
             return (new RedirectResponse('/login', 303))->withAddedHeader('Set-Cookie', $this->cookie('', 0));

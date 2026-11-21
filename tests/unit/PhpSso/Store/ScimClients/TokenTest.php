@@ -8,6 +8,7 @@ use PhpSso\Store\ScimClients;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteScimClients;
 
 #[CoversMethod(ScimClients::class, 'create')]
 #[CoversMethod(ScimClients::class, 'authenticate')]
@@ -19,7 +20,7 @@ final class TokenTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $clients = new ScimClients($data->db);
+        $clients = new SqliteScimClients($data->db);
         $created = $clients->create('Acme', ['Acme.com'], true, 'deactivate', false);
 
         // Act
@@ -38,7 +39,7 @@ final class TokenTest extends TestCase
     public function testAWrongOrEmptyTokenIsNotAccepted(): void
     {
         // Arrange
-        $clients = new ScimClients((new TestData())->db);
+        $clients = new SqliteScimClients((new TestData())->db);
         $clients->create('Acme', ['acme.com'], true, 'deactivate', false);
 
         // Act
@@ -51,7 +52,7 @@ final class TokenTest extends TestCase
     public function testASwitchedOffClientsTokenStopsWorking(): void
     {
         // Arrange
-        $clients = new ScimClients((new TestData())->db);
+        $clients = new SqliteScimClients((new TestData())->db);
         $created = $clients->create('Acme', ['acme.com'], false, 'deactivate', false);
 
         // Act
@@ -64,7 +65,7 @@ final class TokenTest extends TestCase
     public function testANewTokenReplacesTheOldOne(): void
     {
         // Arrange
-        $clients = new ScimClients((new TestData())->db);
+        $clients = new SqliteScimClients((new TestData())->db);
         $created = $clients->create('Acme', ['acme.com'], true, 'deactivate', false);
 
         // Act
@@ -79,16 +80,16 @@ final class TokenTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $clients = new ScimClients($data->db);
+        $clients = new SqliteScimClients($data->db);
         $created = $clients->create('Acme', ['acme.com'], true, 'deactivate', false);
         $sub = $data->user('alice');
-        (new \PhpSso\Store\ScimUsers($data->db))->attach($created['id'], $sub, 'alice@acme.com', null, null, null);
+        (new \PhpSso\Store\Sqlite\SqliteScimUsers($data->db))->attach($created['id'], $sub, 'alice@acme.com', null, null, null);
 
         // Act
         $clients->delete($created['id']);
 
         // Assert
         $this->assertNotNull($data->users->find($sub));
-        $this->assertNull((new \PhpSso\Store\ScimUsers($data->db))->managedBy($sub));
+        $this->assertNull((new \PhpSso\Store\Sqlite\SqliteScimUsers($data->db))->managedBy($sub));
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpSso\OAuth;
 
-use PhpSso\Database;
+use PhpSso\Store\Sqlite\Database;
 use PDO;
 
 /**

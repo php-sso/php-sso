@@ -12,6 +12,8 @@ use PhpSso\Store\Sessions;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteLoginAttempts;
+use PhpSso\Store\Sqlite\SqliteSessions;
 
 #[CoversMethod(LoginFlow::class, 'proceed')]
 #[CoversMethod(LoginFlow::class, 'beginActions')]
@@ -24,8 +26,8 @@ final class ProceedTest extends TestCase
     protected function setUp(): void
     {
         $this->data = new TestData();
-        $sessions = new Sessions($this->data->db, 3600);
-        $this->flow = new LoginFlow($sessions, new LoginAttempts($this->data->db), new RequiredActions([new ChangePasswordAction($this->data->users, $sessions)]), static fn (): bool => true);
+        $sessions = new SqliteSessions($this->data->db, 3600);
+        $this->flow = new LoginFlow($sessions, new SqliteLoginAttempts($this->data->db), new RequiredActions([new ChangePasswordAction($this->data->users, $sessions)]), static fn (): bool => true);
         $_SESSION = [];
     }
 

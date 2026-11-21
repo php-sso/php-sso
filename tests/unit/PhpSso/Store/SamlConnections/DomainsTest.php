@@ -8,6 +8,7 @@ use PhpSso\Store\SamlConnections;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteSamlConnections;
 
 #[CoversMethod(SamlConnections::class, 'findByDomain')]
 #[CoversMethod(SamlConnections::class, 'managesAddress')]
@@ -23,7 +24,7 @@ final class DomainsTest extends TestCase
     public function testADomainFindsItsConnectionIgnoringCase(): void
     {
         // Arrange
-        $connections = new SamlConnections((new TestData())->db);
+        $connections = new SqliteSamlConnections((new TestData())->db);
         $id = $this->add($connections, 'acme', ['Acme.com']);
 
         // Act
@@ -37,7 +38,7 @@ final class DomainsTest extends TestCase
     public function testASwitchedOffConnectionIsNotFoundByDomain(): void
     {
         // Arrange
-        $connections = new SamlConnections((new TestData())->db);
+        $connections = new SqliteSamlConnections((new TestData())->db);
         $this->add($connections, 'acme', ['acme.com'], false);
 
         // Act
@@ -50,7 +51,7 @@ final class DomainsTest extends TestCase
     public function testASubdomainIsNotTheClaimedDomain(): void
     {
         // Arrange
-        $connections = new SamlConnections((new TestData())->db);
+        $connections = new SqliteSamlConnections((new TestData())->db);
         $this->add($connections, 'acme', ['acme.com']);
 
         // Act
@@ -63,7 +64,7 @@ final class DomainsTest extends TestCase
     public function testAnAddressAtAClaimedDomainIsManagedByTheCompany(): void
     {
         // Arrange
-        $connections = new SamlConnections((new TestData())->db);
+        $connections = new SqliteSamlConnections((new TestData())->db);
         $this->add($connections, 'acme', ['acme.com']);
 
         // Act
@@ -76,7 +77,7 @@ final class DomainsTest extends TestCase
     public function testADomainBelongsToOneConnection(): void
     {
         // Arrange
-        $connections = new SamlConnections((new TestData())->db);
+        $connections = new SqliteSamlConnections((new TestData())->db);
         $this->add($connections, 'acme', ['acme.com']);
 
         // Act
@@ -91,10 +92,10 @@ final class DomainsTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $connections = new SamlConnections($data->db);
+        $connections = new SqliteSamlConnections($data->db);
         $id = $this->add($connections, 'acme', ['acme.com']);
         $sub = $data->user('alice');
-        (new \PhpSso\Store\Identities($data->db))->link($sub, 'saml-' . $id, 'alice-at-acme', 'alice@acme.com');
+        (new \PhpSso\Store\Sqlite\SqliteIdentities($data->db))->link($sub, 'saml-' . $id, 'alice-at-acme', 'alice@acme.com');
 
         // Act
         $connections->delete($id);
@@ -102,6 +103,6 @@ final class DomainsTest extends TestCase
         // Assert
         $this->assertNull($connections->find($id));
         $this->assertNull($connections->domainOwner('acme.com'));
-        $this->assertSame([], (new \PhpSso\Store\Identities($data->db))->forUser($sub));
+        $this->assertSame([], (new \PhpSso\Store\Sqlite\SqliteIdentities($data->db))->forUser($sub));
     }
 }

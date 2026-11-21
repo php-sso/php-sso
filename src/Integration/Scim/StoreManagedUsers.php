@@ -10,6 +10,7 @@ use PhpSso\ScimServer\ScimUser;
 use PhpSso\ScimServer\UserPage;
 use PhpSso\Store\ScimUsers;
 use PhpSso\Store\Users;
+use PhpSso\Store\UserState;
 
 /** Which people each provisioning client manages, kept in the `scim_users` table next to the application's users. */
 final class StoreManagedUsers implements ManagedUsers
@@ -80,7 +81,7 @@ final class StoreManagedUsers implements ManagedUsers
             $row['family_name'] ?? null,
             (string) $row['name'],
             (string) $row['email'],
-            !Users::isLocked($row),
+            !UserState::isLocked($row),
             (bool) $row['is_admin'],
         );
     }

@@ -8,6 +8,7 @@ use PhpSso\Store\LoginAttempts;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteLoginAttempts;
 
 #[CoversMethod(LoginAttempts::class, 'failureTimesFromIp')]
 final class FailureTimesFromIpTest extends TestCase
@@ -16,7 +17,7 @@ final class FailureTimesFromIpTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $attempts = new LoginAttempts($data->db);
+        $attempts = new SqliteLoginAttempts($data->db);
         $attempts->record('alice', null, false, '203.0.113.1', 'agent');
         $attempts->record('bob', null, false, '203.0.113.1', 'agent');
         $attempts->record('carol', null, false, '203.0.113.2', 'agent');

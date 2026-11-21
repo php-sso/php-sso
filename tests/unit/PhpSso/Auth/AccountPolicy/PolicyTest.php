@@ -9,6 +9,7 @@ use PhpSso\Store\Settings;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteSettings;
 
 #[CoversMethod(AccountPolicy::class, 'current')]
 #[CoversMethod(AccountPolicy::class, 'parseForm')]
@@ -19,7 +20,7 @@ final class PolicyTest extends TestCase
 {
     private function policy(array $defaults = []): AccountPolicy
     {
-        return new AccountPolicy(new Settings((new TestData())->db), $defaults);
+        return new AccountPolicy(new SqliteSettings((new TestData())->db), $defaults);
     }
 
     public function testBothWaysInAreOffByDefault(): void

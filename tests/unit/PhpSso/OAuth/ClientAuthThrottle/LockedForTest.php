@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\ClientAuthThrottle;
 
-use PhpSso\Database;
+use PhpSso\Store\Sqlite\Database;
 use PhpSso\OAuth\ClientAuthThrottle;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;

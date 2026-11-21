@@ -28,6 +28,12 @@ use PhpSso\Store\Settings;
 use Laminas\Diactoros\ServerRequest;
 use Psr\Http\Message\ServerRequestInterface;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteConsents;
+use PhpSso\Store\Sqlite\SqliteLoginAttempts;
+use PhpSso\Store\Sqlite\SqliteMfaFactors;
+use PhpSso\Store\Sqlite\SqliteSamlConnections;
+use PhpSso\Store\Sqlite\SqliteSessions;
+use PhpSso\Store\Sqlite\SqliteSettings;
 
 /** The sign-in controller on an in-memory database, with the real built-in pages. */
 final class Support
@@ -50,17 +56,17 @@ final class Support
     public function __construct(array $throttle = [], string $mfaPolicy = 'optional', ?SocialProviders $social = null, string $identifier = 'username')
     {
         $this->data = new TestData();
-        $this->attempts = new LoginAttempts($this->data->db);
-        $this->sessions = new Sessions($this->data->db, 3600);
-        $this->consents = new Consents($this->data->db);
-        $this->saml = new SamlConnections($this->data->db);
+        $this->attempts = new SqliteLoginAttempts($this->data->db);
+        $this->sessions = new SqliteSessions($this->data->db, 3600);
+        $this->consents = new SqliteConsents($this->data->db);
+        $this->saml = new SqliteSamlConnections($this->data->db);
         $this->actions = new RequiredActions([new AcceptConsentsAction($this->consents), new ChangePasswordAction($this->data->users, $this->sessions)]);
         $this->flow = new LoginFlow($this->sessions, $this->attempts, $this->actions, static fn (): bool => true);
         $root = dirname(__DIR__, 5);
         $pages = new Pages($root . '/templates/pages', '/nonexistent', sys_get_temp_dir() . '/sso-login-test-' . getmypid(), $root . '/public', ['app_name' => 'SSO'], true);
-        $this->throttle = new LoginThrottle($this->attempts, new Settings($this->data->db), $throttle);
+        $this->throttle = new LoginThrottle($this->attempts, new SqliteSettings($this->data->db), $throttle);
         $this->keyFile = sys_get_temp_dir() . '/sso-login-test-' . bin2hex(random_bytes(4)) . '.key';
-        $this->mfa = new Mfa(new MfaFactors($this->data->db), new SecretBox($this->keyFile), new Settings($this->data->db), 'Test SSO', $mfaPolicy);
+        $this->mfa = new Mfa(new SqliteMfaFactors($this->data->db), new SecretBox($this->keyFile), new SqliteSettings($this->data->db), 'Test SSO', $mfaPolicy);
         $this->controller = new LoginController($pages, $this->flow, IdentifierResolverFactory::create($identifier, $this->data->users), $this->data->users, $this->attempts, new ClientIp([]), $this->throttle, $this->mfa, $social ?? new SocialProviders(), $this->saml);
         $this->mfaController = new MfaLoginController($pages, $this->flow, $this->mfa, new MfaChallenge($this->mfa, $this->throttle, $this->attempts), $this->data->users, new ClientIp([]));
         $this->requiredController = new RequiredActionController($pages, $this->flow, $this->actions, $this->data->users, new ClientIp([]));

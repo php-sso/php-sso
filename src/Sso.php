@@ -28,6 +28,7 @@ use PhpSso\OAuthServer\AuthorizationServer;
 use PhpSso\OAuthServer\Endpoint\AuthorizationHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use PhpSso\Store\UserState;
 
 /**
  * HTTP layer of the OpenID Provider. The protocol itself (codes, PKCE, tokens, errors)
@@ -264,7 +265,7 @@ final class Sso
 
         $user = $this->users->find($sub);
 
-        return $user === null || Users::isLocked($user) ? null : $user; // a locked account is signed out at once
+        return $user === null || UserState::isLocked($user) ? null : $user; // a locked account is signed out at once
     }
 
     private function adminArea(ServerRequestInterface $request): ResponseInterface

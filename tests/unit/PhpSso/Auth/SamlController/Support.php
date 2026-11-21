@@ -14,6 +14,8 @@ use Laminas\Diactoros\ServerRequest;
 use Psr\Http\Message\ServerRequestInterface;
 use Tests\unit\PhpSso\Auth\LoginController\Support as LoginSupport;
 use Tests\unit\PhpSso\Auth\Saml\Support as SamlSupport;
+use PhpSso\Store\Sqlite\SqliteIdentities;
+use PhpSso\Store\Sqlite\SqliteSettings;
 
 /** The SAML controller on an in-memory database, with a company (acme.com) and its fake identity provider. */
 final class Support
@@ -29,8 +31,8 @@ final class Support
     {
         $this->login = new LoginSupport([], $mfaPolicy);
         $this->saml = new SamlSupport($baseUrl, $enabled, ['acme.com'], $this->login->data);
-        $this->identities = new Identities($this->login->data->db);
-        $this->policy = new AccountPolicy(new Settings($this->login->data->db), $policy);
+        $this->identities = new SqliteIdentities($this->login->data->db);
+        $this->policy = new AccountPolicy(new SqliteSettings($this->login->data->db), $policy);
         $this->controller = new SamlController(
             $this->saml->service,
             $this->saml->connections,

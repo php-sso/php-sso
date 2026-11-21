@@ -8,6 +8,7 @@ use PhpSso\Store\Settings;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteSettings;
 
 #[CoversMethod(Settings::class, 'set')]
 #[CoversMethod(Settings::class, 'get')]
@@ -16,7 +17,7 @@ final class SetTest extends TestCase
     public function testItReturnsNullForASettingThatWasNeverSaved(): void
     {
         // Arrange
-        $settings = new Settings((new TestData())->db);
+        $settings = new SqliteSettings((new TestData())->db);
 
         // Act
         $value = $settings->get('missing');
@@ -28,7 +29,7 @@ final class SetTest extends TestCase
     public function testItReplacesTheValueOfASavedSetting(): void
     {
         // Arrange
-        $settings = new Settings((new TestData())->db);
+        $settings = new SqliteSettings((new TestData())->db);
         $settings->set('colour', 'red');
 
         // Act

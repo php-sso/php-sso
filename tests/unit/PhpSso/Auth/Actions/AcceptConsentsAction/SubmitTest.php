@@ -9,6 +9,7 @@ use PhpSso\Store\Consents;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteConsents;
 
 #[CoversMethod(AcceptConsentsAction::class, 'submit')]
 final class SubmitTest extends TestCase
@@ -22,7 +23,7 @@ final class SubmitTest extends TestCase
     protected function setUp(): void
     {
         $this->data = new TestData();
-        $this->consents = new Consents($this->data->db);
+        $this->consents = new SqliteConsents($this->data->db);
         $this->action = new AcceptConsentsAction($this->consents);
         $this->id = $this->consents->create('Terms', 'a', null, true);
         $this->user = $this->data->users->find($this->data->user('alice'));

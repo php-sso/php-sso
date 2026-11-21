@@ -8,6 +8,7 @@ use PhpSso\Store\Consents;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteConsents;
 
 #[CoversMethod(Consents::class, 'delete')]
 final class DeleteTest extends TestCase
@@ -15,7 +16,7 @@ final class DeleteTest extends TestCase
     public function testAnUnusedConsentCanBeDeleted(): void
     {
         // Arrange
-        $consents = new Consents((new TestData())->db);
+        $consents = new SqliteConsents((new TestData())->db);
         $id = $consents->create('Terms', 'a', null, true);
 
         // Act
@@ -30,7 +31,7 @@ final class DeleteTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $consents = new Consents($data->db);
+        $consents = new SqliteConsents($data->db);
         $id = $consents->create('Terms', 'a', null, true);
         $consents->accept($data->user('alice'), $id, 1, '203.0.113.9');
 

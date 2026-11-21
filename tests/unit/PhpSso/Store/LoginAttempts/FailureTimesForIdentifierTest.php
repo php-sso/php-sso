@@ -8,6 +8,7 @@ use PhpSso\Store\LoginAttempts;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestData;
+use PhpSso\Store\Sqlite\SqliteLoginAttempts;
 
 #[CoversMethod(LoginAttempts::class, 'failureTimesForIdentifier')]
 final class FailureTimesForIdentifierTest extends TestCase
@@ -18,7 +19,7 @@ final class FailureTimesForIdentifierTest extends TestCase
     protected function setUp(): void
     {
         $this->data = new TestData();
-        $this->attempts = new LoginAttempts($this->data->db);
+        $this->attempts = new SqliteLoginAttempts($this->data->db);
     }
 
     public function testItCountsFailuresForTheIdentifierIgnoringCase(): void
