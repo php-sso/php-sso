@@ -25,7 +25,7 @@ final class TestData
 
     public function __construct()
     {
-        $this->db = Connection::sqlite(':memory:');
+        $this->db = TestConnection::open();
         $this->users = new SqlUsers($this->db);
         $this->groups = new SqlGroups($this->db);
         $this->clients = new SqlClients($this->db);

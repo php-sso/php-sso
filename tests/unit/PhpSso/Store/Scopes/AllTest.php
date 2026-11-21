@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Store\Scopes;
 
-use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Scopes;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\Store\Sql\SqlScopes;
+use Tests\unit\PhpSso\Support\TestConnection;
 
 #[CoversMethod(Scopes::class, 'all')]
 #[CoversMethod(Scopes::class, 'names')]
@@ -17,7 +17,7 @@ final class AllTest extends TestCase
 {
     private function scopes(): Scopes
     {
-        return new SqlScopes(Connection::sqlite(':memory:'), ['openid', 'profile', 'roles']);
+        return new SqlScopes(TestConnection::open(), ['openid', 'profile', 'roles']);
     }
 
     public function testTheBuiltInScopesComeFirstWithTheirMeaning(): void
@@ -54,7 +54,7 @@ final class AllTest extends TestCase
     public function testAnAddedScopeIsKeptBetweenRequests(): void
     {
         // Arrange
-        $db = Connection::sqlite(':memory:');
+        $db = TestConnection::open();
         (new SqlScopes($db, ['openid']))->create('reports:read', '');
 
         // Act

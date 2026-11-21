@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Store\Sessions;
 
-use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Sessions;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\Store\Sql\SqlSessions;
+use Tests\unit\PhpSso\Support\TestConnection;
 
 #[CoversMethod(Sessions::class, 'amr')]
 #[CoversMethod(Sessions::class, 'start')]
@@ -16,7 +16,7 @@ final class AmrTest extends TestCase
 {
     private function sessions(): Sessions
     {
-        $db = Connection::sqlite(':memory:');
+        $db = TestConnection::open();
         $db->pdo->exec("INSERT INTO users (sub, username, password_hash, name, email) VALUES ('u1', 'alice', 'x', 'Alice', 'a@example.com')");
 
         return new SqlSessions($db, 3600);

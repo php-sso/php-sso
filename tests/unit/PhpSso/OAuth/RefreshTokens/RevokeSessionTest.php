@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\RefreshTokens;
 
-use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Sql\SqlAuthorizationCodes;
 use PhpSso\Store\Sql\SqlRefreshTokens;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\OAuthServer\Grant\AuthorizationCodeRecord;
 use PhpSso\OAuthServer\Grant\RefreshTokenRecord;
+use Tests\unit\PhpSso\Support\TestConnection;
 
 #[CoversMethod(SqlRefreshTokens::class, 'revokeSession')]
 final class RevokeSessionTest extends TestCase
@@ -18,7 +18,7 @@ final class RevokeSessionTest extends TestCase
     public function testItRevokesEveryFamilyOfTheSessionIncludingOnesWithoutARefreshToken(): void
     {
         // Arrange
-        $db = Connection::sqlite(':memory:');
+        $db = TestConnection::open();
         $store = new SqlRefreshTokens($db);
         $store->save($this->token('rt-1', 'family-with-refresh', 'session-1'));
         $store->save($this->token('rt-2', 'family-other-session', 'session-2'));

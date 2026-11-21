@@ -16,6 +16,43 @@ services:
     volumes:
       - .:/app
 
+  # The other databases the app can use (`storage` in config/config.php), for running the test suite against them:
+  #   docker compose --profile databases up -d
+  #   docker compose exec -e SSO_TEST_DATABASE=mysql://sso:sso@mysql/sso_test sso vendor/bin/phpunit
+  #   docker compose exec -e SSO_TEST_DATABASE=pgsql://sso:sso@postgres/sso_test sso vendor/bin/phpunit
+  mysql:
+    image: mysql:8.4
+    profiles: [databases]
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: sso_test
+      MYSQL_USER: sso
+      MYSQL_PASSWORD: sso
+    command: --skip-log-bin --innodb-flush-log-at-trx-commit=0 --innodb-doublewrite=0
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-usso", "-psso"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  postgres:
+    image: postgres:17
+    profiles: [databases]
+    environment:
+      POSTGRES_DB: sso_test
+      POSTGRES_USER: sso
+      POSTGRES_PASSWORD: sso
+    command: -c fsync=off -c synchronous_commit=off -c full_page_writes=off
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sso -d sso_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
   # Tiny demo app that logs in through the SSO server.
   client:
     container_name: php-sso-client

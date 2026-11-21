@@ -48,6 +48,11 @@ final class SqliteDialect implements Dialect
         return $placeholder;
     }
 
+    public function sameOrNull(string $column, string $placeholder): string
+    {
+        return $column . ' IS ' . $placeholder;
+    }
+
     public function like(string $column, string $placeholder): string
     {
         return $column . ' LIKE ' . $placeholder . " ESCAPE '\\'";

@@ -50,6 +50,9 @@ interface Dialect
     /** A placeholder (or value expression) to compare with a {@see ci()} column. */
     public function ciValue(string $placeholder): string;
 
+    /** A condition: the column equals the value, where NULL equals NULL (and nothing else). */
+    public function sameOrNull(string $column, string $placeholder): string;
+
     /** A condition: the column contains the pattern (which the caller escaped with a backslash), ignoring case. */
     public function like(string $column, string $placeholder): string;
 

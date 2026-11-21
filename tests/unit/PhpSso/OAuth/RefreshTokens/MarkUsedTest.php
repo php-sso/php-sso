@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\RefreshTokens;
 
-use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Sql\SqlRefreshTokens;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\OAuthServer\Grant\RefreshTokenRecord;
+use Tests\unit\PhpSso\Support\TestConnection;
 
 #[CoversMethod(SqlRefreshTokens::class, 'markUsed')]
 final class MarkUsedTest extends TestCase
@@ -16,7 +16,7 @@ final class MarkUsedTest extends TestCase
     public function testAnExchangedTokenCannotBeExchangedAgain(): void
     {
         // Arrange
-        $store = new SqlRefreshTokens(Connection::sqlite(':memory:'));
+        $store = new SqlRefreshTokens(TestConnection::open());
         $store->save($this->token());
 
         // Act

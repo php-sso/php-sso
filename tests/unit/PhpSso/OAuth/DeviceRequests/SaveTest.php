@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\DeviceRequests;
 
-use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Sql\SqlDeviceRequests;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\OAuthServer\Grant\DeviceAuthorizationRecord;
 use PhpSso\OAuthServer\Grant\DeviceStatus;
+use Tests\unit\PhpSso\Support\TestConnection;
 
 #[CoversMethod(SqlDeviceRequests::class, 'save')]
 final class SaveTest extends TestCase
@@ -17,7 +17,7 @@ final class SaveTest extends TestCase
     public function testItKeepsEveryFieldAndFindsTheRequestByEitherCode(): void
     {
         // Arrange
-        $store = new SqlDeviceRequests(Connection::sqlite(':memory:'));
+        $store = new SqlDeviceRequests(TestConnection::open());
         $request = $this->request();
 
         // Act

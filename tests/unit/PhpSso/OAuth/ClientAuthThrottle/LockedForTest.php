@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\ClientAuthThrottle;
 
-use PhpSso\Store\Sql\Connection;
 use PhpSso\OAuth\ClientAuthThrottle;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\Store\Sql\SqlClientAuthFailures;
+use Tests\unit\PhpSso\Support\TestConnection;
 
 #[CoversMethod(ClientAuthThrottle::class, 'lockedFor')]
 final class LockedForTest extends TestCase
@@ -19,7 +19,7 @@ final class LockedForTest extends TestCase
     public function testNothingStopsAnAddressWithoutFailures(): void
     {
         // Arrange
-        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(Connection::sqlite(':memory:')), self::LIMITS);
+        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(TestConnection::open()), self::LIMITS);
 
         // Act
         $wait = $throttle->lockedFor('web', '10.0.0.1', self::NOW);
@@ -31,7 +31,7 @@ final class LockedForTest extends TestCase
     public function testAnAddressIsLockedOutOfAClientAfterTooManyFailuresForIt(): void
     {
         // Arrange
-        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(Connection::sqlite(':memory:')), self::LIMITS);
+        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(TestConnection::open()), self::LIMITS);
         foreach ([0, 1, 2] as $second) {
             $throttle->recordFailure('web', '10.0.0.1', self::NOW + $second);
         }
@@ -46,7 +46,7 @@ final class LockedForTest extends TestCase
     public function testAnotherAddressIsNotLockedOutOfTheSameClient(): void
     {
         // Arrange
-        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(Connection::sqlite(':memory:')), self::LIMITS);
+        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(TestConnection::open()), self::LIMITS);
         foreach ([0, 1, 2] as $second) {
             $throttle->recordFailure('web', '10.0.0.1', self::NOW + $second);
         }
@@ -61,7 +61,7 @@ final class LockedForTest extends TestCase
     public function testTheSameAddressMayStillUseAnotherClient(): void
     {
         // Arrange
-        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(Connection::sqlite(':memory:')), self::LIMITS);
+        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(TestConnection::open()), self::LIMITS);
         foreach ([0, 1, 2] as $second) {
             $throttle->recordFailure('web', '10.0.0.1', self::NOW + $second);
         }
@@ -76,7 +76,7 @@ final class LockedForTest extends TestCase
     public function testAnAddressTryingManyClientsIsLockedOutOfAll(): void
     {
         // Arrange
-        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(Connection::sqlite(':memory:')), self::LIMITS);
+        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(TestConnection::open()), self::LIMITS);
         foreach (['a', 'b', 'c', 'd', 'e'] as $i => $client) {
             $throttle->recordFailure($client, '10.0.0.1', self::NOW + $i);
         }
@@ -91,7 +91,7 @@ final class LockedForTest extends TestCase
     public function testFailuresStopCountingWhenTheyLeaveTheWindow(): void
     {
         // Arrange
-        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(Connection::sqlite(':memory:')), self::LIMITS);
+        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(TestConnection::open()), self::LIMITS);
         foreach ([0, 1, 2] as $second) {
             $throttle->recordFailure('web', '10.0.0.1', self::NOW + $second);
         }
@@ -106,7 +106,7 @@ final class LockedForTest extends TestCase
     public function testItNeverLocksWhenSwitchedOff(): void
     {
         // Arrange
-        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(Connection::sqlite(':memory:')), ['enabled' => false] + self::LIMITS);
+        $throttle = new ClientAuthThrottle(new SqlClientAuthFailures(TestConnection::open()), ['enabled' => false] + self::LIMITS);
         foreach (range(0, 20) as $second) {
             $throttle->recordFailure('web', '10.0.0.1', self::NOW + $second);
         }

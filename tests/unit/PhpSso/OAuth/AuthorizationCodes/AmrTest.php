@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\AuthorizationCodes;
 
-use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Sql\SqlAuthorizationCodes;
 use PhpSso\OAuthServer\Grant\AuthorizationCodeRecord;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
+use Tests\unit\PhpSso\Support\TestConnection;
 
 #[CoversMethod(SqlAuthorizationCodes::class, 'save')]
 #[CoversMethod(SqlAuthorizationCodes::class, 'find')]
@@ -23,7 +23,7 @@ final class AmrTest extends TestCase
     public function testTheMethodsComeBackWithTheCode(): void
     {
         // Arrange
-        $store = new SqlAuthorizationCodes(Connection::sqlite(':memory:'));
+        $store = new SqlAuthorizationCodes(TestConnection::open());
 
         // Act
         $store->save($this->code(['pwd', 'otp', 'mfa']));
@@ -35,7 +35,7 @@ final class AmrTest extends TestCase
     public function testNoMethodsStayNull(): void
     {
         // Arrange
-        $store = new SqlAuthorizationCodes(Connection::sqlite(':memory:'));
+        $store = new SqlAuthorizationCodes(TestConnection::open());
 
         // Act
         $store->save($this->code(null));
@@ -47,7 +47,7 @@ final class AmrTest extends TestCase
     public function testUsingTheCodeKeepsTheMethods(): void
     {
         // Arrange
-        $store = new SqlAuthorizationCodes(Connection::sqlite(':memory:'));
+        $store = new SqlAuthorizationCodes(TestConnection::open());
         $store->save($this->code(['pwd']));
 
         // Act

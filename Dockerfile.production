@@ -8,6 +8,11 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --no-progress --no-scripts --prefer-dist --optimize-autoloader
 
 FROM php:8.4-apache
+# The drivers for the databases the app can use besides SQLite (`storage` in config/config.php).
+RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev \
+    && docker-php-ext-install pdo_mysql pdo_pgsql \
+    && apt-get purge -y --auto-remove libpq-dev && apt-get install -y --no-install-recommends libpq5 \
+    && rm -rf /var/lib/apt/lists/*
 RUN a2dismod -f status autoindex >/dev/null \
     && : > /etc/apache2/ports.conf && rm -f /etc/apache2/sites-enabled/*.conf \
     && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"

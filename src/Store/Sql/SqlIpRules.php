@@ -24,7 +24,7 @@ class SqlIpRules implements \PhpSso\Store\IpRules
     /** @return array<int, array{id: int, client_id: ?string, type: string, cidr: string, note: string, created_at: int}> */
     public function all(?string $clientId = null): array
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM ip_rules WHERE client_id IS :c ORDER BY type, id');
+        $stmt = $this->pdo->prepare('SELECT * FROM ip_rules WHERE ' . $this->dialect->sameOrNull('client_id', ':c') . ' ORDER BY type, id');
         $stmt->execute([':c' => $clientId]);
 
         return $stmt->fetchAll();
@@ -33,7 +33,7 @@ class SqlIpRules implements \PhpSso\Store\IpRules
     /** @return string[] ranges of the given type ('allow' or 'deny') */
     public function ranges(string $type, ?string $clientId = null): array
     {
-        $stmt = $this->pdo->prepare('SELECT cidr FROM ip_rules WHERE type = :t AND client_id IS :c');
+        $stmt = $this->pdo->prepare('SELECT cidr FROM ip_rules WHERE type = :t AND ' . $this->dialect->sameOrNull('client_id', ':c'));
         $stmt->execute([':t' => $type, ':c' => $clientId]);
 
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -63,7 +63,7 @@ class SqlIpRules implements \PhpSso\Store\IpRules
 
     public function exists(string $type, string $cidr, ?string $clientId = null): bool
     {
-        $stmt = $this->pdo->prepare('SELECT 1 FROM ip_rules WHERE type = :t AND cidr = :r AND client_id IS :c');
+        $stmt = $this->pdo->prepare('SELECT 1 FROM ip_rules WHERE type = :t AND cidr = :r AND ' . $this->dialect->sameOrNull('client_id', ':c'));
         $stmt->execute([':t' => $type, ':r' => $cidr, ':c' => $clientId]);
 
         return (bool) $stmt->fetchColumn();

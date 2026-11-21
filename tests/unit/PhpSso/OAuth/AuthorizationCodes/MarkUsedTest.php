@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\AuthorizationCodes;
 
-use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Sql\SqlAuthorizationCodes;
 use PhpSso\Store\Sql\SqlRefreshTokens;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\OAuthServer\Grant\AuthorizationCodeRecord;
+use Tests\unit\PhpSso\Support\TestConnection;
 
 #[CoversMethod(SqlAuthorizationCodes::class, 'markUsed')]
 final class MarkUsedTest extends TestCase
@@ -22,7 +22,7 @@ final class MarkUsedTest extends TestCase
     public function testExactlyOneCallerRedeemsACode(): void
     {
         // Arrange
-        $store = new SqlAuthorizationCodes(Connection::sqlite(':memory:'));
+        $store = new SqlAuthorizationCodes(TestConnection::open());
         $this->saved($store);
 
         // Act
@@ -38,7 +38,7 @@ final class MarkUsedTest extends TestCase
     public function testACodeWhoseSessionEndedMeanwhileCannotBeRedeemed(): void
     {
         // Arrange
-        $db = Connection::sqlite(':memory:');
+        $db = TestConnection::open();
         $store = new SqlAuthorizationCodes($db);
         $this->saved($store, 'family-9');
         (new SqlRefreshTokens($db))->revokeFamily('family-9', 1_700_000_000);
@@ -53,7 +53,7 @@ final class MarkUsedTest extends TestCase
     public function testItRefusesAnUnknownCode(): void
     {
         // Arrange
-        $store = new SqlAuthorizationCodes(Connection::sqlite(':memory:'));
+        $store = new SqlAuthorizationCodes(TestConnection::open());
 
         // Act
         $redeemed = $store->markUsed('nope', 1_700_000_000);

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Store\Sql\SqlMaintenance;
 
-use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Sql\SqlMaintenance;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
+use Tests\unit\PhpSso\Support\TestConnection;
 
 #[CoversMethod(SqlMaintenance::class, 'purgeExpired')]
 final class PurgeExpiredTest extends TestCase
@@ -15,7 +15,7 @@ final class PurgeExpiredTest extends TestCase
     public function testItDropsOldRowsAndKeepsRecentOnes(): void
     {
         // Arrange
-        $db = Connection::sqlite(':memory:');
+        $db = TestConnection::open();
         $insert = $db->pdo->prepare('INSERT INTO device_failures (user_sub, created_at) VALUES (?, ?)');
         $insert->execute(['old', time() - 8 * 86400]);
         $insert->execute(['recent', time() - 3600]);

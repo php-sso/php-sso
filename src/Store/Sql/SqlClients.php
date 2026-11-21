@@ -116,6 +116,8 @@ final class SqlClients implements \PhpSso\Store\Clients
             $this->pdo->rollBack();
 
             throw $e;
+        } finally {
+            $this->dialect->restoreForeignKeys($this->pdo);
         }
     }
 

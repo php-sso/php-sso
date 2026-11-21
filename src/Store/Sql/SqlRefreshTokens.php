@@ -64,11 +64,11 @@ final class SqlRefreshTokens implements RefreshTokenStore
     /** Revokes every family that was started or continued in the login session, whether or not it got a refresh token. */
     public function revokeSession(string $sessionId, int $at): void
     {
-        $at = $this->dialect->castInt(':at');
+        $atInt = $this->dialect->castInt(':at');
         $this->pdo->prepare($this->dialect->insertIgnoreSelect('oauth_revoked_families', ['family_id', 'revoked_at'], ['family_id'],
-            "SELECT family_id, {$at} FROM oauth_codes WHERE session_id = :sid
+            "SELECT family_id, {$atInt} FROM oauth_codes WHERE session_id = :sid
             UNION
-            SELECT family_id, {$at} FROM oauth_refresh_tokens WHERE session_id = :sid"))
+            SELECT family_id, {$atInt} FROM oauth_refresh_tokens WHERE session_id = :sid"))
             ->execute([':at' => $at, ':sid' => $sessionId]);
     }
 

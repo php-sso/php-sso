@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\OAuth\SessionLinks;
 
-use PhpSso\Store\Sql\Connection;
 use PhpSso\OAuth\SessionLinks;
 use PhpSso\Store\Sessions;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use PhpSso\Store\Sql\SqlSessions;
+use Tests\unit\PhpSso\Support\TestConnection;
 
 #[CoversMethod(SessionLinks::class, 'terminate')]
 final class TerminateTest extends TestCase
@@ -17,7 +17,7 @@ final class TerminateTest extends TestCase
     public function testItOnlyMarksTheSessionEndedBecauseTheOAuthServerDoesTheRest(): void
     {
         // Arrange
-        $db = Connection::sqlite(':memory:');
+        $db = TestConnection::open();
         $db->pdo->exec("INSERT INTO users (sub, username, password_hash, name, email) VALUES ('u1', 'alice', 'x', 'Alice', 'a@example.com')");
         $sessions = new SqlSessions($db, 3600);
         $told = 0;

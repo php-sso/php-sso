@@ -20,11 +20,6 @@ final class SqlStorage implements Storage
     {
     }
 
-    public static function open(string $path, StorageOptions $options): self
-    {
-        return new self(Connection::sqlite($path), $options);
-    }
-
     public function users(): Users
     {
         return $this->made[__FUNCTION__] ??= new SqlUsers($this->db);
