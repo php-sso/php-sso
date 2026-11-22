@@ -15,7 +15,7 @@ final class SqlMaintenance implements Maintenance
     private Dialect $dialect;
     private Connection $db;
 
-    public function __construct(Connection $db, private int $idleSeconds)
+    public function __construct(Connection $db, private int $idleSeconds, private int $auditRetentionSeconds = 0)
     {
         $this->db = $db;
         $this->pdo = $db->pdo;
@@ -31,6 +31,9 @@ final class SqlMaintenance implements Maintenance
         // Expired codes and tokens, and revocations old enough that every access token they cover has expired.
         foreach (['oauth_codes' => 'expires_at', 'oauth_refresh_tokens' => 'expires_at', 'oauth_revoked_families' => 'revoked_at', 'oauth_revoked_tokens' => 'expires_at', 'oauth_device_requests' => 'expires_at', 'device_failures' => 'created_at'] as $table => $column) {
             $this->pdo->prepare("DELETE FROM {$table} WHERE {$column} < ?")->execute([$cutoff]);
+        }
+        if ($this->auditRetentionSeconds > 0) { // the audit log is kept for the retention period the operator chose, not for the week the rest is
+            $this->pdo->prepare('DELETE FROM audit_log WHERE at < ?')->execute([time() - $this->auditRetentionSeconds]);
         }
     }
 

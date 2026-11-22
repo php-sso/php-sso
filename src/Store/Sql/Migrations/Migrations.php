@@ -12,6 +12,7 @@ final class Migrations
     {
         return [
             new CreateBaselineSchema(),
+            new CreateAuditLog(),
         ];
     }
 }

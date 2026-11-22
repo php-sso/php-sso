@@ -23,6 +23,23 @@
 <label class="check-row"><input type="checkbox" name="{{ field }}[]" value="{{ value }}"{{ checked ? ' checked' }}><span class="check-text"><b class="mono">{{ value }}</b>{% if meaning %}<small>{{ meaning }}</small>{% endif %}</span></label>
 {% endmacro %}
 
+{# A numbered pager for a PhpSso\Admin\Pager. `base` is the address up to and including `?` (and any other parameters, each followed by `&`). #}
+{% macro pager(pager, base, param = 'page', anchor = '') %}
+{% if pager.pages > 1 %}
+<nav class="pager" aria-label="Pages">
+  {% if pager.page > 1 %}<a href="{{ base }}{{ param }}={{ pager.page - 1 }}{{ anchor }}" rel="prev">Previous</a>{% else %}<span class="off">Previous</span>{% endif %}
+  <ol>
+    {% for n in pager.links %}
+      {% if n is null %}<li class="gap" aria-hidden="true">...</li>
+      {% elseif n == pager.page %}<li><span class="here" aria-current="page">{{ n }}</span></li>
+      {% else %}<li><a href="{{ base }}{{ param }}={{ n }}{{ anchor }}" aria-label="Page {{ n }}">{{ n }}</a></li>{% endif %}
+    {% endfor %}
+  </ol>
+  {% if pager.page < pager.pages %}<a href="{{ base }}{{ param }}={{ pager.page + 1 }}{{ anchor }}" rel="next">Next</a>{% else %}<span class="off">Next</span>{% endif %}
+</nav>
+{% endif %}
+{% endmacro %}
+
 {% macro avatar(name, size = '') %}<span class="avatar {{ size }}" style="--h: {{ hue(name) }}" aria-hidden="true">{{ initials(name) }}</span>{% endmacro %}
 
 {% macro chip(name) %}<span class="chip" style="--h: {{ hue(name) }}">{{ name }}</span>{% endmacro %}

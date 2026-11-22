@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpSso\Store\Sql;
 
-use PhpSso\Store\{Backup, ClientAuthFailures, Clients, Consents, DeviceFailures, Groups, HttpCache, Identities, IpRules, LoginAttempts, Maintenance, MfaFactors, Relations, Roles, SamlConnections, SamlRequests, ScimClients, ScimEvents, ScimGroups, ScimUsers, Scopes, Sessions, Settings, Storage, StorageOptions, Users};
+use PhpSso\Store\{AuditLog, Backup, ClientAuthFailures, Clients, Consents, DeviceFailures, Groups, HttpCache, Identities, IpRules, LoginAttempts, Maintenance, MfaFactors, Relations, Roles, SamlConnections, SamlRequests, ScimClients, ScimEvents, ScimGroups, ScimUsers, Scopes, Sessions, Settings, Storage, StorageOptions, Users};
 use PhpSso\OAuthServer\Grant\AuthorizationCodeStore;
 use PhpSso\OAuthServer\Grant\RefreshTokenStore;
 use PhpSso\OAuthServer\Grant\DeviceAuthorizationStore;
@@ -132,7 +132,7 @@ final class SqlStorage implements Storage
 
     public function maintenance(): Maintenance
     {
-        return $this->made[__FUNCTION__] ??= new SqlMaintenance($this->db, $this->options->sessionIdleSeconds);
+        return $this->made[__FUNCTION__] ??= new SqlMaintenance($this->db, $this->options->sessionIdleSeconds, $this->options->auditRetentionSeconds);
     }
 
     public function authorizationCodes(): AuthorizationCodeStore
@@ -153,6 +153,11 @@ final class SqlStorage implements Storage
     public function revokedAccessTokens(): RevokedAccessTokens
     {
         return $this->made[__FUNCTION__] ??= new SqlRevokedAccessTokens($this->db);
+    }
+
+    public function auditLog(): AuditLog
+    {
+        return $this->made[__FUNCTION__] ??= new SqlAuditLog($this->db);
     }
 
     public function backup(): Backup

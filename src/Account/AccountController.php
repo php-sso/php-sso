@@ -11,6 +11,8 @@ use PhpSso\Auth\Social\SocialLoginException;
 use PhpSso\Auth\UserRules;
 use PhpSso\Net\ClientIp;
 use PhpSso\Pages;
+use PhpSso\Audit\AccountActions;
+use PhpSso\Audit\Audit;
 use PhpSso\Store\Sessions;
 use PhpSso\Store\Users;
 use Laminas\Diactoros\Response\RedirectResponse;
@@ -29,6 +31,7 @@ final class AccountController
         private MfaChallenge $challenge,
         private ClientIp $clientIp,
         private SocialLogin $social,
+        private ?Audit $audit = null,
     ) {
     }
 
@@ -55,7 +58,9 @@ final class AccountController
             ], 400);
         }
 
-        return match (true) {
+        $plan = $this->audit !== null ? AccountActions::plan($path) : null;
+        $flashBefore = $_SESSION['flash'] ?? null;
+        $response = match (true) {
             $path === '/profile' => $this->updateProfile($user, $body),
             $path === '/password' => $this->changePassword($user, $body),
             $path === '/mfa/setup' => $this->mfaSetup($user, $body),
@@ -66,6 +71,11 @@ final class AccountController
             (bool) preg_match('#^/sessions/([0-9a-f]{32})/end$#', $path, $m) => $this->endSession($user, $m[1]),
             default => $this->notFound($user),
         };
+        if ($plan !== null && AccountActions::succeeded($plan, $response->getStatusCode(), ($_SESSION['flash'] ?? null) !== $flashBefore ? ($_SESSION['flash']['type'] ?? null) : null)) {
+            $this->audit?->record($plan['action'], $user, $this->clientIp->of($request), $plan['type'], $plan['target'], null, $plan['detail']);
+        }
+
+        return $response;
     }
 
     private function show(array $user, array $errors = [], array $values = [], int $status = 200): ResponseInterface

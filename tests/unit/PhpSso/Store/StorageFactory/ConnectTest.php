@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\Store\StorageFactory;
 
 use PhpSso\Store\StorageFactory;
+use PhpSso\Store\Sql\Migrations\Migrations;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 
@@ -32,7 +33,7 @@ final class ConnectTest extends TestCase
         $db = StorageFactory::connect($config);
 
         // Assert
-        $this->assertCount(1, $db->migrator()->pending());
+        $this->assertCount(count(Migrations::all()), $db->migrator()->pending());
     }
 
     public function testTheCallerMayOverrideTheConfig(): void

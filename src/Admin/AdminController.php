@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace PhpSso\Admin;
 
+use PhpSso\Audit\AdminActions;
+use PhpSso\Audit\Audit;
+use PhpSso\Store\AuditLog;
 use PhpSso\Auth\Impersonation;
 use PhpSso\Auth\LoginThrottle;
 use PhpSso\Auth\Mfa\Mfa;
@@ -83,6 +86,8 @@ final class AdminController
         private string $publicUrl,
         private Impersonation $impersonation,
         private Scopes $scopes,
+        private Audit $audit,
+        private AuditLog $auditLog,
     ) {
     }
 
@@ -100,11 +105,54 @@ final class AdminController
 
         foreach ($this->routes() as [$method, $pattern, $handler]) {
             if ($method === $request->getMethod() && preg_match($pattern, $path, $m)) {
-                return $this->$handler($request, ...array_map('urldecode', array_slice($m, 1)));
+                $args = array_map('urldecode', array_slice($m, 1));
+                // Every change an administrator makes is recorded: planned before it runs (so the name of what it deletes is still there), written once it succeeded.
+                $plan = $method === 'POST' ? AdminActions::plan($handler, $args, (array) $request->getParsedBody(), fn (string $type, string $id): ?array => $this->auditFind($type, $id)) : null;
+                $flashBefore = $_SESSION['flash'] ?? null;
+                $response = $this->$handler($request, ...$args);
+                if ($plan !== null) {
+                    $this->recordAudit($plan, $request, $response, ($_SESSION['flash'] ?? null) !== $flashBefore ? ($_SESSION['flash']['type'] ?? null) : null);
+                }
+
+                return $response;
             }
         }
 
         return $this->render('error.html.twig', ['message' => 'Page not found'], 404);
+    }
+
+    /** @param array{action: string, type: string|null, target: string|null, label: string|null, detail: array<string, mixed>} $plan */
+    private function recordAudit(array $plan, ServerRequestInterface $request, ResponseInterface $response, ?string $flashType): void
+    {
+        if (!AdminActions::succeeded($response->getStatusCode(), $flashType)) {
+            return;
+        }
+
+        $type = $plan['type'];
+        $target = $plan['target'];
+        if ($target === null && $response->hasHeader('Location') && ($made = AdminActions::createdBy($response->getHeaderLine('Location'))) !== null) {
+            [$type, $target] = $made; // a create: the id of what it made is in the address it sent the browser to
+        }
+        $this->audit->record($plan['action'], $this->admin, $this->clientIp->of($request), $type, $target, $plan['label'], $plan['detail']);
+    }
+
+    /** @return array<string, mixed>|null the row of a kind of thing, for the name the audit log copies; never throws, because a lookup must not stop a change */
+    private function auditFind(string $type, string $id): ?array
+    {
+        try {
+            return match ($type) {
+                'user' => $this->users->find($id),
+                'client' => $this->clients->find($id),
+                'group' => ctype_digit($id) ? $this->groups->find((int) $id) : null,
+                'role' => ctype_digit($id) ? $this->roles->find((int) $id) : null,
+                'scim_client' => ctype_digit($id) ? $this->scimClients->find((int) $id) : null,
+                'saml_connection' => ctype_digit($id) ? $this->samlConnections->find((int) $id) : null,
+                'consent' => ctype_digit($id) ? $this->consents->find((int) $id) : null,
+                default => null,
+            };
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /** @return array<int, array{string, string, string}> */
@@ -113,6 +161,7 @@ final class AdminController
         return [
             ['GET', '#^/$#', 'dashboard'],
 
+            ['GET', '#^/audit$#', 'auditList'],
             ['POST', '#^/sessions/([0-9a-f]{32})/end$#', 'sessionEnd'],
 
             ['GET', '#^/scopes$#', 'scopeList'],
@@ -239,6 +288,46 @@ final class AdminController
             'clients' => $this->clients->all(),
             'admins' => $this->users->admins(),
         ]);
+    }
+
+    private const AUDIT_PAGE_SIZE = 50;
+
+    private function auditList(ServerRequestInterface $request): ResponseInterface
+    {
+        $query = $request->getQueryParams();
+        $filter = [];
+        foreach (['action', 'actor', 'target'] as $key) {
+            $value = trim(is_string($query[$key] ?? null) ? $query[$key] : '');
+            if ($value !== '') {
+                $filter[$key] = mb_substr($value, 0, 100);
+            }
+        }
+        $from = self::day($query['from'] ?? null, false);
+        $to = self::day($query['to'] ?? null, true);
+        $search = $filter + ($from !== null ? ['since' => $from] : []) + ($to !== null ? ['until' => $to] : []);
+
+        $pager = new Pager($this->auditLog->count($search), self::AUDIT_PAGE_SIZE, $query['page'] ?? 1);
+        $keep = array_filter($filter + ['from' => $from !== null ? gmdate('Y-m-d', $from) : '', 'to' => $to !== null ? gmdate('Y-m-d', $to) : '']);
+
+        return $this->render('audit.html.twig', [
+            'rows' => $this->auditLog->search($search, $pager->perPage, $pager->offset),
+            'pager' => $pager,
+            'filter' => $filter,
+            'from' => $from !== null ? gmdate('Y-m-d', $from) : '',
+            'to' => $to !== null ? gmdate('Y-m-d', $to) : '',
+            'groups' => Audit::GROUPS,
+            'base' => '/admin/audit?' . ($keep === [] ? '' : http_build_query($keep) . '&'),
+        ]);
+    }
+
+    /** A date as typed in a date field (YYYY-MM-DD, taken as UTC): its first second, or its last. */
+    private static function day(mixed $value, bool $endOfDay): ?int
+    {
+        if (!is_string($value) || preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) !== 1 || ($time = strtotime($value . ' 00:00:00 UTC')) === false) {
+            return null;
+        }
+
+        return $endOfDay ? $time + 86399 : $time;
     }
 
     private function sessionEnd(ServerRequestInterface $request, string $id): ResponseInterface

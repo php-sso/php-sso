@@ -131,7 +131,7 @@ final class RelationPicker
             'pages' => $pages,
             'from' => $matching === 0 ? 0 : ($page - 1) * self::PAGE_SIZE + 1,
             'to' => min($matching, $page * self::PAGE_SIZE),
-            'links' => self::pageLinks($page, $pages),
+            'links' => Pager::links($page, $pages),
             'find' => $find,
             'candidates' => $find === '' ? [] : $this->rows($spec['item'], $relation->candidates($owner['id'], $find, 8)),
         ];
@@ -207,27 +207,6 @@ final class RelationPicker
         return $row['name'] ?? null;
     }
 
-    /**
-     * Page numbers to show: the first and last page and a window around the current one, with gaps as null.
-     * @return array<int, int|null>
-     */
-    private static function pageLinks(int $page, int $pages): array
-    {
-        $numbers = array_unique(array_filter([1, $page - 2, $page - 1, $page, $page + 1, $page + 2, $pages], static fn (int $n) => $n >= 1 && $n <= $pages));
-        sort($numbers);
-
-        $links = [];
-        $previous = 0;
-        foreach ($numbers as $n) {
-            if ($n - $previous > 1) {
-                $links[] = null;
-            }
-            $links[] = $n;
-            $previous = $n;
-        }
-
-        return $links;
-    }
 
     private function done(string $to, string $message, string $type = 'success'): ResponseInterface
     {

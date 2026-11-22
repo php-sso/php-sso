@@ -6,6 +6,8 @@ namespace Tests\unit\PhpSso\Store\Sql\Migrations\Migrator;
 
 use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Sql\Migrations\Migrator;
+use PhpSso\Store\Sql\Migrations\Migration;
+use PhpSso\Store\Sql\Migrations\Migrations;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\CountingConnection;
@@ -38,7 +40,7 @@ final class MigrateRealSchemaTest extends TestCase
         // Assert
         $this->assertTrue($db->tableExists('users'));
         $this->assertTrue($db->tableExists('schema_migrations'));
-        $this->assertSame(['0001'], array_keys($db->migrator()->applied()));
+        $this->assertSame(array_map(static fn (Migration $m): string => $m->id(), Migrations::all()), array_keys($db->migrator()->applied()));
     }
 
     public function testASqliteDatabaseFromBeforeTheMigratorIsUpgradedAndStamped(): void
@@ -55,7 +57,7 @@ final class MigrateRealSchemaTest extends TestCase
         $db = Connection::sqlite($this->path);
 
         // Assert
-        $this->assertSame(['0001'], array_keys($db->migrator()->applied()));
+        $this->assertSame(array_map(static fn (Migration $m): string => $m->id(), Migrations::all()), array_keys($db->migrator()->applied()));
         $this->assertSame('alice', $db->pdo->query('SELECT username FROM users')->fetchColumn());
         $this->assertTrue($db->columnExists('users', 'must_change_password'));
         $this->assertTrue($db->tableExists('oauth_codes'));
@@ -98,7 +100,7 @@ final class MigrateRealSchemaTest extends TestCase
         $pending = array_map(static fn ($m): string => $m->id(), $db->migrator()->pending());
 
         // Assert
-        $this->assertSame(['0001'], $pending);
+        $this->assertSame(array_map(static fn (Migration $m): string => $m->id(), Migrations::all()), $pending);
         $this->assertFalse($db->tableExists('users'));
     }
 }

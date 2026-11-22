@@ -87,6 +87,7 @@ use PhpSso\OAuthServer\Endpoint\Endpoints;
 use PhpSso\OAuthServer\Clock\SystemClock;
 use PhpSso\OAuthServer\Device\DeviceVerifier;
 use PhpSso\OAuthServer\Logout\LogoutSupport;
+use PhpSso\Audit\Audit;
 use PhpSso\Http\SecurityHeaders;
 use PhpSso\Startup\Checks;
 use PhpSso\Store\SchemaTooNew;
@@ -116,7 +117,7 @@ if ($problems !== []) {
 }
 
 try {
-    $storage = StorageFactory::create($config['storage'], new StorageOptions($config['session_idle_seconds'], array_keys($config['scopes'])));
+    $storage = StorageFactory::create($config['storage'], StorageOptions::fromConfig($config));
 } catch (SchemaTooNew $e) { // a database a newer version has upgraded: nothing was changed, and nothing is served
     $refuse([$e->getMessage()]);
 }
@@ -149,6 +150,7 @@ $sessions = $storage->sessions();
 $attempts = $storage->loginAttempts();
 $ipRules = $storage->ipRules();
 $ipPolicy = new IpPolicy($ipRules);
+$audit = new Audit($storage->auditLog(), $config['audit']['stream']);
 $clientIp = new ClientIp($config['trusted_proxies']);
 $storage->enforceUniqueEmail(IdentifierResolverFactory::usesEmail($config['login']['identifier']));
 (new Seeder($users, $groups, $clients, $roles))->seed($config['seed']);
@@ -202,7 +204,7 @@ $sessions->onEnded(static function (array $ended) use ($oauth): void {
 $consents = $storage->consents();
 $requiredActions = new RequiredActions([new AcceptConsentsAction($consents), new ChangePasswordAction($users, $sessions)]);
 $loginFlow = new LoginFlow($sessions, $attempts, $requiredActions);
-$impersonation = new \PhpSso\Auth\Impersonation($sessions, $users);
+$impersonation = new \PhpSso\Auth\Impersonation($sessions, $users, $audit);
 $settings = $storage->settings();
 $throttle = new LoginThrottle($attempts, $settings, $config['login']['throttle']);
 $mfa = new Mfa($storage->mfaFactors(), new SecretBox($config['keys_dir'] . '/mfa.key'), $settings, $config['app_name'], $config['login']['mfa']['policy']);
@@ -219,7 +221,7 @@ $accountMatcher = new AccountMatcher($identities, $users);
 $socialPolicy = new AccountPolicy($settings, $config['login']['social']);
 $social = new SocialLogin($socialProviders, $identities, $users, $socialPolicy, $config['issuer'], $accountMatcher, $samlConnections);
 $verifier = new DeviceVerifier($storage->deviceRequests(), new RegisteredClients($clients, $scopes->builtinNames()), new ClientAccess($clients), new SystemClock());
-$sso = new Sso($config, $oauth, $users, new AdminController($twig, $users, $groups, $clients, $roles, $sessions, $attempts, $ipRules, $ipPolicy, $clientIp, new AccessTester($ipPolicy, $clients, $users), new RelationPicker($twig, $storage->relations(), $users, $groups, $clients, $roles), $userRules, $throttle, $mfa, $social, $consents, $samlConnections, $samlService, $scimClients, $scimEvents, $scimUsers, $scimGroups, $config['issuer'], $impersonation, $scopes), $sessions, $attempts, $clients, $pages, new AccountController($pages, $users, $sessions, $userRules, $mfa, $mfaChallenge, $clientIp, $social), new DevicePage($pages, $verifier, $storage->deviceFailures()), $clientIp, $ipPolicy, $loginFlow, new LoginController($pages, $loginFlow, IdentifierResolverFactory::create($config['login']['identifier'], $users), $users, $attempts, $clientIp, $throttle, $mfa, $socialProviders, $samlConnections), new MfaLoginController($pages, $loginFlow, $mfa, $mfaChallenge, $users, $clientIp), new SocialController($social, $loginFlow, $mfa, $clientIp), new SamlController($samlService, $samlConnections, $accountMatcher, $socialPolicy, $loginFlow, $mfa, $clientIp), new RequiredActionController($pages, $loginFlow, $requiredActions, $users, $clientIp), $requiredActions, new ClientAuthThrottle($storage->clientAuthFailures(), $config['client_auth_throttle']), $impersonation);
+$sso = new Sso($config, $oauth, $users, new AdminController($twig, $users, $groups, $clients, $roles, $sessions, $attempts, $ipRules, $ipPolicy, $clientIp, new AccessTester($ipPolicy, $clients, $users), new RelationPicker($twig, $storage->relations(), $users, $groups, $clients, $roles), $userRules, $throttle, $mfa, $social, $consents, $samlConnections, $samlService, $scimClients, $scimEvents, $scimUsers, $scimGroups, $config['issuer'], $impersonation, $scopes, $audit, $storage->auditLog()), $sessions, $attempts, $clients, $pages, new AccountController($pages, $users, $sessions, $userRules, $mfa, $mfaChallenge, $clientIp, $social, $audit), new DevicePage($pages, $verifier, $storage->deviceFailures()), $clientIp, $ipPolicy, $loginFlow, new LoginController($pages, $loginFlow, IdentifierResolverFactory::create($config['login']['identifier'], $users), $users, $attempts, $clientIp, $throttle, $mfa, $socialProviders, $samlConnections), new MfaLoginController($pages, $loginFlow, $mfa, $mfaChallenge, $users, $clientIp), new SocialController($social, $loginFlow, $mfa, $clientIp), new SamlController($samlService, $samlConnections, $accountMatcher, $socialPolicy, $loginFlow, $mfa, $clientIp), new RequiredActionController($pages, $loginFlow, $requiredActions, $users, $clientIp), $requiredActions, new ClientAuthThrottle($storage->clientAuthFailures(), $config['client_auth_throttle']), $impersonation);
 
 // Provisioning clients call the SCIM endpoints with a bearer token: no cookie, no session.
 if (str_starts_with($request->getUri()->getPath(), '/scim/')) {

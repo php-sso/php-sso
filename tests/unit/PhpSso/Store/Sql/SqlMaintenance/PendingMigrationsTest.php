@@ -6,6 +6,8 @@ namespace Tests\unit\PhpSso\Store\Sql\SqlMaintenance;
 
 use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Sql\SqlMaintenance;
+use PhpSso\Store\Sql\Migrations\Migration;
+use PhpSso\Store\Sql\Migrations\Migrations;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use Tests\unit\PhpSso\Support\TestConnection;
@@ -34,6 +36,6 @@ final class PendingMigrationsTest extends TestCase
         $pending = $maintenance->pendingMigrations();
 
         // Assert
-        $this->assertSame(['0001'], $pending);
+        $this->assertSame(array_map(static fn (Migration $m): string => $m->id(), Migrations::all()), $pending);
     }
 }

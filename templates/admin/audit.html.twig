@@ -1,0 +1,53 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as m %}
+{% import 'admin/_icons.html.twig' as i %}
+{% block section %}audit{% endblock %}
+{% block title %}Audit log{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>Audit log</h1><p class="sub">Who changed what, and when. Times are UTC.</p></div>
+</div>
+
+<form class="filters" method="get" action="/admin/audit">
+  <div class="field"><label for="f-action">Action</label><input type="text" id="f-action" name="action" value="{{ filter.action ?? '' }}" list="audit-actions" placeholder="user. or user.lock" autocomplete="off"></div>
+  <datalist id="audit-actions">{% for g in groups %}<option value="{{ g }}.">{% endfor %}</datalist>
+  <div class="field"><label for="f-actor">Who</label><input type="text" id="f-actor" name="actor" value="{{ filter.actor ?? '' }}" placeholder="name or id" autocomplete="off"></div>
+  <div class="field"><label for="f-target">What it was about</label><input type="text" id="f-target" name="target" value="{{ filter.target ?? '' }}" placeholder="name or id" autocomplete="off"></div>
+  <div class="field"><label for="f-from">From</label><input id="f-from" type="date" name="from" value="{{ from }}"></div>
+  <div class="field"><label for="f-to">To</label><input id="f-to" type="date" name="to" value="{{ to }}"></div>
+  <div class="actions"><button class="btn">Filter</button>{% if filter or from or to %}<a class="btn ghost" href="/admin/audit">Clear</a>{% endif %}</div>
+</form>
+
+{% if rows %}
+  <table class="list audit">
+    <thead><tr><th>When</th><th>Who</th><th>What</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td><span title="{{ r.at|date('Y-m-d H:i:s', 'UTC') }} UTC">{{ ago(r.at) }}</span><span class="meta">{{ r.at|date('Y-m-d H:i:s', 'UTC') }}</span></td>
+        <td>{{ r.actor }}{% if r.ip %}<span class="meta">{{ r.ip }}</span>{% endif %}</td>
+        <td>
+          <span class="audit-action">{{ r.action }}</span>
+          {% if r.target_label or r.target %}
+            <span class="meta">{{ r.target_type ? r.target_type|replace({'_': ' '}) ~ ': ' : '' }}{{ r.target_label ?: r.target }}{% if r.target_label and r.target and r.target != r.target_label %} ({{ r.target }}){% endif %}</span>
+          {% endif %}
+          {% if r.detail %}
+            <ul class="audit-detail">
+              {% for k, v in r.detail %}
+                <li><b>{{ k|replace({'_': ' '}) }}</b>: {% if v is iterable %}{{ v|join(', ') }}{% elseif v is same as(true) %}yes{% elseif v is same as(false) %}no{% else %}{{ v }}{% endif %}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="listfoot"><span class="muted">{{ pager.total }} {{ pager.total == 1 ? 'entry' : 'entries' }}{% if pager.pages > 1 %}, page {{ pager.page }} of {{ pager.pages }}{% endif %}</span></div>
+  {{ m.pager(pager, base) }}
+{% elseif filter or from or to %}
+  <div class="empty"><h2>Nothing matches</h2><p>No entry fits these filters.</p><a class="btn" href="/admin/audit">Clear the filters</a></div>
+{% else %}
+  <div class="empty"><h2>Nothing recorded yet</h2><p>Changes made in the admin panel and from the command line will show up here.</p></div>
+{% endif %}
+{% endblock %}

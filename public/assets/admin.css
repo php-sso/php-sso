@@ -406,3 +406,14 @@ dialog form { display: flex; gap: 10px; justify-content: flex-end; }
 .scope-tools .rowmenu { flex: none; }
 .scope-group + .hint { margin-top: 10px; }
 .pick[hidden] { display: none; }
+
+/* Audit log */
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; margin: 0 0 16px; }
+.filters .field, .filters .field + .field { margin: 0; }
+.filters .actions { display: flex; gap: 8px; }
+.filters input[type=date] { font: inherit; font-size: 14px; height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--paper); color: var(--text); }
+.filters input[type=text] { width: 200px; }
+table.audit .meta { display: block; font-size: 12.5px; color: var(--muted); font-weight: 400; }
+.audit-action { font-family: var(--font-mono); font-size: 12.5px; }
+.audit-detail { margin: 4px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 12.5px; }
+.audit-detail b { font-weight: 600; color: var(--text); }

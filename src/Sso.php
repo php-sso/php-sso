@@ -129,7 +129,7 @@ final class Sso
             ['GET', '/login/required'] => $this->requiredAction->form(request: $request),
             ['POST', '/login/required'] => $this->requiredAction->submit($request),
             ['GET', '/userinfo'], ['POST', '/userinfo'] => $this->oauth->bearerTokenMiddleware(['openid'])->process($request, $this->oauth->userInfoHandler()),
-            ['GET', '/logout'] => $this->logout(),
+            ['GET', '/logout'] => $this->logout($request),
             default => $this->pages->render('error', ['title' => 'Page not found', 'message' => 'There is nothing at this address.', 'user' => null, 'csrf' => ''], 404),
         };
     }
@@ -461,13 +461,13 @@ final class Sso
             return $this->pages->render('error', ['title' => 'Page expired', 'message' => 'Go back, reload the page and try again.', 'user' => null, 'csrf' => ''], 400);
         }
 
-        return new RedirectResponse($this->impersonation->stop() ? '/admin/access-test' : '/login', 303);
+        return new RedirectResponse($this->impersonation->stop($this->clientIp->of($request)) ? '/admin/access-test' : '/login', 303);
     }
 
-    private function logout(): ResponseInterface
+    private function logout(ServerRequestInterface $request): ResponseInterface
     {
         if ($this->impersonation->active() !== null) { // leaving an impersonation, not signing the administrator out
-            return new RedirectResponse($this->impersonation->stop() ? '/admin/access-test' : '/login');
+            return new RedirectResponse($this->impersonation->stop($this->clientIp->of($request)) ? '/admin/access-test' : '/login');
         }
         $this->signOut();
 

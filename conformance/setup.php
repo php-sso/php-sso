@@ -17,7 +17,7 @@ use PhpSso\Store\Users;
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $config = require dirname(__DIR__) . '/config/config.php';
-$storage = StorageFactory::create($config['storage'], new StorageOptions($config['session_idle_seconds'], array_keys($config['scopes'])));
+$storage = StorageFactory::create($config['storage'], StorageOptions::fromConfig($config));
 $users = $storage->users();
 $clients = $storage->clients();
 

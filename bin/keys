@@ -10,6 +10,7 @@ declare(strict_types=1);
 //   bin/keys rotate --now          the new key signs at once (after a leaked key: apps with a cached key list may refuse tokens until they refresh it)
 //   bin/keys prune                 remove the private half of retired keys, and keys past the retention period (SSO_KEY_RETENTION_DAYS)
 
+use PhpSso\Audit\CliAudit;
 use PhpSso\Keys;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -46,12 +47,16 @@ switch ($command) {
             fwrite(STDERR, $e->getMessage() . "\n");
             exit(1);
         }
+        CliAudit::open($config)?->record('keys.rotate', CliAudit::actor(), '', null, $new['kid'], null, ['signs_from' => gmdate('Y-m-d H:i:s', $new['activeFrom']) . ' UTC', 'immediate' => $delay === 0]);
         echo "New key {$new['kid']} is published now and signs from {$at($new['activeFrom'])}.\n";
         echo "Run `bin/keys prune` after the retention period to remove the old key.\n";
         break;
 
     case 'prune':
         $result = $keys->prune();
+        if ($result['privateRemoved'] + $result['removed'] > 0) {
+            CliAudit::open($config)?->record('keys.prune', CliAudit::actor(), '', null, null, null, $result);
+        }
         echo "Removed {$result['privateRemoved']} private key(s) and {$result['removed']} expired key(s).\n";
         break;
 

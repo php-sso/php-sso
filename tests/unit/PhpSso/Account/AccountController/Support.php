@@ -17,6 +17,7 @@ final class Support
     public readonly LoginSupport $login;
     public readonly \Tests\unit\PhpSso\Auth\Social\SocialLogin\Support $social;
     public readonly AccountController $controller;
+    public readonly \Tests\unit\PhpSso\Support\InMemoryAuditLog $audit;
 
     public function __construct(string $mfaPolicy = 'optional')
     {
@@ -33,6 +34,7 @@ final class Support
             new \PhpSso\Auth\Mfa\MfaChallenge($this->login->mfa, $this->login->throttle, $this->login->attempts),
             new ClientIp([]),
             $this->social->social,
+            new \PhpSso\Audit\Audit($this->audit = new \Tests\unit\PhpSso\Support\InMemoryAuditLog()),
         );
         $_SESSION = ['csrf' => 'token'];
     }

@@ -11,6 +11,7 @@ This section describes what the server does by itself, and what it expects of yo
 | [Security headers]({{< relref "security/headers.md" >}}) | The headers every response carries, the default `Content-Security-Policy`, and how to change it for a theme |
 | [Sessions and cookies]({{< relref "security/sessions.md" >}}) | The browser session cookie, where its files live, and how long a session lasts |
 | [Signing keys]({{< relref "security/signing-keys.md" >}}) | How tokens are signed, rotating the key, and what to back up |
+| [Audit log]({{< relref "security/audit-log.md" >}}) | Who changed what and when, what is recorded, how long it is kept, and sending it elsewhere |
 | [Safe startup]({{< relref "security/startup-checks.md" >}}) | What the server refuses to start with, and why: plain HTTP, demo data, a weak first password |
 
 Related, described where they belong:
@@ -31,7 +32,7 @@ Related, described where they belong:
 
 ## What is not there yet
 
-- There is no audit log yet: see [Not production ready]({{< relref "not-production-ready.md" >}}).
+- The [audit log]({{< relref "security/audit-log.md" >}}) is in the same database as the data it describes, so it is not proof against someone who can change the database: stream it elsewhere for that. See also [Not production ready]({{< relref "not-production-ready.md" >}}).
 - php-sso has not had an independent security review. The code and the tests are public, and the Basic OP plan of the OpenID Connect conformance
   suite can be run against it (`conformance/README.md` says what has been run), but neither is an independent review.
 

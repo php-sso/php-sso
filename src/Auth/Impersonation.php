@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpSso\Auth;
 
+use PhpSso\Audit\Audit;
 use PhpSso\Store\Sessions;
 use PhpSso\Store\Users;
 use PhpSso\Store\UserState;
@@ -16,7 +17,7 @@ use PhpSso\Store\UserState;
  */
 final class Impersonation
 {
-    public function __construct(private Sessions $sessions, private Users $users)
+    public function __construct(private Sessions $sessions, private Users $users, private ?Audit $audit = null)
     {
     }
 
@@ -83,11 +84,15 @@ final class Impersonation
      * Ends the impersonated session (its tokens are revoked and apps told, like any session) and gives the browser back
      * to the administrator. @return bool false when the administrator's own session ran out meanwhile: they are signed out
      */
-    public function stop(): bool
+    public function stop(string $ip = ''): bool
     {
         $held = $this->active();
         if ($held === null) {
             return false;
+        }
+        if ($this->audit !== null && ($admin = $this->users->find($held['sub'])) !== null) { // starting is recorded by the admin panel as user.impersonate
+            $target = is_string($_SESSION['user'] ?? null) ? $this->users->find($_SESSION['user']) : null;
+            $this->audit->record('impersonation.stop', $admin, $ip, 'user', $target['sub'] ?? null, $target['username'] ?? null);
         }
         if (is_string($_SESSION['sid'] ?? null)) {
             $this->sessions->end($_SESSION['sid']);

@@ -25,6 +25,7 @@
       <a href="/admin/security" data-tip="Sign-in protection" aria-label="Sign-in protection" {{ section == 'security' ? 'aria-current=page' : '' }}>{{ i.icon('lock') }}</a>
     </nav>
     <div class="rail-user">
+      <a href="/admin/audit" data-tip="Audit log" aria-label="Audit log" {{ section == 'audit' ? 'aria-current=page' : '' }}>{{ i.icon('history') }}</a>
       <a href="/admin/access-test" data-tip="Access test" aria-label="Access test" {{ section == 'access-test' ? 'aria-current=page' : '' }}>{{ i.icon('flask') }}</a>
       <details class="usermenu">
         <summary class="who" data-tip="{{ admin.name }}" aria-label="Account menu for {{ admin.username }}" aria-haspopup="menu">{{ m.avatar(admin.name, 'sm') }}</summary>

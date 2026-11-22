@@ -14,7 +14,7 @@ never overwrites an existing file.
 
 ## What is in it
 
-- **The data**: every table (people, groups, apps, roles, settings, sessions, tokens, sign-in history and the rest), in a form that does not depend on the database.
+- **The data**: every table (people, groups, apps, roles, settings, sessions, tokens, sign-in history, the [audit log]({{< relref "security/audit-log.md" >}}) and the rest), in a form that does not depend on the database.
 - **The keys**: the files in `var/keys`: the signing keys (with the ones from [rotations]({{< relref "security/signing-keys.md" >}})) and `mfa.key`, which decrypts the saved
   authenticator secrets.
 

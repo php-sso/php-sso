@@ -41,6 +41,12 @@ return [
     'csp' => getenv('SSO_CSP') ?: null,
     // PHP's own session files (the browser session's cookie data), kept out of the shared temporary directory.
     'session_dir' => dirname(__DIR__) . '/var/sessions',
+    // The audit log (who did what): entries older than SSO_AUDIT_RETENTION_DAYS are removed (default 365; 0 keeps them for ever). SSO_AUDIT_STREAM=1 also writes
+    // every entry to the error log as a JSON line starting with SSO_AUDIT, for a log collector.
+    'audit' => [
+        'retention_seconds' => max(0, (int) (getenv('SSO_AUDIT_RETENTION_DAYS') !== false && getenv('SSO_AUDIT_RETENTION_DAYS') !== '' ? getenv('SSO_AUDIT_RETENTION_DAYS') : 365)) * 86400,
+        'stream' => filter_var(getenv('SSO_AUDIT_STREAM') ?: false, FILTER_VALIDATE_BOOL),
+    ],
     'trusted_proxies' => array_values(array_filter(array_map('trim', explode(',', getenv('SSO_TRUSTED_PROXIES') ?: '')))),
 
     'login' => [

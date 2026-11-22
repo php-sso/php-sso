@@ -29,6 +29,8 @@ The production image runs Apache as an unprivileged user on port 8080. Mount a v
 | `SSO_ALLOW_INSECURE_HTTP` | `1` lets `SSO_PUBLIC_URL` be a plain `http://` address that is not local. Without it the server refuses to start (see [Safe startup]({{< relref "security/startup-checks.md" >}})) |
 | `SSO_CSP` | The `Content-Security-Policy` to send instead of the default, for a theme that loads fonts or images from another server (see [Security headers]({{< relref "security/headers.md" >}})) |
 | `SSO_KEY_RETENTION_DAYS` | How long a signing key that has been replaced stays published, default 30 (see [Signing keys]({{< relref "security/signing-keys.md" >}})) |
+| `SSO_AUDIT_RETENTION_DAYS` | How long [audit log]({{< relref "security/audit-log.md" >}}) entries are kept, default 365; `0` keeps them for ever |
+| `SSO_AUDIT_STREAM` | `1` also writes every audit entry to the error log as a JSON line starting with `SSO_AUDIT` |
 | `SSO_THEME_DIR` | Theme folder, default `/theme` |
 | `SSO_DEBUG` | `1` shows theme errors instead of falling back |
 | `SSO_TRUSTED_PROXIES` | Comma separated addresses or CIDR ranges of your reverse proxies. Only their `X-Forwarded-For` is believed; set it when behind a proxy, or IP rules see the proxy's address |
