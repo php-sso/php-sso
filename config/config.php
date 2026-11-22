@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 // SSO_DEMO_DATA=1 adds people and apps with well-known passwords to a new database: local development only.
 $demo = filter_var(getenv('SSO_DEMO_DATA') ?: false, FILTER_VALIDATE_BOOL);
+$mailHost = getenv('SSO_SMTP_HOST') ?: '';
+$mailFrom = getenv('SSO_MAIL_FROM') ?: '';
 
 return [
     'issuer' => getenv('SSO_PUBLIC_URL') ?: 'http://localhost:9000',
@@ -47,6 +49,23 @@ return [
         'retention_seconds' => max(0, (int) (getenv('SSO_AUDIT_RETENTION_DAYS') !== false && getenv('SSO_AUDIT_RETENTION_DAYS') !== '' ? getenv('SSO_AUDIT_RETENTION_DAYS') : 365)) * 86400,
         'stream' => filter_var(getenv('SSO_AUDIT_STREAM') ?: false, FILTER_VALIDATE_BOOL),
     ],
+    // Email, for the password reset (and the notice that a password was changed). With no SSO_SMTP_HOST and SSO_MAIL_FROM nothing is sent and the reset is off.
+    // SSO_SMTP_ENCRYPTION is starttls (the default, port 587), tls (port 465) or none (only for a server on this machine or a trusted network); SSO_SMTP_CA_FILE
+    // is a file of certificate authorities, for a server whose certificate your own authority signed.
+    'mail' => [
+        'enabled' => $mailHost !== '' && $mailFrom !== '',
+        'host' => $mailHost,
+        'port' => (int) (getenv('SSO_SMTP_PORT') ?: 587),
+        'encryption' => strtolower(getenv('SSO_SMTP_ENCRYPTION') ?: 'starttls'),
+        'username' => getenv('SSO_SMTP_USER') ?: '',
+        'password' => getenv('SSO_SMTP_PASSWORD') ?: '',
+        'from' => $mailFrom,
+        'from_name' => getenv('SSO_MAIL_FROM_NAME') ?: '',
+        'ca_file' => getenv('SSO_SMTP_CA_FILE') ?: '',
+        'timeout' => 10,
+    ],
+    // How long the link of a password reset works, in minutes (SSO_PASSWORD_RESET_MINUTES, 5 to 1440).
+    'password_reset' => ['minutes' => max(5, min(1440, (int) (getenv('SSO_PASSWORD_RESET_MINUTES') ?: 60)))],
     'trusted_proxies' => array_values(array_filter(array_map('trim', explode(',', getenv('SSO_TRUSTED_PROXIES') ?: '')))),
 
     'login' => [

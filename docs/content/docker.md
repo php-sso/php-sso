@@ -35,6 +35,7 @@ Every release is published as `ghcr.io/php-sso/php-sso` with these tags, for `li
   working. The container runs as `www-data` (user id 33), so a folder you mount instead of a named volume must be writable by that user:
   `chown 33:33 ./sso-data`.
 - **A health check** is built in: `docker ps` shows the container as `healthy` while the server and its database answer, and `GET /healthz` is there for your own monitoring.
+- **Email** is optional: with `SSO_SMTP_HOST` and `SSO_MAIL_FROM` set, people can [reset their own password]({{< relref "sign-in/password-reset.md" >}}). Check it with `docker exec sso php bin/mail-test you@example.com`.
 - **Every other setting** is an environment variable: see [Production and configuration]({{< relref "production.md" >}}).
 
 ## With a database server

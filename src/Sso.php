@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhpSso;
 
+use PhpSso\Auth\PasswordResetController;
 use PhpSso\Admin\AdminController;
 use PhpSso\Account\AccountController;
 use PhpSso\Auth\Actions\RequiredActions;
@@ -61,6 +62,7 @@ final class Sso
         private RequiredActions $requiredActions,
         private ClientAuthThrottle $clientAuthThrottle,
         private Impersonation $impersonation,
+        private ?PasswordResetController $passwordReset = null,
     ) {
     }
 
@@ -83,6 +85,9 @@ final class Sso
         }
         if ($request->getMethod() === 'POST' && in_array($path, self::CLIENT_AUTH_PATHS, true)) {
             return $this->clientEndpoint($request, $path);
+        }
+        if ($this->passwordReset !== null && ($response = $this->passwordReset->handle($request, $path)) !== null) {
+            return $response;
         }
         if (str_starts_with($path, '/admin')) {
             return $this->adminArea($request);
@@ -182,7 +187,8 @@ final class Sso
     {
         return in_array($path, ['/authorize', '/logout', '/end-session', '/device'], true) || $path === '/login' || str_starts_with($path, '/login/') || preg_match('#^/saml/\d+/acs$#', $path) === 1
             || $path === '/admin' || str_starts_with($path, '/admin/')
-            || $path === '/account' || str_starts_with($path, '/account/');
+            || $path === '/account' || str_starts_with($path, '/account/')
+            || str_starts_with($path, '/password/');
     }
 
     /**

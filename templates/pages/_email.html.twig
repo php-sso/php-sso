@@ -1,0 +1,17 @@
+{#- The base of the HTML emails. Mail programs ignore style sheets, so the look is in the style attributes. -#}
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ app_name }}</title></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:8px;padding:28px 28px 24px;">
+        <tr><td style="font-size:15px;line-height:1.55;">
+          {% block email_body %}{% endblock %}
+        </td></tr>
+        <tr><td style="padding-top:20px;font-size:12px;line-height:1.5;color:#6b7280;">{% block email_footer %}Sent by {{ app_name }}. You are getting this because of something done with your account.{% endblock %}</td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

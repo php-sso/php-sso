@@ -1,0 +1,46 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Sends a test message with the email settings (SSO_SMTP_*, SSO_MAIL_*), to see that they work before anyone needs the password reset.
+//   bin/mail-test you@example.com
+// It says what it connects to and what the mail server answered. The password is never printed.
+
+use PhpSso\Mail\Email;
+use PhpSso\Mail\MailFactory;
+use PhpSso\Mail\MailFailed;
+use PhpSso\Startup\Checks;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$config = require dirname(__DIR__) . '/config/config.php';
+$to = $argv[1] ?? '';
+if ($to === '' || filter_var($to, FILTER_VALIDATE_EMAIL) === false) {
+    fwrite(STDERR, "Usage: bin/mail-test you@example.com\n");
+    exit(2);
+}
+
+$mail = $config['mail'];
+if (!$mail['enabled']) {
+    fwrite(STDERR, "Email is not set up: set SSO_SMTP_HOST and SSO_MAIL_FROM (see the documentation, \"Email and the password reset\").\n");
+    exit(1);
+}
+if (($problems = Checks::mailProblems($mail)) !== []) {
+    fwrite(STDERR, "The email settings are not right:\n- " . implode("\n- ", $problems) . "\n");
+    exit(1);
+}
+
+echo "Sending from {$mail['from']} through {$mail['host']}:{$mail['port']} ({$mail['encryption']}" . ($mail['username'] !== '' ? ", signing in as {$mail['username']}" : ', no sign-in') . ") to {$to} ...\n";
+try {
+    MailFactory::create($mail, $config['issuer'], $config['app_name'])->send(new Email(
+        $to,
+        "Test email from {$config['app_name']}",
+        "This is a test message from {$config['app_name']} ({$config['issuer']}).\n\nIf you can read it, the email settings work: people can be sent a link to choose a new password.\n",
+        '<p>This is a test message from <strong>' . htmlspecialchars((string) $config['app_name'], ENT_QUOTES) . '</strong> (' . htmlspecialchars((string) $config['issuer'], ENT_QUOTES) . ').</p><p>If you can read it, the email settings work: people can be sent a link to choose a new password.</p>',
+    ));
+} catch (MailFailed $e) {
+    fwrite(STDERR, 'It did not work: ' . $e->getMessage() . "\n");
+    exit(1);
+}
+echo "The mail server accepted it. Check the inbox of {$to} (and the spam folder).\n";

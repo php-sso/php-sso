@@ -47,9 +47,12 @@ final class LoginController
             $error = $_SESSION['login_error']; // left by a social sign-in that failed
         }
         unset($_SESSION['login_error']);
+        $notice = is_string($_SESSION['login_notice'] ?? null) ? $_SESSION['login_notice'] : ''; // left by a password reset that worked
+        unset($_SESSION['login_notice']);
 
         return $this->pages->render('login', $this->context() + [
             'error' => $error,
+            'notice' => $notice,
             'social' => $this->social->buttons(),
             'username' => $typed,
             'identifier' => ['label' => $this->identifiers->label(), 'type' => $this->identifiers->inputType()],

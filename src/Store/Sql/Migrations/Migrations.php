@@ -14,6 +14,7 @@ final class Migrations
             new CreateBaselineSchema(),
             new CreateAuditLog(),
             new CreateLogoutRetries(),
+            new CreatePasswordResets(),
         ];
     }
 }

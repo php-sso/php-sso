@@ -15,6 +15,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - **Backup and restore** with `bin/backup` and `bin/restore`: one file with the data and the keys, consistent while the server runs, and restorable into any of the three databases (also how to move from SQLite to MySQL or PostgreSQL).
 - **Housekeeping** with `bin/maintenance`, and automatically on about one request in a hundred.
 - **An audit log** at `/admin/audit`: every change made in the admin panel, the changes people make to their own account, and key, backup and restore commands. Entries are kept 365 days (`SSO_AUDIT_RETENTION_DAYS`) and can be streamed to the error log (`SSO_AUDIT_STREAM`).
+- **Password reset by email.** With `SSO_SMTP_HOST` and `SSO_MAIL_FROM` set, the sign-in page offers "Forgot your password?" and people get a link to choose a new password. The link works once and expires
+  (`SSO_PASSWORD_RESET_MINUTES`), only a hash of it is stored, the answer is the same for accounts that exist and those that do not, requests are limited per address and per account, and using it ends every session of the
+  person and sends them a notice. Administrators can send the link from a person's page. The emails are themable (plain text and HTML), the mail client is built in (STARTTLS or TLS with the certificate always checked, PLAIN or LOGIN), and
+  `bin/mail-test` checks the settings. The development setup starts Mailpit, an inbox for the mail the server sends.
 - **Paged lists:** Users, Groups and Clients show 25 to a page with a search box, and cost the same however many there are (the dashboard and the access test no longer load everyone).
 - **Back-channel logout is retried:** a notification an app did not accept is sent again after 1 minute, 5 minutes, 30 minutes, 2 hours and 12 hours, with a fresh token each time, and then given up on and audited (`logout.undelivered`).
 - Documentation sections for running with Docker and with Composer, security, backup and restore, and development.

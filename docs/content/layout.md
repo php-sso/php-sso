@@ -10,6 +10,7 @@ lead: "Where things are in the source."
 - `src/Pages.php`, `src/Account/`, `templates/pages/`: themeable pages (login, account, errors)
 - `src/Auth/`: signing in: the login steps and their controllers, throttling, two-step verification (`Mfa/`), outside providers and SAML, the steps a person must take before they are in (`Actions/`), what people type to identify themselves (`Identifier/`), and impersonation
 - `src/OAuth/`: what `php-sso/oauth-server` needs from us: clients from the database, the access policy, the sign-in, "no access" and logout screens, the device page, the retry of [logout notifications]({{< relref "signing-out.md" >}}) that failed, and what it asks of the token stores
+- `src/Mail/`: sending email: the message, the SMTP client (with no library behind it) and the emails the server sends, made from templates a theme can replace
 - `src/Audit/`: the [audit log]({{< relref "security/audit-log.md" >}}): `Audit` writes entries, and `AdminActions` and `AccountActions` say what each change is called and what is kept of it
 - `src/Backup/`: [backup and restore]({{< relref "backup.md" >}}): the exporter, the importer and the list of tables a backup holds
 - `src/Http/`: the [security headers]({{< relref "security/headers.md" >}})
@@ -20,7 +21,7 @@ lead: "Where things are in the source."
 - `src/Net/`: client address handling and CIDR ranges for the IP rules, and a small PSR-18 HTTP client for back-channel logout
 - `src/Qr/`: the QR code for two-step verification, drawn on the server as SVG
 - `src/Keys.php`: the [signing keys](../security/signing-keys/) and their rotation; `src/Claims.php`: what goes into the tokens; `src/IpPolicy.php` and `src/AccessTester.php`: the IP rules and the admin's access test; `src/Seeder.php`: what a new database starts with
-- `bin/`: the commands: `maintenance`, `keys`, `migrate`, `backup` and `restore`
+- `bin/`: the commands: `maintenance`, `keys`, `migrate`, `backup`, `restore` and `mail-test`
 - `config/config.php`: scopes, TTLs, the environment variables and the first-start seed data
 - `client/public/index.php`: demo relying party; verifies the ID token signature, `iss`, `aud` and `nonce`
 - `conformance/`: runs the OpenID Connect conformance suite against a throwaway copy

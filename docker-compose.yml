@@ -13,8 +13,24 @@ services:
       SSO_DEMO_DATA: "1"                            # demo user, group and client; never in production
       SSO_DEBUG: "1"                                # show theme errors instead of falling back
       PHP_CLI_SERVER_WORKERS: "4"                   # php -S is single-threaded; back-channel logout calls the client, which calls back
+      # Email goes to the Mailpit inbox below (http://localhost:8025) instead of out into the world: the password reset works in development.
+      SSO_SMTP_HOST: mailpit
+      SSO_SMTP_PORT: "1025"
+      SSO_SMTP_ENCRYPTION: none
+      SSO_MAIL_FROM: sso@example.com
+      SSO_TEST_SMTP: mailpit:1025                   # the tests of the mail client send through it, and read what arrived
+      SSO_TEST_MAILPIT: http://mailpit:8025
     volumes:
       - .:/app
+
+  # A mailbox for development: the email the server sends (the password reset) is kept here, and shown at http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
 
   # The other databases the app can use (`storage` in config/config.php), for running the test suite against them:
   #   docker compose --profile databases up -d

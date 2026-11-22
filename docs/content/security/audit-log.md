@@ -14,7 +14,7 @@ actions, a few details. The names are copied into the entry, so it still says `c
 
 | Group | Actions |
 | --- | --- |
-| `user` | `create`, `update` (says whether administrator rights are on, and whether they were), `lock`, `unlock`, `delete`, `reset_failures`, `reset_mfa`, `unlink_connection`, `consent_ask_again`, `impersonate` |
+| `user` | `create`, `update` (says whether administrator rights are on, and whether they were), `lock`, `unlock`, `delete`, `reset_failures`, `reset_mfa`, `unlink_connection`, `consent_ask_again`, `impersonate`, `send_reset` (an administrator sent a password reset link) |
 | `impersonation` | `stop` (starting is `user.impersonate`) |
 | `client` | `create`, `update`, `access`, `rotate_secret`, `delete`, `ip_rule_create`, `ip_rule_scope`, `ip_rule_delete` |
 | `group`, `role` | `create`, `update`, `delete` |
@@ -22,7 +22,7 @@ actions, a few details. The names are copied into the entry, so it still says `c
 | `scope`, `ip_rule`, `session` | `create`, `update` and `delete` for scopes; `create` and `delete` for IP rules; `end` for a browser session an administrator ended |
 | `scim_client`, `saml_connection`, `consent` | `create`, `update`, `delete`; `rotate_token` for SCIM; `ask_everyone_again` for a notice |
 | `security` | `accounts`, `settings`, `reset_failures`, `mfa_policy`, `social`: the sign-in protection pages (an entry names the fields that were saved, not their values; `mfa_policy` also says which policy) |
-| `account` | What people do to their own account: `profile_update`, `password_change`, `mfa_enable`, `mfa_disable`, `mfa_recovery_codes`, `social_unlink`, `session_end`, `sessions_end_others` |
+| `account` | What people do to their own account: `profile_update`, `password_change`, `mfa_enable`, `mfa_disable`, `mfa_recovery_codes`, `social_unlink`, `password_reset` (a new password chosen with an emailed link), `session_end`, `sessions_end_others` |
 | `logout` | `undelivered`: an app did not accept a [logout notification](../../signing-out/) after every attempt. The person is `system` |
 | `keys`, `backup` | From the command line: `keys.rotate`, `keys.prune`, `backup.create`, `backup.restore`. The person is `cli:` and the name of the user who ran the command |
 

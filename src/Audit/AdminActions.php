@@ -48,6 +48,7 @@ final class AdminActions
         'userResetLock' => ['action' => 'user.reset_failures', 'type' => 'user', 'target' => 0],
         'userLock' => ['action' => 'user.lock', 'type' => 'user', 'target' => 0],
         'userUnlock' => ['action' => 'user.unlock', 'type' => 'user', 'target' => 0],
+        'userSendReset' => ['action' => 'user.send_reset', 'type' => 'user', 'target' => 0],
         'userResetMfa' => ['action' => 'user.reset_mfa', 'type' => 'user', 'target' => 0],
         'userAskConsentAgain' => ['action' => 'user.consent_ask_again', 'type' => 'user', 'target' => 0, 'args' => [1 => 'consent']],
         'userUnlinkConnection' => ['action' => 'user.unlink_connection', 'type' => 'user', 'target' => 0, 'args' => [1 => 'provider']],

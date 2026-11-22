@@ -42,6 +42,16 @@
   </div>
 {% endif %}
 
+{% if reset_available %}
+  <div class="zone plain">
+    <div>
+      <h2>Password reset</h2>
+      <p>{% if reset_refusal %}{{ reset_refusal }}{% else %}Send {{ user.name }} an email at {{ user.email }} with a link to choose a new password. The link works once and for a limited time, and when it is used {{ user.name }} is signed out everywhere.{% endif %}</p>
+    </div>
+    {% if not reset_refusal %}{{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/send-reset', csrf, 'Send reset email', 'Send a password reset email?', 'An email with a link goes to ' ~ user.email ~ '. Their password stays as it is until they use the link.', 'btn ghost') }}{% endif %}
+  </div>
+{% endif %}
+
 {% if mfa and mfa.enrolled %}
   <div class="zone plain">
     <div>

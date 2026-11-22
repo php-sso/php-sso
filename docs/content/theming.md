@@ -18,6 +18,13 @@ theme/
     mfa_recovery.html.twig     the recovery codes, shown once
     password_change.html.twig  choosing a new password, when an administrator requires it
     consent.html.twig          a notice to accept before signing in, one page per notice
+    password_forgot.html.twig          asking for a link to choose a new password (when email is set up)
+    password_reset.html.twig           choosing the new password, from that link
+    password_reset_invalid.html.twig   a link that expired, was used or was replaced
+    email_password_reset.txt.twig      the email with the link: plain text and subject
+    email_password_reset.html.twig     the same email, in HTML
+    email_password_changed.txt.twig    the notice that the password was changed: plain text and subject
+    email_password_changed.html.twig   the same notice, in HTML
     account.html.twig
     no_access.html.twig
     device.html.twig
@@ -49,23 +56,47 @@ keeps working as before. The admin panel is not themeable.
 Overriding `layout.html.twig` changes every page at once (header, logo, footer). It must extend
 `@sso/layout.html.twig`, not `layout.html.twig`, or it would extend itself.
 
+## Emails
+
+The emails the server sends (the [password reset]({{< relref "sign-in/password-reset.md" >}}) link and the notice that a password was changed) are templates in the same folder as the pages, and
+you replace them the same way: a file in `theme/templates/` with the same name wins. Each email is two files, one for plain text and one for HTML, and the message carries both.
+
+- **`email_<name>.txt.twig`** is the plain text. Its `subject` block is the subject (it is not part of the body, and is made a single line), and its `body` block is the text. Nothing is HTML-escaped in it.
+- **`email_<name>.html.twig`** is the HTML. Mail programs ignore style sheets and most of `<head>`, so style with `style="..."` attributes and tables, and do not link to files on your server.
+  Its `email_body` block is the content, and `email_footer` the line under it.
+
+Extend the built-in email to change a piece of it, as with pages:
+
+```twig
+{% extends '@sso/email_password_reset.txt.twig' %}
+{% block subject %}Your Acme sign-in{% endblock %}
+```
+
+Both emails receive `app_name` and `user` (`name`, `username`, `email`). The reset email also gets `link` (the address to open), `minutes` (how long it works), `ip` (where the request came from) and
+`by_admin` (true when an administrator sent it). The notice gets `ip` and `at` (the time, as text, in UTC). A theme that makes a mistake in an email falls back to the built-in one, as for pages
+(unless `SSO_DEBUG` is on). To try a theme, ask for a reset for a test account: in the development setup the mail arrives in the Mailpit inbox at <http://localhost:8025>.
+
 ## Variables
 
 Every page receives:
 
 | Name | Value |
 | --- | --- |
+| `password_reset` | `true` when email is set up and people can ask for a link: use it to show "Forgot your password?" |
 | `app_name` | `SSO_APP_NAME` |
 | `csrf` | The token to send back as `_csrf` in every form |
 | `user` | `null` when nobody is signed in, otherwise `name`, `username`, `email`, `is_admin` |
 
 | Page | Extra variables |
 | --- | --- |
-| `login` | `error` (text, may be empty), `username` (what was typed), `identifier` (`label` and `type` of the sign-in field, set by `SSO_LOGIN_IDENTIFIER`), `social` (the providers to offer: a list of `key` and `label`, empty when none) |
+| `login` | `notice` (text, may be empty: the sign-in page says "your password was changed" after a reset), `error` (text, may be empty), `username` (what was typed), `identifier` (`label` and `type` of the sign-in field, set by `SSO_LOGIN_IDENTIFIER`), `social` (the providers to offer: a list of `key` and `label`, empty when none) |
 | `login_password` | `error` (text, may be empty), `username` (who is signing in, as the first step understood it) |
 | `login_mfa` | `error` (text, may be empty) |
 | `mfa_setup` | `error`, `secret` (the key, in groups of four), `uri` (the `otpauth://` link), `qr` (the QR code for it as inline SVG to print with `|raw`, or null when it could not be drawn), `action` (where the form posts), `cancel_href` (or null), `required` (true when the policy forces it) |
 | `mfa_recovery` | `codes` (list), `continue_action` (a form to post to, or null), `continue_href` (a link, or null) |
+| `password_forgot` | `sent` (true once the form was sent: show the answer instead of the form), `error`, `identifier` (what was typed), `minutes` (how long a link works) |
+| `password_reset` | `error` (text, may be empty), `username` (whose password it is), `min_length` (the shortest password allowed) |
+| `password_reset_invalid` | none |
 | `password_change` | `error` (text, may be empty), `username` (who is signing in), `min_length` (the shortest password allowed) |
 | `consent` | `error` (text, may be empty), `consent` (`id`, `version`, `name`, `message`, `url` or null), `step` (`of`: how many notices are left, this one included) |
 | `no_access` | `client_name` |
@@ -88,6 +119,10 @@ Templates run with `strict_variables`: using a variable that does not exist is a
 | `layout` | `title`, `styles`, `head`, `page_name`, `impersonation`, `brand`, `logo`, `nav`, `content`, `footer` |
 | `login`, `login_password`, `login_mfa`, `mfa_setup`, `password_change`, `consent` | `intro`, `after_form` |
 | `mfa_recovery` | `intro` |
+| `password_forgot` | `sent` (the answer after the form was sent), `intro`, `after_form` |
+| `password_reset`, `password_reset_invalid` | `intro`; `after_form` as well on `password_reset` |
+| `email_*.txt.twig` | `subject`, `body` |
+| `email_*.html.twig` | `email_body`, `email_footer` |
 | `account` | `nav`, `profile`, `password`, `social`, `mfa`, `sessions` |
 
 `impersonation` is the banner shown while an administrator tests the server as someone else ("You are signed in as ..."). It only renders when that is happening, so override it to restyle or reword the banner, and keep the form that posts to `/impersonate/stop`.
@@ -104,6 +139,8 @@ Templates run with `strict_variables`: using a variable that does not exist is a
 | Set up the app (`mfa_setup`) | `POST /login/mfa/setup` or `POST /account/mfa/setup` | `_csrf`, `code` |
 | After the recovery codes (`mfa_recovery`, when signing in) | `POST /login/mfa/continue` | `_csrf` |
 | New recovery codes / turn off two-step | `POST /account/mfa/recovery`, `POST /account/mfa/disable` | `_csrf`, `code` |
+| Ask for a link (`password_forgot`) | `POST /password/forgot` | `_csrf`, `identifier` (a username or an email address) |
+| Choose the new password (`password_reset`) | `POST /password/reset` | `_csrf`, `new_password`, `confirm_password` |
 | Choose a new password (`password_change`) | `POST /login/required` | `_csrf`, `new_password`, `confirm_password` |
 | Accept a notice (`consent`) | `POST /login/required` | `_csrf`, `consent_id`, `version` (both from `consent`), `accept` (the checkbox) |
 | Sign in with a provider | link to `GET /login/social/{provider}` (the `key` from `social`) | none |

@@ -11,5 +11,7 @@ reveal who has one. What people type is set with `SSO_LOGIN_IDENTIFIER` (`userna
 refuses to start while two users share one, and the admin forms reject duplicates. With
 `username_or_email`, new usernames cannot contain `@`.
 
+Someone who forgot their password can choose a new one themselves when email is set up: see [Email and password reset]({{< relref "sign-in/password-reset.md" >}}).
+
 A user can exist without a local password (for example when provisioned from elsewhere); such a person
 cannot sign in with a password.

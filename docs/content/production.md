@@ -31,6 +31,9 @@ The production image runs Apache as an unprivileged user on port 8080. Mount a v
 | `SSO_KEY_RETENTION_DAYS` | How long a signing key that has been replaced stays published, default 30 (see [Signing keys]({{< relref "security/signing-keys.md" >}})) |
 | `SSO_AUDIT_RETENTION_DAYS` | How long [audit log]({{< relref "security/audit-log.md" >}}) entries are kept, default 365; `0` keeps them for ever |
 | `SSO_AUDIT_STREAM` | `1` also writes every audit entry to the error log as a JSON line starting with `SSO_AUDIT` |
+| `SSO_SMTP_HOST`, `SSO_MAIL_FROM` | The mail server and the sender address. Both are needed to turn on the [password reset]({{< relref "sign-in/password-reset.md" >}}) |
+| `SSO_SMTP_PORT`, `SSO_SMTP_ENCRYPTION`, `SSO_SMTP_USER`, `SSO_SMTP_PASSWORD`, `SSO_MAIL_FROM_NAME`, `SSO_SMTP_CA_FILE` | The rest of the mail settings: port (587), `starttls`, `tls` or `none`, sign-in, the sender's name, your own certificate authority |
+| `SSO_PASSWORD_RESET_MINUTES` | How long a password reset link works, default 60 |
 | `SSO_THEME_DIR` | Theme folder, default `/theme` |
 | `SSO_DEBUG` | `1` shows theme errors instead of falling back |
 | `SSO_TRUSTED_PROXIES` | Comma separated addresses or CIDR ranges of your reverse proxies. Only their `X-Forwarded-For` is believed; set it when behind a proxy, or IP rules see the proxy's address |

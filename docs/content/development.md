@@ -27,6 +27,12 @@ and `Clients`), so that a page costs the same whatever the number of rows, and f
 The controller makes a `PhpSso\Admin\Pager` from the count and the requested page, and the template uses the macros in `templates/admin/_macros.html.twig`:
 `m.listbar` (the search box), `m.listfoot` (how many, and which page) and `m.pager` (the numbered pages, keeping the search text). The audit log page is the other example.
 
+## Email
+
+`docker compose up` also starts [Mailpit](https://mailpit.axllent.org) and sets `SSO_SMTP_HOST=mailpit`, so the [password reset]({{< relref "sign-in/password-reset.md" >}}) works in development and every
+email the server sends is kept in Mailpit's inbox at <http://localhost:8025>. Nothing is sent to the outside. Use it to see a theme's emails too. The tests of the mail client send through it when
+`SSO_TEST_SMTP` (`mailpit:1025`) and `SSO_TEST_MAILPIT` (`http://mailpit:8025`) are set, which the compose file does; without them those tests are skipped.
+
 ## Tests
 
 ```bash

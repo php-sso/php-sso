@@ -32,6 +32,7 @@ final class SqlMaintenance implements Maintenance
         foreach (['oauth_codes' => 'expires_at', 'oauth_refresh_tokens' => 'expires_at', 'oauth_revoked_families' => 'revoked_at', 'oauth_revoked_tokens' => 'expires_at', 'oauth_device_requests' => 'expires_at', 'device_failures' => 'created_at'] as $table => $column) {
             $this->pdo->prepare("DELETE FROM {$table} WHERE {$column} < ?")->execute([$cutoff]);
         }
+        $this->pdo->prepare('DELETE FROM password_resets WHERE created_at < ?')->execute([time() - 86400]); // the limits look back an hour; a day is plenty for what is left
         if ($this->auditRetentionSeconds > 0) { // the audit log is kept for the retention period the operator chose, not for the week the rest is
             $this->pdo->prepare('DELETE FROM audit_log WHERE at < ?')->execute([time() - $this->auditRetentionSeconds]);
         }

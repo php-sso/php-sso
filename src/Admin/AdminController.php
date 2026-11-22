@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpSso\Admin;
 
+use PhpSso\Auth\PasswordReset;
+use PhpSso\Mail\MailFailed;
 use PhpSso\Audit\AdminActions;
 use PhpSso\Audit\Audit;
 use PhpSso\Store\AuditLog;
@@ -88,6 +90,7 @@ final class AdminController
         private Scopes $scopes,
         private Audit $audit,
         private AuditLog $auditLog,
+        private ?PasswordReset $passwordReset = null,
     ) {
     }
 
@@ -231,6 +234,7 @@ final class AdminController
             ['POST', '#^/users/([^/]+)/lock$#', 'userLock'],
             ['POST', '#^/users/([^/]+)/unlock$#', 'userUnlock'],
             ['POST', '#^/users/([^/]+)/reset-mfa$#', 'userResetMfa'],
+            ['POST', '#^/users/([^/]+)/send-reset$#', 'userSendReset'],
             ['POST', '#^/users/([^/]+)/consents/(\d+)/ask-again$#', 'userAskConsentAgain'],
             ['POST', '#^/users/([^/]+)/connections/([a-z0-9_-]+)/unlink$#', 'userUnlinkConnection'],
             ['POST', '#^/users/([^/]+)$#', 'userUpdate'],
@@ -512,6 +516,8 @@ final class AdminController
             'scim' => $user && $tab === 'details' ? $this->scimUsers->managedBy($user['sub']) : null,
             'consent_status' => $user && $tab === 'notices' ? $this->consents->statusFor($user['sub']) : [],
             'mfa' => $user && $tab === 'details' ? ['enrolled' => $this->mfa->isEnrolled($user['sub']), 'codes_left' => $this->mfa->recoveryCodesLeft($user['sub'])] : null,
+            'reset_available' => $user !== null && $tab === 'details' && $this->passwordReset !== null,
+            'reset_refusal' => $user !== null && $this->passwordReset !== null ? $this->passwordReset->refusal($user) : null,
             'user' => $user,
             'item' => $item,
             'errors' => $errors,
@@ -1577,6 +1583,28 @@ final class AdminController
         $removed = $this->social->unlinkAny($sub, $provider);
 
         return $this->done('/admin/users/' . rawurlencode($sub) . '/edit', $removed ? "{$label} is disconnected from {$user['name']}." : "{$user['name']} had no {$label} account connected.", $removed ? 'success' : 'error');
+    }
+
+    private function userSendReset(ServerRequestInterface $request, string $sub): ResponseInterface
+    {
+        $user = $this->users->find($sub);
+        if ($user === null) {
+            return $this->notFound('User');
+        }
+        $back = '/admin/users/' . rawurlencode($sub) . '/edit';
+        if ($this->passwordReset === null) {
+            return $this->done($back, 'Email is not set up, so no password reset can be sent (see SSO_SMTP_HOST).', 'error');
+        }
+
+        try {
+            $this->passwordReset->sendTo($user, $this->clientIp->of($request));
+        } catch (\DomainException $e) {
+            return $this->done($back, $e->getMessage(), 'error');
+        } catch (MailFailed $e) {
+            return $this->done($back, 'The email could not be sent: ' . $e->getMessage(), 'error');
+        }
+
+        return $this->done($back, "A password reset email was sent to {$user['email']}.");
     }
 
     private function userResetMfa(ServerRequestInterface $request, string $sub): ResponseInterface

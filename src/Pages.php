@@ -74,6 +74,40 @@ final class Pages
         return new HtmlResponse($this->default->render($page . '.html.twig', $context), $status);
     }
 
+    /**
+     * Renders an email: `email_<name>.txt.twig` (whose `subject` block is the subject, and which is the plain text part) and `email_<name>.html.twig`. They are
+     * looked up in the theme like pages are; a theme that fails to render falls back to the built-in email (unless debug is on).
+     *
+     * @param array<string, mixed> $context
+     * @return array{subject: string, text: string, html: string}
+     */
+    public function email(string $name, array $context): array
+    {
+        $context += $this->shared;
+        foreach ([$this->themed, $this->default] as $environment) {
+            if ($environment === null) {
+                continue;
+            }
+            try {
+                $text = $environment->load("email_{$name}.txt.twig");
+                $html = $environment->load("email_{$name}.html.twig");
+
+                return [
+                    'subject' => trim((string) preg_replace('/\s+/', ' ', $text->renderBlock('subject', $context))),
+                    'text' => $text->render($context),
+                    'html' => $html->render($context),
+                ];
+            } catch (TwigError $e) {
+                if ($this->debug || $environment === $this->default) {
+                    throw $e;
+                }
+                error_log("SSO theme error in the email {$name}: {$e->getMessage()}; using the built-in email");
+            }
+        }
+
+        throw new \LogicException('There is no environment to render an email in.');
+    }
+
     /** @return array{file: string, type: string}|null a servable file below the theme's assets folder */
     public function themeAsset(string $path): ?array
     {
@@ -98,7 +132,8 @@ final class Pages
             'cache' => $cache,
             'auto_reload' => true,
             'strict_variables' => true,
-            'autoescape' => 'html',
+            // HTML is escaped; a plain text template (`*.txt.twig`, the text part of an email) is not, in whatever file it is written, so a name such as O'Brien stays as typed.
+            'autoescape' => static fn (string $name): string|false => str_ends_with($name, '.txt.twig') ? false : 'html',
         ]);
         $twig->addExtension(new AdminTwigExtension($this->publicDir));
         $twig->addGlobal('app_name', $this->globals['app_name']);

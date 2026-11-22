@@ -17,6 +17,7 @@ This section describes what the server does by itself, and what it expects of yo
 Related, described where they belong:
 
 - [Sign-in protection]({{< relref "sign-in/protection.md" >}}): limits on failed attempts, for people and for apps
+- [Email and password reset]({{< relref "sign-in/password-reset.md" >}}): choosing a new password by emailed link, and what protects it
 - [Two-step verification]({{< relref "sign-in/two-step-verification.md" >}}) and [required steps]({{< relref "sign-in/required-steps.md" >}})
 - [IP rules]({{< relref "ip-rules.md" >}}): which network addresses may sign in
 
