@@ -2,6 +2,31 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/) and the project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- **More databases.** MySQL 8.0.19 or later and PostgreSQL 13 or later, besides SQLite (`SSO_DB_DRIVER` and `SSO_DB_*`), behind a `Storage` interface. The test suite runs on all three.
+- **Schema migrations** with `bin/migrate status|up` and `SSO_AUTO_MIGRATE`. An older version refuses to run against a database a newer one has upgraded.
+- **A published Docker image**, `ghcr.io/php-sso/php-sso`, for every version tag, and `composer create-project php-sso/php-sso` as the other way to install. `docker compose` is documented as the development setup only.
+- **Security:** a `Content-Security-Policy` and other headers on every response (`SSO_CSP` to change the policy), a `Secure` `__Host-` session cookie over HTTPS, session files in `var/sessions`, `GET /healthz` and a Docker `HEALTHCHECK`, SQLite in write-ahead-log mode, and a weekly `composer audit` in CI.
+- **Safe startup:** the server refuses to start with a public `http://` address (`SSO_ALLOW_INSECURE_HTTP=1` to accept it), with demo data on a public address, or with a first administrator password of fewer than 12 characters.
+- **Signing key rotation** with `bin/keys list|rotate|prune` (`SSO_KEY_RETENTION_DAYS`): a new key is published before it signs, and a retired one stays published until its tokens have expired.
+- **Backup and restore** with `bin/backup` and `bin/restore`: one file with the data and the keys, consistent while the server runs, and restorable into any of the three databases (also how to move from SQLite to MySQL or PostgreSQL).
+- **Housekeeping** with `bin/maintenance`, and automatically on about one request in a hundred.
+- **An audit log** at `/admin/audit`: every change made in the admin panel, the changes people make to their own account, and key, backup and restore commands. Entries are kept 365 days (`SSO_AUDIT_RETENTION_DAYS`) and can be streamed to the error log (`SSO_AUDIT_STREAM`).
+- Documentation sections for running with Docker and with Composer, security, backup and restore, and development.
+
+### Changed
+
+Read this before upgrading.
+
+- **Existing SQLite databases are upgraded in place** when the new version starts (the audit log table is added). Copy `var/sso.sqlite` first.
+- **Everyone signs in again once over HTTPS:** the session cookie is now named `__Host-sso_session`.
+- **The server may refuse to start** where it used to run: a public `http://` `SSO_PUBLIC_URL`, `SSO_DEMO_DATA` on a public address, a weak `ADMIN_PASSWORD` on an empty database (see Added).
+- **`config/config.php`:** the `database` setting is now `storage`, an array with the driver and its settings. This only matters if you edited that file.
+- **For code that builds on the app:** the store classes (`PhpSso\Store\Users` and the others) are interfaces now, their SQL implementations are in `PhpSso\Store\Sql` (`SqlUsers` and so on), and `PhpSso\Database` is `PhpSso\Store\Sql\Connection`.
+
 ## 0.1.0 - 2026-11-21
 
 First public release.
