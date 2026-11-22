@@ -4,8 +4,18 @@ declare(strict_types=1);
 
 return [
     'issuer' => getenv('SSO_PUBLIC_URL') ?: 'http://localhost:9000',
-    // Where the data lives. `sqlite` keeps everything in one file; another backend is another driver (see PhpSso\Store\StorageFactory).
-    'storage' => ['driver' => 'sqlite', 'path' => dirname(__DIR__) . '/var/sso.sqlite'],
+    // Where the data lives: SSO_DB_DRIVER is `sqlite` (the default: one file, SSO_DB_PATH), `mysql` (8.0.19 or later) or `pgsql`
+    // (13 or later), which also need SSO_DB_HOST, SSO_DB_NAME, SSO_DB_USER and SSO_DB_PASSWORD (and SSO_DB_PORT when it is not the
+    // usual one). The tables are created on first start. See PhpSso\Store\StorageFactory.
+    'storage' => [
+        'driver' => getenv('SSO_DB_DRIVER') ?: 'sqlite',
+        'path' => getenv('SSO_DB_PATH') ?: dirname(__DIR__) . '/var/sso.sqlite',
+        'host' => getenv('SSO_DB_HOST') ?: '',
+        'port' => (int) (getenv('SSO_DB_PORT') ?: 0) ?: null,
+        'database' => getenv('SSO_DB_NAME') ?: '',
+        'username' => getenv('SSO_DB_USER') ?: '',
+        'password' => getenv('SSO_DB_PASSWORD') ?: '',
+    ],
     'keys_dir' => dirname(__DIR__) . '/var/keys',
     'twig_cache' => dirname(__DIR__) . '/var/cache/twig',
 

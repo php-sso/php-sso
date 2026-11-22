@@ -38,6 +38,10 @@
     "config": {
         "sort-packages": true
     },
+    "suggest": {
+        "ext-pdo_mysql": "To keep the data in MySQL 8.0.19 or later instead of SQLite",
+        "ext-pdo_pgsql": "To keep the data in PostgreSQL 13 or later instead of SQLite"
+    },
     "require-dev": {
         "phpunit/phpunit": "^11"
     },

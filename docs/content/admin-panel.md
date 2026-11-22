@@ -34,9 +34,9 @@ are all edited with the same control: search to add, a paged and filterable list
 everything matching the filter. It searches on the server,
 so it stays fast with thousands of people, and every change applies immediately.
 
-Everything lives in `var/sso.sqlite` (the `storage` setting in `config/config.php`; the app only talks to the `PhpSso\Store\Storage` interface, so another backend is another implementation of it, chosen there). `bin/maintenance` removes expired data and can run from cron. On first start, an empty database is seeded from the `seed`
-section of `config/config.php`; after that the config is no longer read for users or clients.
-Delete `var/sso.sqlite` to start over.
+Everything lives in one database: `var/sso.sqlite` unless you chose MySQL or PostgreSQL (see [Databases](../production/#databases)).
+On first start, an empty database is seeded from the `seed` section of `config/config.php`; after that the config is no longer
+read for users or clients. With SQLite, delete `var/sso.sqlite` to start over.
 
 The panel's stylesheet and script are in `public/assets/`. The fonts there (Bricolage Grotesque and
 Instrument Sans) are bundled so the panel makes no third-party requests; both are licensed under the

@@ -18,8 +18,8 @@ final class StorageFactory
 
         return match ($driver) {
             'sqlite' => new SqlStorage(Connection::sqlite(self::string($config, 'path')), $options),
-            'mysql' => new SqlStorage(Connection::mysql(self::string($config, 'host'), (int) ($config['port'] ?? 3306), self::string($config, 'database'), self::string($config, 'username'), (string) ($config['password'] ?? '')), $options),
-            'pgsql' => new SqlStorage(Connection::postgres(self::string($config, 'host'), (int) ($config['port'] ?? 5432), self::string($config, 'database'), self::string($config, 'username'), (string) ($config['password'] ?? '')), $options),
+            'mysql' => new SqlStorage(Connection::mysql(self::string($config, 'host'), (int) ($config['port'] ?: 3306), self::string($config, 'database'), self::string($config, 'username'), (string) ($config['password'] ?? '')), $options),
+            'pgsql' => new SqlStorage(Connection::postgres(self::string($config, 'host'), (int) ($config['port'] ?: 5432), self::string($config, 'database'), self::string($config, 'username'), (string) ($config['password'] ?? '')), $options),
             default => throw new InvalidArgumentException('Unknown storage driver "' . (is_string($driver) ? $driver : gettype($driver)) . '". Available: sqlite, mysql, pgsql.'),
         };
     }

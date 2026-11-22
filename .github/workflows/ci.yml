@@ -28,6 +28,69 @@ jobs:
       - run: composer install --no-interaction --no-progress --prefer-dist
       - run: composer test
 
+  mysql:
+    name: MySQL ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['8.0', '8.4']
+    services:
+      mysql:
+        image: mysql:${{ matrix.version }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sso_test
+          MYSQL_USER: sso
+          MYSQL_PASSWORD: sso
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -usso -psso"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      SSO_TEST_DATABASE: mysql://sso:sso@127.0.0.1:3306/sso_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, mbstring, openssl, pdo_sqlite, pdo_mysql
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: composer test
+
+  postgres:
+    name: PostgreSQL ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['13', '17']
+    services:
+      postgres:
+        image: postgres:${{ matrix.version }}
+        env:
+          POSTGRES_DB: sso_test
+          POSTGRES_USER: sso
+          POSTGRES_PASSWORD: sso
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U sso -d sso_test"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      SSO_TEST_DATABASE: pgsql://sso:sso@127.0.0.1:5432/sso_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, mbstring, openssl, pdo_sqlite, pdo_pgsql
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: composer test
+
   production-image:
     name: Production image
     runs-on: ubuntu-latest
