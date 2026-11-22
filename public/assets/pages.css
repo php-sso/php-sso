@@ -95,6 +95,8 @@ b { font-weight: 650; }
 .steps li { margin-bottom: 14px; }
 
 /* ---- Sign in with another provider ---------------------------------------------- */
+/* A line of links under a form ("Forgot your password?", "Back to sign in"): set apart from the button, and centred. */
+.card form ~ p.muted { margin: 18px 0 0; text-align: center; }
 .social { margin-top: 16px; display: grid; gap: 8px; text-align: center; }
 .social p { margin: 0; }
 
