@@ -11,6 +11,9 @@ use RuntimeException;
 /** PostgreSQL 13 or later. */
 final class PostgresDialect implements Dialect
 {
+    /** The advisory lock that lets one process at a time migrate (the key is arbitrary, "SSOM"). */
+    private const LOCK_KEY = 1397051213;
+
     public function name(): string
     {
         return 'pgsql';
@@ -102,5 +105,75 @@ final class PostgresDialect implements Dialect
                 . implode(', ', $duplicates) . '. Give each person their own address, or set SSO_LOGIN_IDENTIFIER=username.');
         }
         $pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users (LOWER(email))');
+    }
+
+    public function transactionalDdl(): bool
+    {
+        return true;
+    }
+
+    public function beginMigration(PDO $pdo): void
+    {
+        $pdo->beginTransaction();
+    }
+
+    public function commitMigration(PDO $pdo): void
+    {
+        $pdo->commit();
+    }
+
+    public function rollbackMigration(PDO $pdo): void
+    {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+    }
+
+    public function lock(PDO $pdo, int $seconds): void
+    {
+        $deadline = microtime(true) + $seconds;
+        while (true) { // an advisory lock belongs to the database, and is held until unlock() or the connection ends
+            if ($pdo->query('SELECT pg_try_advisory_lock(' . self::LOCK_KEY . ')')->fetchColumn() === true) { // PDO gives a boolean
+                return;
+            }
+            if (microtime(true) >= $deadline) {
+                throw new RuntimeException("Could not get the migration lock within {$seconds} seconds: another process is migrating.");
+            }
+            usleep(100_000);
+        }
+    }
+
+    public function unlock(PDO $pdo): void
+    {
+        $pdo->query('SELECT pg_advisory_unlock(' . self::LOCK_KEY . ')')->fetchColumn();
+    }
+
+    public function tableExists(PDO $pdo, string $table): bool
+    {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = ?');
+        $stmt->execute([$table]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function columnExists(PDO $pdo, string $table, string $column): bool
+    {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? AND column_name = ?');
+        $stmt->execute([$table, $column]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function indexExists(PDO $pdo, string $table, string $index): bool
+    {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM pg_indexes WHERE schemaname = current_schema() AND tablename = ? AND indexname = ?');
+        $stmt->execute([$table, $index]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function createMigrationsTable(PDO $pdo, string $table): void
+    {
+        $pdo->exec('CREATE TABLE IF NOT EXISTS "' . $table . '" (version VARCHAR(64) NOT NULL PRIMARY KEY, applied_at BIGINT NOT NULL)');
     }
 }

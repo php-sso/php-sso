@@ -110,4 +110,71 @@ final class MysqlDialect implements Dialect
             $pdo->exec('CREATE UNIQUE INDEX users_email_unique ON users ((LOWER(email)))');
         }
     }
+
+    public function transactionalDdl(): bool
+    {
+        return false;
+    }
+
+    public function beginMigration(PDO $pdo): void
+    {
+    }
+
+    public function commitMigration(PDO $pdo): void
+    {
+    }
+
+    public function rollbackMigration(PDO $pdo): void
+    {
+    }
+
+    public function lock(PDO $pdo, int $seconds): void
+    {
+        $stmt = $pdo->prepare('SELECT GET_LOCK(?, ?)'); // server wide, so the name carries the database
+        $stmt->execute([$this->lockName($pdo), $seconds]);
+        if ((int) $stmt->fetchColumn() !== 1) {
+            throw new RuntimeException("Could not get the migration lock within {$seconds} seconds: another process is migrating.");
+        }
+    }
+
+    public function unlock(PDO $pdo): void
+    {
+        $stmt = $pdo->prepare('SELECT RELEASE_LOCK(?)');
+        $stmt->execute([$this->lockName($pdo)]);
+        $stmt->fetchColumn();
+    }
+
+    private function lockName(PDO $pdo): string
+    {
+        return 'php_sso_migrate_' . md5((string) $pdo->query('SELECT DATABASE()')->fetchColumn());
+    }
+
+    public function tableExists(PDO $pdo, string $table): bool
+    {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?');
+        $stmt->execute([$table]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function columnExists(PDO $pdo, string $table, string $column): bool
+    {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?');
+        $stmt->execute([$table, $column]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function indexExists(PDO $pdo, string $table, string $index): bool
+    {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?');
+        $stmt->execute([$table, $index]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function createMigrationsTable(PDO $pdo, string $table): void
+    {
+        $pdo->exec('CREATE TABLE IF NOT EXISTS "' . $table . '" (version VARCHAR(64) NOT NULL PRIMARY KEY, applied_at BIGINT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin');
+    }
 }

@@ -1,0 +1,52 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// The database schema, one migration at a time. See "Databases" in the production docs.
+//   bin/migrate status            every migration, whether it ran, and when
+//   bin/migrate up                run the pending migrations (one process at a time: a database lock)
+//   bin/migrate up --dry-run      say what would run, change nothing
+// It never migrates on its own while it looks: the database is opened as it is, whatever SSO_AUTO_MIGRATE says.
+
+use PhpSso\Store\StorageFactory;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$config = require dirname(__DIR__) . '/config/config.php';
+
+$command = $argv[1] ?? 'status';
+$dryRun = in_array('--dry-run', array_slice($argv, 2), true);
+if (!in_array($command, ['status', 'up'], true) || array_diff(array_slice($argv, 2), ['--dry-run']) !== [] || ($dryRun && $command !== 'up')) {
+    fwrite(STDERR, "Usage: bin/migrate status | up [--dry-run]\n");
+    exit(2);
+}
+
+try {
+    $migrator = StorageFactory::connect($config['storage'], migrate: false)->migrator();
+
+    if ($command === 'status') {
+        foreach ($migrator->status() as $row) {
+            $appliedAt = $row['appliedAt'];
+            fwrite(STDOUT, sprintf("%s  %-8s  %-19s  %s\n", $row['migration']->id(), $appliedAt === null ? 'pending' : 'applied', $appliedAt === null ? '-' : date('Y-m-d H:i:s', $appliedAt), $row['migration']->description()));
+        }
+        exit(0);
+    }
+
+    if ($dryRun) {
+        $pending = $migrator->pending();
+        foreach ($pending as $migration) {
+            fwrite(STDOUT, "Would apply {$migration->id()}  {$migration->description()}\n");
+        }
+        fwrite(STDOUT, $pending === [] ? "Nothing to do: the schema is up to date.\n" : sprintf("%d migration%s would run.\n", count($pending), count($pending) === 1 ? '' : 's'));
+        exit(0);
+    }
+
+    $ran = $migrator->migrate(static function ($migration): void {
+        fwrite(STDOUT, "Applying {$migration->id()}  {$migration->description()} ...\n");
+    });
+    fwrite(STDOUT, $ran === [] ? "Nothing to do: the schema is up to date.\n" : sprintf("Done: %d migration%s applied.\n", count($ran), count($ran) === 1 ? '' : 's'));
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Migration failed: ' . $e->getMessage() . "\n");
+    exit(1);
+}

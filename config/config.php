@@ -9,7 +9,7 @@ return [
     'issuer' => getenv('SSO_PUBLIC_URL') ?: 'http://localhost:9000',
     // Where the data lives: SSO_DB_DRIVER is `sqlite` (the default: one file, SSO_DB_PATH), `mysql` (8.0.19 or later) or `pgsql`
     // (13 or later), which also need SSO_DB_HOST, SSO_DB_NAME, SSO_DB_USER and SSO_DB_PASSWORD (and SSO_DB_PORT when it is not the
-    // usual one). The tables are created on first start. See PhpSso\Store\StorageFactory.
+    // usual one). The tables are created on first start, and later changes are migrations. See PhpSso\Store\StorageFactory.
     'storage' => [
         'driver' => getenv('SSO_DB_DRIVER') ?: 'sqlite',
         'path' => getenv('SSO_DB_PATH') ?: dirname(__DIR__) . '/var/sso.sqlite',
@@ -18,6 +18,9 @@ return [
         'database' => getenv('SSO_DB_NAME') ?: '',
         'username' => getenv('SSO_DB_USER') ?: '',
         'password' => getenv('SSO_DB_PASSWORD') ?: '',
+        // SSO_AUTO_MIGRATE (default on): bring the schema up to date when the server connects. Off, the server refuses to
+        // serve while migrations are pending, and `bin/migrate up` runs them. See PhpSso\Store\Sql\Migrations\Migrator.
+        'auto_migrate' => getenv('SSO_AUTO_MIGRATE') === false || getenv('SSO_AUTO_MIGRATE') === '' ? true : filter_var(getenv('SSO_AUTO_MIGRATE'), FILTER_VALIDATE_BOOL),
     ],
     // How long a signing key that has been replaced stays published (SSO_KEY_RETENTION_DAYS): tokens it signed verify until then. See bin/keys.
     'key_retention_seconds' => max(1, (int) (getenv('SSO_KEY_RETENTION_DAYS') ?: 30)) * 86400,

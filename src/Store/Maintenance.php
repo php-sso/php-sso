@@ -12,4 +12,11 @@ interface Maintenance
 
     /** Whether the store answers right now. Reads and writes nothing that matters, so a monitor may ask often. */
     public function isHealthy(): bool;
+
+    /**
+     * The ids of the schema migrations that have not run yet (empty: the schema is up to date).
+     *
+     * @return list<string>
+     */
+    public function pendingMigrations(): array;
 }

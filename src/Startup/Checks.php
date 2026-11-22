@@ -35,6 +35,21 @@ final class Checks
         return $problems;
     }
 
+    /**
+     * What is wrong when migrations are pending and the server was told not to run them (SSO_AUTO_MIGRATE off).
+     *
+     * @param list<string> $pending the ids of the migrations that have not run
+     * @return list<string>
+     */
+    public static function pendingMigrations(array $pending): array
+    {
+        if ($pending === []) {
+            return [];
+        }
+
+        return ['The database schema is not up to date (pending migrations: ' . implode(', ', $pending) . '). Run bin/migrate up, or set SSO_AUTO_MIGRATE=1 to let the server do it when it starts.'];
+    }
+
     private static function isLocal(string $host): bool
     {
         return $host === 'localhost' || str_ends_with($host, '.localhost') || $host === '::1' || preg_match('/^127\.\d+\.\d+\.\d+$/', $host) === 1;

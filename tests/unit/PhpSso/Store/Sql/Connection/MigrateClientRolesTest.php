@@ -38,6 +38,7 @@ final class MigrateClientRolesTest extends TestCase
         $this->old->exec('CREATE TABLE client_role (id INTEGER PRIMARY KEY AUTOINCREMENT, client_id TEXT NOT NULL, name TEXT NOT NULL COLLATE NOCASE, description TEXT NOT NULL DEFAULT \'\')');
         $this->old->exec('CREATE TABLE client_role_group (role_id INTEGER NOT NULL, group_id INTEGER NOT NULL)');
         $this->old->exec('CREATE TABLE client_role_user (role_id INTEGER NOT NULL, user_sub TEXT NOT NULL)');
+        $this->old->exec('DROP TABLE schema_migrations'); // a database from before the migrator: the baseline migration runs the upgrade
     }
 
     protected function tearDown(): void

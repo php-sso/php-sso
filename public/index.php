@@ -104,14 +104,25 @@ $emitter = new SapiEmitter();
 $request = ServerRequestFactory::fromGlobals();
 
 // A setup that would weaken the server stops it, and says why, instead of serving anyone.
-$problems = Checks::problems($config['issuer'], $config['demo'], $config['allow_insecure_http']);
-if ($problems !== []) {
+$refuse = static function (array $problems) use ($emitter, $headers): never {
     error_log('SSO: refusing to start: ' . implode(' ', $problems));
     $emitter->emit($headers->apply(new TextResponse("php-sso is not set up safely:\n\n- " . implode("\n- ", $problems) . "\n", 500)));
     exit;
+};
+$problems = Checks::problems($config['issuer'], $config['demo'], $config['allow_insecure_http']);
+if ($problems !== []) {
+    $refuse($problems);
 }
 
 $storage = StorageFactory::create($config['storage'], new StorageOptions($config['session_idle_seconds'], array_keys($config['scopes'])));
+
+// With SSO_AUTO_MIGRATE off the schema is changed by `bin/migrate up` only: until then nothing is served, /healthz included.
+if (!$config['storage']['auto_migrate']) {
+    $problems = Checks::pendingMigrations($storage->maintenance()->pendingMigrations());
+    if ($problems !== []) {
+        $refuse($problems);
+    }
+}
 
 // For a load balancer or a container health check: does the server answer, and does the database? Nothing else is said.
 if ($request->getUri()->getPath() === '/healthz' && in_array($request->getMethod(), ['GET', 'HEAD'], true)) {

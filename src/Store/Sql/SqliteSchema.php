@@ -359,7 +359,10 @@ final class SqliteSchema
             return $stmt->fetchAll(PDO::FETCH_COLUMN);
         };
 
-        $this->pdo->beginTransaction();
+        $own = !$this->pdo->inTransaction(); // the migrator may have opened one already
+        if ($own) {
+            $this->pdo->beginTransaction();
+        }
         foreach ($this->pdo->query('SELECT id, client_id, name, description FROM client_role ORDER BY id')->fetchAll() as $old) {
             $groups = $holders('client_role_group', 'group_id', (int) $old['id']);
             $users = $holders('client_role_user', 'user_sub', (int) $old['id']);
@@ -389,7 +392,9 @@ final class SqliteSchema
         $this->pdo->exec('DROP TABLE client_role_group');
         $this->pdo->exec('DROP TABLE client_role_user');
         $this->pdo->exec('DROP TABLE client_role');
-        $this->pdo->commit();
+        if ($own) {
+            $this->pdo->commit();
+        }
     }
 
     /** @return bool whether the column was added just now */
@@ -417,9 +422,15 @@ final class SqliteSchema
             return;
         }
 
-        $this->pdo->exec('PRAGMA foreign_keys = OFF');
+        // Inside the migrator's transaction its foreign keys are off already, and it checks them before it commits.
+        $own = !$this->pdo->inTransaction();
+        if ($own) {
+            $this->pdo->exec('PRAGMA foreign_keys = OFF');
+        }
         try {
-            $this->pdo->beginTransaction();
+            if ($own) {
+                $this->pdo->beginTransaction();
+            }
             $this->pdo->exec('CREATE TABLE users_rebuilt (' . self::USERS_COLUMNS . ')');
             $this->pdo->exec('INSERT INTO users_rebuilt (sub, username, password_hash, name, email, email_verified, is_admin)
                 SELECT sub, username, password_hash, name, email, email_verified, is_admin FROM users');
@@ -428,14 +439,18 @@ final class SqliteSchema
             if ($this->pdo->query('PRAGMA foreign_key_check')->fetchAll() !== []) {
                 throw new \RuntimeException('Rebuilding the users table broke a foreign key; nothing was changed.');
             }
-            $this->pdo->commit();
+            if ($own) {
+                $this->pdo->commit();
+            }
         } catch (\Throwable $e) {
-            if ($this->pdo->inTransaction()) {
+            if ($own && $this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
             throw $e;
         } finally {
-            $this->pdo->exec('PRAGMA foreign_keys = ON');
+            if ($own) {
+                $this->pdo->exec('PRAGMA foreign_keys = ON');
+            }
         }
     }
 }

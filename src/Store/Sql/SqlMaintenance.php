@@ -7,14 +7,17 @@ namespace PhpSso\Store\Sql;
 use PDO;
 use PDOException;
 use PhpSso\Store\Maintenance;
+use PhpSso\Store\Sql\Migrations\Migration;
 
 final class SqlMaintenance implements Maintenance
 {
     private PDO $pdo;
     private Dialect $dialect;
+    private Connection $db;
 
     public function __construct(Connection $db, private int $idleSeconds)
     {
+        $this->db = $db;
         $this->pdo = $db->pdo;
         $this->dialect = $db->dialect;
     }
@@ -38,5 +41,10 @@ final class SqlMaintenance implements Maintenance
         } catch (PDOException) {
             return false;
         }
+    }
+
+    public function pendingMigrations(): array
+    {
+        return array_map(static fn (Migration $m): string => $m->id(), $this->db->migrator()->pending());
     }
 }

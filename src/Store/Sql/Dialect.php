@@ -74,4 +74,33 @@ interface Dialect
      * already has duplicates.
      */
     public function enforceUniqueEmail(PDO $pdo, bool $unique): void;
+
+    /** Whether DDL (CREATE, ALTER, DROP) can be rolled back with the transaction around it: SQLite and PostgreSQL yes, MySQL no. */
+    public function transactionalDdl(): bool;
+
+    /**
+     * Starts a migration: where {@see transactionalDdl()}, opens the transaction it runs in (SQLite also switches foreign
+     * keys off first, which it ignores inside a transaction, and takes its write lock at once); elsewhere does nothing.
+     */
+    public function beginMigration(PDO $pdo): void;
+
+    /** Ends a migration that went well (SQLite first checks that no foreign key is broken). Throws, having rolled back, when that fails. */
+    public function commitMigration(PDO $pdo): void;
+
+    /** Ends a migration that failed: rolls back where it can, and puts back what {@see beginMigration()} changed. Safe to call with nothing open. */
+    public function rollbackMigration(PDO $pdo): void;
+
+    /** Waits (up to `$seconds`) for the lock that lets one process at a time migrate; throws when it cannot get it. Pair with {@see unlock()}. */
+    public function lock(PDO $pdo, int $seconds): void;
+
+    public function unlock(PDO $pdo): void;
+
+    public function tableExists(PDO $pdo, string $table): bool;
+
+    public function columnExists(PDO $pdo, string $table, string $column): bool;
+
+    public function indexExists(PDO $pdo, string $table, string $index): bool;
+
+    /** Creates the table that records which migrations ran (`version`, `applied_at`) when it is not there. */
+    public function createMigrationsTable(PDO $pdo, string $table): void;
 }

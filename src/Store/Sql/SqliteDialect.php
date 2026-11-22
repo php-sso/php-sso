@@ -101,4 +101,76 @@ final class SqliteDialect implements Dialect
         }
         $pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users (email COLLATE NOCASE)');
     }
+
+    public function transactionalDdl(): bool
+    {
+        return true;
+    }
+
+    public function beginMigration(PDO $pdo): void
+    {
+        $pdo->exec('PRAGMA foreign_keys = OFF'); // a table rebuild needs it, and SQLite ignores the pragma inside a transaction
+        try {
+            $pdo->exec('BEGIN IMMEDIATE'); // the write lock: another process that migrates waits here (busy_timeout)
+        } catch (\Throwable $e) {
+            $pdo->exec('PRAGMA foreign_keys = ON');
+            throw $e;
+        }
+    }
+
+    public function commitMigration(PDO $pdo): void
+    {
+        if ($pdo->query('PRAGMA foreign_key_check')->fetchAll() !== []) {
+            $this->rollbackMigration($pdo);
+            throw new RuntimeException('The migration broke a foreign key; nothing was changed.');
+        }
+        try {
+            $pdo->exec('COMMIT');
+        } finally {
+            $pdo->exec('PRAGMA foreign_keys = ON');
+        }
+    }
+
+    public function rollbackMigration(PDO $pdo): void
+    {
+        if ($pdo->inTransaction()) {
+            $pdo->exec('ROLLBACK');
+        }
+        $pdo->exec('PRAGMA foreign_keys = ON');
+    }
+
+    public function lock(PDO $pdo, int $seconds): void
+    {
+        // The lock is the write transaction of beginMigration().
+    }
+
+    public function unlock(PDO $pdo): void
+    {
+    }
+
+    public function tableExists(PDO $pdo, string $table): bool
+    {
+        $stmt = $pdo->prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?");
+        $stmt->execute([$table]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    public function columnExists(PDO $pdo, string $table, string $column): bool
+    {
+        return in_array(strtolower($column), array_map('strtolower', array_column($pdo->query('PRAGMA table_info("' . $table . '")')->fetchAll(), 'name')), true);
+    }
+
+    public function indexExists(PDO $pdo, string $table, string $index): bool
+    {
+        $stmt = $pdo->prepare("SELECT 1 FROM sqlite_master WHERE type = 'index' AND tbl_name = ? AND name = ?");
+        $stmt->execute([$table, $index]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    public function createMigrationsTable(PDO $pdo, string $table): void
+    {
+        $pdo->exec('CREATE TABLE IF NOT EXISTS "' . $table . '" (version TEXT PRIMARY KEY, applied_at INTEGER NOT NULL)');
+    }
 }

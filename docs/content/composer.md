@@ -73,5 +73,6 @@ Set `SSO_THEME_DIR` to a folder of yours, outside the project, so that an upgrad
 
 The project is an application you own, so `composer update` only updates the libraries it uses, not the application. To move to a new
 version, create a new project of that version next to the old one, move `var/` across (it holds your data and keys) and use the same
-environment variables and theme folder. Keep your own changes out of the application's files and this stays a copy and a restart.
+environment variables and theme folder. Keep your own changes out of the application's files and this stays a copy and a restart. The new version brings the database up to date
+when it starts; `bin/migrate status` and `bin/migrate up` do it as a separate step (see [Migrations]({{< relref "production.md#migrations" >}})).
 For a setup you would rather not maintain this way, use the [Docker image]({{< relref "docker.md" >}}).

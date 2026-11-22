@@ -94,5 +94,7 @@ What goes in the folder, and what you can change, is on the [Theming]({{< relref
 
 ## Upgrading
 
-Change the tag, pull and recreate the container. The volume keeps the data. SQLite databases are brought up to date when the new
-version starts. MySQL and PostgreSQL tables are created if missing but not altered, so read the release notes of a version before you move to it.
+Change the tag, pull and recreate the container. The volume keeps the data. The new version brings the database schema up to date when it
+starts (see [Migrations]({{< relref "production.md#migrations" >}})). To do that as a separate step instead, set `SSO_AUTO_MIGRATE=0`, run
+`docker run --rm <the same options> ghcr.io/php-sso/php-sso:<tag> bin/migrate up` (or `docker exec <container> bin/migrate up`), and start the new
+version after it. `bin/migrate status` shows what ran. Back up a MySQL database first: it cannot undo a migration that fails halfway.
