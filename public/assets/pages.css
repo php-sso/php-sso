@@ -98,7 +98,8 @@ b { font-weight: 650; }
 /* A line of links under a form ("Forgot your password?", "Back to sign in"): set apart from the button, and centred. */
 .card form ~ p.muted { margin: 18px 0 0; text-align: center; }
 /* A secondary action under a form, as a button of its own ("Forgot your password?"). */
-.card form ~ a.btn { margin-top: 12px; }
+.card form ~ a.btn, .card a.btn + a.btn { margin-top: 12px; }
+.card p + a.btn { margin-top: 16px; }
 .social { margin-top: 16px; display: grid; gap: 8px; text-align: center; }
 .social p { margin: 0; }
 
