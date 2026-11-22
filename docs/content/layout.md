@@ -1,7 +1,8 @@
 ---
 title: "Code layout"
-weight: 13
+weight: 41
 lead: "Where things are in the source."
+group: "Contribute"
 ---
 
 - `public/index.php`: the front controller. It builds everything for the request, runs the [startup checks]({{< relref "security/startup-checks.md" >}}), answers `/healthz`, starts the session and sends every response through the security headers

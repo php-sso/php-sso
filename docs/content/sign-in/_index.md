@@ -1,7 +1,8 @@
 ---
 title: "Signing in"
-weight: 7
+weight: 10
 lead: "Passwords, outside accounts, companies and a second step."
+group: "Users and access"
 ---
 
 Signing in takes two steps: the person says who they are (`/login`), then proves it with a password

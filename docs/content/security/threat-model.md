@@ -49,9 +49,9 @@ An attacker who controls the server itself, the host, or an administrator's brow
 
 ## Known gaps
 
-These are known, and not fixed yet:
+These are known, and not fixed (or accepted):
 
-- **`GET /logout` has no token.** A page on another website can send a visitor there and sign them out (and notify the apps that they were signed out). This is a nuisance and gives no access. Making sign-out a `POST` would change the links apps use.
+- **`GET /logout` has no token.** A page on another website can send a visitor there and sign them out (and notify the apps that they were signed out). This is a nuisance and gives no access. The author has accepted this: making sign-out a `POST` would change the links apps use.
 - **No independent review.** Everything on this page is the author's analysis. An outside review, ideally including testing of a running instance, is still needed before relying on php-sso for something that matters.
 - **No rate limit in front of the application.** Limits are in the application. Flooding the server with requests is for your reverse proxy or firewall to handle.
 - **PHP session files** are cleaned by PHP's own collector, not by php-sso.

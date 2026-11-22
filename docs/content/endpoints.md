@@ -1,7 +1,8 @@
 ---
 title: "Endpoints"
-weight: 4
+weight: 30
 lead: "The addresses the server answers on."
+group: "Reference"
 ---
 
 | Endpoint | Purpose |

@@ -1,7 +1,8 @@
 ---
 title: "Development"
-weight: 15
+weight: 40
 lead: "Run the demo, and the tests, from a checkout."
+group: "Contribute"
 ---
 
 This is how to work on php-sso, not how to run it: for that, see [Run with Docker]({{< relref "docker.md" >}}) and

@@ -1,7 +1,8 @@
 ---
 title: "Signing out"
-weight: 5
+weight: 11
 lead: "Logout, and how it reaches the apps."
+group: "Users and access"
 ---
 
 - **Ending a session** (by the person, by an administrator, on password change, or when the user is

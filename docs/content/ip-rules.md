@@ -1,7 +1,8 @@
 ---
 title: "IP rules"
-weight: 8
+weight: 14
 lead: "Allow or deny network addresses."
+group: "Users and access"
 ---
 
 `/admin/ip-rules` controls which network addresses may sign in. Rules are single addresses or CIDR ranges (IPv4 and IPv6).

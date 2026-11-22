@@ -2,6 +2,7 @@
 title: "Install with Composer"
 weight: 2
 lead: "Run php-sso on your own PHP and web server."
+group: "Get started"
 ---
 
 ```bash

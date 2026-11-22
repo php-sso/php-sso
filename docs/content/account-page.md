@@ -2,6 +2,7 @@
 title: "Account page"
 weight: 12
 lead: "What people can change about themselves."
+group: "Users and access"
 ---
 
 Signed-in people manage their own profile at `/account`: name, email, password, and the browsers

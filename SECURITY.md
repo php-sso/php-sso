@@ -29,6 +29,12 @@ two-step verification, social and SAML sign-in, SCIM provisioning, IP rules).
 
 Out of scope: the demo values below, which are public on purpose, and the demo client in `client/`.
 
+## Threat model
+
+What is protected, who might attack, what stops them, the known gaps (for example, `GET /logout` has no token) and the
+checks anyone can run again are in the documentation: <https://php-sso.github.io/php-sso/security/threat-model/>.
+It is the author's own analysis, not an independent review.
+
 ## Demo defaults that are public
 
 This project is a demo and a starting point, and the README lists what is missing for production ("Not production ready"). The

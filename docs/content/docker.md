@@ -2,6 +2,7 @@
 title: "Run with Docker"
 weight: 1
 lead: "The published image is the way to run php-sso."
+group: "Get started"
 ---
 
 ```bash

@@ -1,7 +1,8 @@
 ---
 title: Theming
-weight: 11
+weight: 23
 lead: Change the pages people see without rebuilding the image.
+group: "Run in production"
 ---
 
 The pages people see (sign in, account settings, "no access", errors) are Twig templates that you can

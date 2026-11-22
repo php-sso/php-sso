@@ -1,7 +1,8 @@
 ---
 title: "Admin panel"
-weight: 6
+weight: 13
 lead: "Manage people, groups, clients and settings."
+group: "Users and access"
 ---
 
 Reachable at `/admin` for users with the administrator flag; it reuses the SSO login. Manage:

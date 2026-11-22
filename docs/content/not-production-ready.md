@@ -1,7 +1,8 @@
 ---
 title: "Not production ready"
-weight: 14
+weight: 3
 lead: "What is still missing."
+group: "Get started"
 ---
 
 - No consent screen (first-party apps only; `prompt=consent` is refused), no front-channel logout.

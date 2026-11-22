@@ -1,7 +1,8 @@
 ---
 title: "Production and configuration"
-weight: 10
+weight: 20
 lead: "The production image and every environment variable."
+group: "Run in production"
 ---
 
 ```bash
