@@ -65,7 +65,7 @@ you replace them the same way: a file in `theme/templates/` with the same name w
 
 - **`email_<name>.txt.twig`** is the plain text. Its `subject` block is the subject (it is not part of the body, and is made a single line), and its `body` block is the text. Nothing is HTML-escaped in it.
 - **`email_<name>.html.twig`** is the HTML. Mail programs ignore style sheets and most of `<head>`, so style with `style="..."` attributes and tables, and do not link to files on your server.
-  Its `email_body` block is the content, and `email_footer` the line under it.
+  Its `email_body` block is the content, and `email_footer` the line under it. The base `_email.html.twig` (the page around the content) can be replaced on its own, and its `email_button_style` block holds the style of the buttons, so a theme gets its own colours and logo without copying the text of each email.
 
 Extend the built-in email to change a piece of it, as with pages:
 

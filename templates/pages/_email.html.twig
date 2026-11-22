@@ -15,3 +15,5 @@
   </table>
 </body>
 </html>
+{#- The style of a button in an email is this block: a theme restyles every button by extending this base. It sits in a branch that never runs, so it is only used through block('email_button_style'). -#}
+{% if false %}{% block email_button_style %}display:inline-block;background:#0f6b7a;color:#ffffff;text-decoration:none;font-weight:600;padding:10px 18px;border-radius:6px;{% endblock %}{% endif %}
