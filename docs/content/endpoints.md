@@ -17,7 +17,7 @@ group: "Reference"
 | `POST /introspect` | Token introspection (RFC 7662), for confidential clients such as APIs |
 | `GET /userinfo` | Claims for a Bearer access token (needs the `openid` scope) |
 | `GET`/`POST /end-session` | RP-initiated logout (`id_token_hint`, `post_logout_redirect_uri`, `state`) |
-| `GET /login`, `/logout` | SSO session on this server |
+| `GET /login`, `GET` and `POST /logout` | SSO session on this server |
 | `GET /.well-known/oauth-authorization-server` | Same metadata as the discovery document (RFC 8414) |
 
 Scopes: `openid`, `profile` (name), `email` (email, email_verified), `groups` (names of the user's groups), `roles` (names of the user's roles, see below).

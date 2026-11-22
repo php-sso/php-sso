@@ -36,7 +36,7 @@ An attacker who controls the server itself, the host, or an administrator's brow
 | Reusing a code or a token | Authorization codes and refresh tokens work once, also when requests race | the load and race test below |
 | Sending the code to another address | Redirect addresses must match the registered ones exactly; a wrong one gets an error page, never a redirect | conformance run |
 | Intercepting a code | PKCE is required of everyone by default | [Production]({{< relref "production.md" >}}) |
-| Forged requests from another website | A token in every form, checked for all `POST` requests of the admin, account and sign-in pages; `SameSite=Lax` cookies | [Sessions and cookies]({{< relref "security/sessions.md" >}}) |
+| Forged requests from another website | A token in every form, checked for all `POST` requests of the admin, account and sign-in pages, and for signing out (a link to `/logout` only asks first); `SameSite=Lax` cookies | [Sessions and cookies]({{< relref "security/sessions.md" >}}) |
 | Clickjacking and script injection | `frame-ancestors 'none'`, a strict Content-Security-Policy, output escaped by default | [Security headers]({{< relref "security/headers.md" >}}) |
 | Fixing a session id before sign-in | A new session id is issued at sign-in | probe below |
 | Reaching the admin panel or files | Admin routes need a signed-in administrator; only `public/` is served; `var`, `vendor` and `config` answer `404` | probe below |
@@ -51,7 +51,6 @@ An attacker who controls the server itself, the host, or an administrator's brow
 
 These are known, and not fixed (or accepted):
 
-- **`GET /logout` has no token.** A page on another website can send a visitor there and sign them out (and notify the apps that they were signed out). This is a nuisance and gives no access. The author has accepted this: making sign-out a `POST` would change the links apps use.
 - **No independent review.** Everything on this page is the author's analysis. An outside review, ideally including testing of a running instance, is still needed before relying on php-sso for something that matters.
 - **No rate limit in front of the application.** Limits are in the application. Flooding the server with requests is for your reverse proxy or firewall to handle.
 - **PHP session files** are cleaned by PHP's own collector, not by php-sso.

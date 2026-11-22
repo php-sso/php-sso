@@ -134,7 +134,7 @@ final class Sso
             ['GET', '/login/required'] => $this->requiredAction->form(request: $request),
             ['POST', '/login/required'] => $this->requiredAction->submit($request),
             ['GET', '/userinfo'], ['POST', '/userinfo'] => $this->oauth->bearerTokenMiddleware(['openid'])->process($request, $this->oauth->userInfoHandler()),
-            ['GET', '/logout'] => $this->logout($request),
+            ['GET', '/logout'], ['POST', '/logout'] => $this->logout($request),
             default => $this->pages->render('error', ['title' => 'Page not found', 'message' => 'There is nothing at this address.', 'user' => null, 'csrf' => ''], 404),
         };
     }
@@ -470,8 +470,22 @@ final class Sso
         return new RedirectResponse($this->impersonation->stop($this->clientIp->of($request)) ? '/admin/access-test' : '/login', 303);
     }
 
+    /**
+     * Asks first (a link on another website must not be able to sign someone out), then signs out on a POST with the
+     * form token. Without a session there is nothing to end.
+     */
     private function logout(ServerRequestInterface $request): ResponseInterface
     {
+        $user = $this->currentUser();
+        if ($user === null) {
+            return new RedirectResponse('/login');
+        }
+        if ($request->getMethod() === 'GET') {
+            return $this->pages->render('logout', $this->pageContext($user));
+        }
+        if (!hash_equals($_SESSION['csrf'] ?? '', (string) (((array) $request->getParsedBody())['_csrf'] ?? ''))) {
+            return $this->pages->render('error', $this->pageContext($user) + ['title' => 'Page expired', 'message' => 'Go back, reload the page and try again.'], 400);
+        }
         if ($this->impersonation->active() !== null) { // leaving an impersonation, not signing the administrator out
             return new RedirectResponse($this->impersonation->stop($this->clientIp->of($request)) ? '/admin/access-test' : '/login');
         }

@@ -29,6 +29,7 @@ theme/
     account.html.twig
     no_access.html.twig
     device.html.twig
+    logout.html.twig
     logout_confirm.html.twig
     signed_out.html.twig
     error.html.twig
@@ -102,6 +103,7 @@ Every page receives:
 | `consent` | `error` (text, may be empty), `consent` (`id`, `version`, `name`, `message`, `url` or null), `step` (`of`: how many notices are left, this one included) |
 | `no_access` | `client_name` |
 | `device` | `step` (`enter`, `confirm` or `done`), `error`, `user_code`, `client_name`, `scopes`, `approved` |
+| `logout` | none |
 | `logout_confirm` | `client_name` (or null), `fields` (hidden values to send back: name => value) |
 | `signed_out` | none |
 | `error` | `title`, `message`, and `code` (the OAuth error, such as `invalid_request`) only for sign-in requests an app got wrong, such as an unregistered redirect URI. Test it with `code is defined`, because the other error pages do not have it |
@@ -149,11 +151,12 @@ Templates run with `strict_variables`: using a variable that does not exist is a
 | Profile | `POST /account/profile` | `_csrf`, `name`, `email` |
 | Password | `POST /account/password` | `_csrf`, `current_password`, `new_password`, `confirm_password` |
 | Device code (`device`) | `POST /device` | `_csrf`, `user_code`, and `action` (`approve` or `deny`) on the confirm step |
+| Sign out of this browser (`logout`) | `POST /logout` | `_csrf` |
 | Confirm sign-out (`logout_confirm`) | `POST /end-session` | `_csrf` and every entry of `fields` |
 | Sign out one session | `POST /account/sessions/{id}/end` | `_csrf` |
 | Sign out all others | `POST /account/sessions/end-others` | `_csrf` |
 
-Signing out of this browser is a link to `GET /logout`.
+Signing out of this browser is a link to `/logout`, which asks "Sign out?" first; the button on that page (`logout`) posts the form token to `/logout`.
 
 A `login.html.twig` that replaces the built-in page instead of extending it only shows provider buttons if it
 loops over `social` and links to `/login/social/{key}`.
