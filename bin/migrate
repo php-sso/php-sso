@@ -9,6 +9,7 @@ declare(strict_types=1);
 //   bin/migrate up --dry-run      say what would run, change nothing
 // It never migrates on its own while it looks: the database is opened as it is, whatever SSO_AUTO_MIGRATE says.
 
+use PhpSso\Store\SchemaTooNew;
 use PhpSso\Store\StorageFactory;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -30,9 +31,15 @@ try {
             $appliedAt = $row['appliedAt'];
             fwrite(STDOUT, sprintf("%s  %-8s  %-19s  %s\n", $row['migration']->id(), $appliedAt === null ? 'pending' : 'applied', $appliedAt === null ? '-' : date('Y-m-d H:i:s', $appliedAt), $row['migration']->description()));
         }
+        foreach ($migrator->unknown() as $version) {
+            fwrite(STDOUT, sprintf("%s  %-8s  %-19s  %s\n", $version, 'unknown', '-', 'applied by a newer version of php-sso: this version must not be run against this database'));
+        }
         exit(0);
     }
 
+    if (($unknown = $migrator->unknown()) !== []) {
+        throw new SchemaTooNew($unknown);
+    }
     if ($dryRun) {
         $pending = $migrator->pending();
         foreach ($pending as $migration) {

@@ -89,6 +89,10 @@ With `SSO_AUTO_MIGRATE=0` the server does not change the schema. While migration
 included, answers `500` with the reason, and the same line is written to the error log. `bin/migrate` ignores the setting: it never migrates
 when you only ask for `status`, and always migrates for `up`. (In the Docker image: `docker exec <container> bin/migrate up`.)
 
+**An older version never runs against a newer schema.** If the database has migrations that this version does not know, because a newer release upgraded it and
+you went back, the server refuses to serve (every request, `/healthz` included, answers `500` naming them) and `bin/migrate up` refuses to run, whatever `SSO_AUTO_MIGRATE` says. Nothing is changed.
+Run the newer version again, or [restore]({{< relref "backup.md" >}}) a backup made before the upgrade. `bin/migrate status` lists such a migration as `unknown`.
+
 How a failure is handled depends on the database:
 
 - **SQLite and PostgreSQL** can roll back schema changes. Each migration, and the line that records it, is one transaction: if a step fails,

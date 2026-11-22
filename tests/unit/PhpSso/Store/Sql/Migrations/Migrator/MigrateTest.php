@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\unit\PhpSso\Store\Sql\Migrations\Migrator;
 
+use PhpSso\Store\SchemaTooNew;
 use PhpSso\Store\Sql\Connection;
 use PhpSso\Store\Sql\Migrations\Migrator;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -246,5 +247,24 @@ final class MigrateTest extends TestCase
         $this->assertSame([], $this->recordedVersions());
         $this->assertFalse($this->db->tableExists('mig_probe_child'));
         $this->assertSame(1, (int) $this->db->pdo->query('PRAGMA foreign_keys')->fetchColumn());
+    }
+
+    public function testItRefusesADatabaseANewerVersionUpgradedAndRunsNothing(): void
+    {
+        // Arrange
+        $this->migrator([FakeMigration::noop('0001'), FakeMigration::noop('0002')])->migrate();
+        $ran = [];
+        $older = $this->migrator([FakeMigration::noop('0001'), new FakeMigration('0003', static function () use (&$ran): void { $ran[] = '0003'; })]);
+        $this->expectException(SchemaTooNew::class);
+        $this->expectExceptionMessage('0002');
+
+        // Act
+        try {
+            $older->migrate();
+        } finally {
+            // Assert (also: its own pending migration did not run over the newer schema)
+            $this->assertSame([], $ran);
+            $this->assertSame(['0001', '0002'], $this->recordedVersions());
+        }
     }
 }

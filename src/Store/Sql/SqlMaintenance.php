@@ -43,6 +43,11 @@ final class SqlMaintenance implements Maintenance
         }
     }
 
+    public function unknownMigrations(): array
+    {
+        return $this->db->migrator()->unknown();
+    }
+
     public function pendingMigrations(): array
     {
         return array_map(static fn (Migration $m): string => $m->id(), $this->db->migrator()->pending());

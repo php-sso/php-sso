@@ -19,4 +19,11 @@ interface Maintenance
      * @return list<string>
      */
     public function pendingMigrations(): array;
+
+    /**
+     * The schema versions the storage has that this version of the software does not know: it was upgraded by a newer one, and this one must not serve from it.
+     *
+     * @return list<string>
+     */
+    public function unknownMigrations(): array;
 }

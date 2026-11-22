@@ -89,6 +89,7 @@ use PhpSso\OAuthServer\Device\DeviceVerifier;
 use PhpSso\OAuthServer\Logout\LogoutSupport;
 use PhpSso\Http\SecurityHeaders;
 use PhpSso\Startup\Checks;
+use PhpSso\Store\SchemaTooNew;
 use Laminas\Diactoros\Response\JsonResponse;
 use Laminas\Diactoros\Response\TextResponse;
 use Twig\Environment;
@@ -114,11 +115,15 @@ if ($problems !== []) {
     $refuse($problems);
 }
 
-$storage = StorageFactory::create($config['storage'], new StorageOptions($config['session_idle_seconds'], array_keys($config['scopes'])));
+try {
+    $storage = StorageFactory::create($config['storage'], new StorageOptions($config['session_idle_seconds'], array_keys($config['scopes'])));
+} catch (SchemaTooNew $e) { // a database a newer version has upgraded: nothing was changed, and nothing is served
+    $refuse([$e->getMessage()]);
+}
 
 // With SSO_AUTO_MIGRATE off the schema is changed by `bin/migrate up` only: until then nothing is served, /healthz included.
 if (!$config['storage']['auto_migrate']) {
-    $problems = Checks::pendingMigrations($storage->maintenance()->pendingMigrations());
+    $problems = [...Checks::unknownMigrations($storage->maintenance()->unknownMigrations()), ...Checks::pendingMigrations($storage->maintenance()->pendingMigrations())];
     if ($problems !== []) {
         $refuse($problems);
     }

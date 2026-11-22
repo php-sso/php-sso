@@ -16,6 +16,13 @@ final class FakeMigration implements Migration
     {
     }
 
+    /** One that changes nothing. */
+    public static function noop(string $id): self
+    {
+        return new self($id, static function (): void {
+        });
+    }
+
     /** One that creates a table (when it is not there yet: safe to run again). */
     public static function createsTable(string $id, string $table): self
     {

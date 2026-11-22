@@ -6,6 +6,7 @@ namespace PhpSso\Store\Sql\Migrations;
 
 use LogicException;
 use PDOException;
+use PhpSso\Store\SchemaTooNew;
 use PhpSso\Store\Sql\Connection;
 use Throwable;
 
@@ -71,6 +72,15 @@ final class Migrator
         return $applied;
     }
 
+    /** @return list<string> the versions the database has that this version does not know: it was migrated by a newer one */
+    public function unknown(): array
+    {
+        $known = array_map(static fn (Migration $m): string => $m->id(), $this->migrations);
+
+        // array keys: PHP turns a numeric string such as "10000" into an int, so they are made strings again
+        return array_values(array_diff(array_map('strval', array_keys($this->applied())), $known));
+    }
+
     /** @return list<Migration> the migrations that have not run, in the order they will */
     public function pending(): array
     {
@@ -96,10 +106,16 @@ final class Migrator
      *
      * @param (callable(Migration): void)|null $starting called before each migration runs
      * @return list<Migration> the migrations that ran
+     * @throws SchemaTooNew when the database was migrated by a newer version: nothing is run
      */
     public function migrate(?callable $starting = null): array
     {
-        if ($this->pending() === []) {
+        $applied = $this->applied();
+        $unknown = array_values(array_diff(array_map('strval', array_keys($applied)), array_map(static fn (Migration $m): string => $m->id(), $this->migrations)));
+        if ($unknown !== []) {
+            throw new SchemaTooNew($unknown);
+        }
+        if (array_filter($this->migrations, static fn (Migration $m): bool => !isset($applied[$m->id()])) === []) {
             return [];
         }
 

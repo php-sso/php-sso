@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpSso\Startup;
 
+use PhpSso\Store\SchemaTooNew;
+
 /** What must be true of the setup before the server serves anyone, so that a mistake stops it instead of weakening it quietly. */
 final class Checks
 {
@@ -48,6 +50,15 @@ final class Checks
         }
 
         return ['The database schema is not up to date (pending migrations: ' . implode(', ', $pending) . '). Run bin/migrate up, or set SSO_AUTO_MIGRATE=1 to let the server do it when it starts.'];
+    }
+
+    /**
+     * @param list<string> $unknown the schema versions the database has that this version does not know
+     * @return list<string>
+     */
+    public static function unknownMigrations(array $unknown): array
+    {
+        return $unknown === [] ? [] : [SchemaTooNew::describe($unknown)];
     }
 
     private static function isLocal(string $host): bool
