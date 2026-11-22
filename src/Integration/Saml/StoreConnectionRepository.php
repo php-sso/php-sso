@@ -29,6 +29,7 @@ final class StoreConnectionRepository implements ConnectionRepository
             (string) $row['idp_sso_url'],
             (string) $row['idp_certificate'],
             $row['domains'],
+            (bool) ($row['sign_requests'] ?? false),
         );
     }
 }

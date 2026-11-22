@@ -16,6 +16,7 @@ use PhpSso\Auth\Mfa\MfaChallenge;
 use PhpSso\Auth\Mfa\SecretBox;
 use PhpSso\Auth\MfaLoginController;
 use PhpSso\Auth\RequiredActionController;
+use PhpSso\Integration\Saml\SpKeys;
 use PhpSso\Integration\Saml\StoreConnectionRepository;
 use PhpSso\Integration\Saml\StoreRequestStore;
 use PhpSso\Saml\ServiceProvider\SignIn;
@@ -214,7 +215,9 @@ $scimClients = $storage->scimClients();
 $scimEvents = $storage->scimEvents();
 $scimUsers = $storage->scimUsers();
 $scimGroups = $storage->scimGroups();
-$samlService = new SignIn(new StoreConnectionRepository($samlConnections), new StoreRequestStore($storage->samlRequests()), $config['issuer']);
+// The key SAML sign-in requests are signed with (made the first time a connection asks for signed requests).
+$spKeys = new SpKeys($config['keys_dir'], parse_url($config['issuer'], PHP_URL_HOST) ?: 'sso');
+$samlService = new SignIn(new StoreConnectionRepository($samlConnections), new StoreRequestStore($storage->samlRequests()), $config['issuer'], $spKeys->current());
 $accountMatcher = new AccountMatcher($identities, $users);
 $socialPolicy = new AccountPolicy($settings, $config['login']['social']);
 $social = new SocialLogin($socialProviders, $identities, $users, $socialPolicy, $config['issuer'], $accountMatcher, $samlConnections);
@@ -244,7 +247,7 @@ if ($config['mail']['enabled']) {
     );
     $passwordResetController = new PasswordResetController($pages, $passwordReset, $clientIp, $config['password_reset']['minutes']);
 }
-$sso = new Sso($config, $oauth, $users, new AdminController($twig, $users, $groups, $clients, $roles, $sessions, $attempts, $ipRules, $ipPolicy, $clientIp, new AccessTester($ipPolicy, $clients, $users), new RelationPicker($twig, $storage->relations(), $users, $groups, $clients, $roles), $userRules, $throttle, $mfa, $social, $consents, $samlConnections, $samlService, $scimClients, $scimEvents, $scimUsers, $scimGroups, $config['issuer'], $impersonation, $scopes, $audit, $storage->auditLog(), $passwordReset), $sessions, $attempts, $clients, $pages, new AccountController($pages, $users, $sessions, $userRules, $mfa, $mfaChallenge, $clientIp, $social, $audit), new DevicePage($pages, $verifier, $storage->deviceFailures()), $clientIp, $ipPolicy, $loginFlow, new LoginController($pages, $loginFlow, IdentifierResolverFactory::create($config['login']['identifier'], $users), $users, $attempts, $clientIp, $throttle, $mfa, $socialProviders, $samlConnections), new MfaLoginController($pages, $loginFlow, $mfa, $mfaChallenge, $users, $clientIp), new SocialController($social, $loginFlow, $mfa, $clientIp), new SamlController($samlService, $samlConnections, $accountMatcher, $socialPolicy, $loginFlow, $mfa, $clientIp), new RequiredActionController($pages, $loginFlow, $requiredActions, $users, $clientIp), $requiredActions, new ClientAuthThrottle($storage->clientAuthFailures(), $config['client_auth_throttle']), $impersonation, $passwordResetController);
+$sso = new Sso($config, $oauth, $users, new AdminController($twig, $users, $groups, $clients, $roles, $sessions, $attempts, $ipRules, $ipPolicy, $clientIp, new AccessTester($ipPolicy, $clients, $users), new RelationPicker($twig, $storage->relations(), $users, $groups, $clients, $roles), $userRules, $throttle, $mfa, $social, $consents, $samlConnections, $samlService, $scimClients, $scimEvents, $scimUsers, $scimGroups, $config['issuer'], $impersonation, $scopes, $audit, $storage->auditLog(), $passwordReset, $spKeys), $sessions, $attempts, $clients, $pages, new AccountController($pages, $users, $sessions, $userRules, $mfa, $mfaChallenge, $clientIp, $social, $audit), new DevicePage($pages, $verifier, $storage->deviceFailures()), $clientIp, $ipPolicy, $loginFlow, new LoginController($pages, $loginFlow, IdentifierResolverFactory::create($config['login']['identifier'], $users), $users, $attempts, $clientIp, $throttle, $mfa, $socialProviders, $samlConnections), new MfaLoginController($pages, $loginFlow, $mfa, $mfaChallenge, $users, $clientIp), new SocialController($social, $loginFlow, $mfa, $clientIp), new SamlController($samlService, $samlConnections, $accountMatcher, $socialPolicy, $loginFlow, $mfa, $clientIp), new RequiredActionController($pages, $loginFlow, $requiredActions, $users, $clientIp), $requiredActions, new ClientAuthThrottle($storage->clientAuthFailures(), $config['client_auth_throttle']), $impersonation, $passwordResetController);
 
 // Provisioning clients call the SCIM endpoints with a bearer token: no cookie, no session.
 if (str_starts_with($request->getUri()->getPath(), '/scim/')) {

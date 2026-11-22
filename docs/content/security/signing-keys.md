@@ -18,6 +18,9 @@ bin/keys prune     # remove what is no longer needed
 
 With the Docker image, run it in the container: `docker exec sso php bin/keys rotate`.
 
+The server also has a key for [signing SAML sign-in requests]({{< relref "sign-in/saml.md#signed-requests" >}}), made the first time a connection needs it. It is replaced
+with `bin/keys saml-stage` and `bin/keys saml-activate`, which publish the new certificate before it is used.
+
 ## How a rotation works
 
 1. **`bin/keys rotate`** makes a new key. It is published at `/jwks` right away, but the server keeps signing with the old one for an hour

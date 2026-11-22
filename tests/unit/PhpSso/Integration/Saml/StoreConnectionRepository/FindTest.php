@@ -30,6 +30,19 @@ final class FindTest extends TestCase
         $this->assertEqualsCanonicalizing(['acme.com', 'acme.org'], $connection->domains);
     }
 
+    public function testAConnectionSetToSignRequestsSaysSo(): void
+    {
+        // Arrange
+        $connections = new SqlSamlConnections((new TestData())->db);
+        $id = $connections->create(['name' => 'Acme', 'idp_entity_id' => 'e', 'idp_sso_url' => 'https://x.test', 'idp_certificate' => 'x', 'enabled' => true, 'create_users' => false, 'link_existing' => false, 'sign_requests' => true], ['acme.com']);
+
+        // Act
+        $connection = (new StoreConnectionRepository($connections))->find($id);
+
+        // Assert
+        $this->assertTrue($connection?->signRequests);
+    }
+
     public function testASwitchedOffConnectionSaysSo(): void
     {
         // Arrange

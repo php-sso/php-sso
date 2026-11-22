@@ -71,24 +71,24 @@ final class SqlSamlConnections implements \PhpSso\Store\SamlConnections
     }
 
     /**
-     * @param array{name: string, idp_entity_id: string, idp_sso_url: string, idp_certificate: string, enabled: bool, create_users: bool, link_existing: bool} $data
+     * @param array{name: string, idp_entity_id: string, idp_sso_url: string, idp_certificate: string, enabled: bool, create_users: bool, link_existing: bool, sign_requests?: bool} $data
      * @param list<string> $domains
      */
     public function create(array $data, array $domains): int
     {
-        $this->pdo->prepare('INSERT INTO saml_connections (name, idp_entity_id, idp_sso_url, idp_certificate, enabled, create_users, link_existing)
-            VALUES (?, ?, ?, ?, ?, ?, ?)')->execute([$data['name'], $data['idp_entity_id'], $data['idp_sso_url'], $data['idp_certificate'], (int) $data['enabled'], (int) $data['create_users'], (int) $data['link_existing']]);
+        $this->pdo->prepare('INSERT INTO saml_connections (name, idp_entity_id, idp_sso_url, idp_certificate, enabled, create_users, link_existing, sign_requests)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)')->execute([$data['name'], $data['idp_entity_id'], $data['idp_sso_url'], $data['idp_certificate'], (int) $data['enabled'], (int) $data['create_users'], (int) $data['link_existing'], (int) ($data['sign_requests'] ?? false)]);
         $id = $this->dialect->lastInsertId($this->pdo, 'saml_connections');
         $this->setDomains($id, $domains);
 
         return $id;
     }
 
-    /** @param array{name: string, idp_entity_id: string, idp_sso_url: string, idp_certificate: string, enabled: bool, create_users: bool, link_existing: bool} $data @param list<string> $domains */
+    /** @param array{name: string, idp_entity_id: string, idp_sso_url: string, idp_certificate: string, enabled: bool, create_users: bool, link_existing: bool, sign_requests?: bool} $data @param list<string> $domains */
     public function update(int $id, array $data, array $domains): void
     {
-        $this->pdo->prepare('UPDATE saml_connections SET name = ?, idp_entity_id = ?, idp_sso_url = ?, idp_certificate = ?, enabled = ?, create_users = ?, link_existing = ? WHERE id = ?')
-            ->execute([$data['name'], $data['idp_entity_id'], $data['idp_sso_url'], $data['idp_certificate'], (int) $data['enabled'], (int) $data['create_users'], (int) $data['link_existing'], $id]);
+        $this->pdo->prepare('UPDATE saml_connections SET name = ?, idp_entity_id = ?, idp_sso_url = ?, idp_certificate = ?, enabled = ?, create_users = ?, link_existing = ?, sign_requests = ? WHERE id = ?')
+            ->execute([$data['name'], $data['idp_entity_id'], $data['idp_sso_url'], $data['idp_certificate'], (int) $data['enabled'], (int) $data['create_users'], (int) $data['link_existing'], (int) ($data['sign_requests'] ?? false), $id]);
         $this->setDomains($id, $domains);
     }
 

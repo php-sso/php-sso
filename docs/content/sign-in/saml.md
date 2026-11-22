@@ -32,5 +32,33 @@ certificate you entered, and its audience, destination, issuer, time window and 
 only accept an answer to a request we sent, once, from the browser that sent it (a cookie set for exactly this,
 `SameSite=None; Secure` over https). Over plain http, which browsers do not send that cookie back on, the binding is only
 checked when the cookie is there: use https outside development. Answers nobody asked for (an identity provider
-that starts the sign-in itself) are refused. Not supported yet: signed or encrypted requests, single logout,
+that starts the sign-in itself) are refused. Not supported yet: encrypted answers, single logout,
 and signing in at the provider first.
+
+## Signed requests
+
+Most providers do not need them: the signed answer is the proof, and the request only says where to send the person. A few do (some
+ADFS and Shibboleth setups, and providers that only answer applications they know). For those, tick **Sign our sign-in requests**
+on the connection.
+
+- The first time any connection is set to sign, the server makes a key (RSA 3072) and a self-signed certificate in `var/keys`
+  (`saml-sp.key` readable only by the server, `saml-sp.crt`). One key serves every connection. The certificate is valid for ten years:
+  providers read it from our metadata and do not need an authority behind it.
+- A request is signed with RSA-SHA256, as the HTTP-Redirect binding says (the signature covers the query string). The **metadata** says
+  `AuthnRequestsSigned="true"` for that connection and carries the certificate, and the connection's page shows the certificate and its
+  fingerprint for the company's administrator. **They must trust that certificate**, or their provider will refuse our requests.
+- If the key cannot be used when a request is sent, the sign-in is refused. An unsigned request is never sent to a connection that asks for signing.
+- The key is part of the [backup]({{< relref "backup.md" >}}) (it is in `var/keys`) and as private as the token signing keys.
+
+**Replacing the key** (a leak, or before the certificate expires) without a moment in which a provider refuses us:
+
+```bash
+bin/keys saml-status      # the key in use and the one staged, with fingerprints and expiry
+bin/keys saml-stage       # make a new key; its certificate is published in the metadata next to the current one
+# tell the companies: they add the new certificate to their provider (the metadata lists both)
+bin/keys saml-activate    # sign with the new key; the old one is removed
+bin/keys saml-discard     # or: throw the staged key away
+```
+
+Providers that read our metadata on a schedule pick the new certificate up by themselves; others need it by hand, so give them time
+before you activate. Each step is written to the [audit log]({{< relref "security/audit-log.md" >}}).

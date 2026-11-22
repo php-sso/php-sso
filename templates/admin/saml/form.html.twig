@@ -20,6 +20,19 @@
     <div class="field"><label>Entity ID (audience)</label><div class="mono">{{ details.entity_id }}</div></div>
     <div class="field"><label>Reply address (ACS URL)</label><div class="mono">{{ details.acs_url }}</div></div>
     <div class="field"><label>Metadata</label><div class="mono"><a href="{{ details.metadata_url }}" target="_blank" rel="noopener noreferrer">{{ details.metadata_url }}</a></div><div class="hint">Name ID: any format. Send the person's email address as the <code>email</code> attribute, and their name as <code>displayName</code> if you can.</div></div>
+    {% if sp_key and sp_key.current %}
+    <div class="field"><label>Our signing certificate</label>
+      <div class="mono">SHA-256 fingerprint {{ sp_key.current.fingerprint }}</div>
+      <div class="hint">Requests to them are signed. The certificate is in the metadata above; give it to them if they ask for it as a file. Valid until {{ sp_key.current.expires|date('j M Y') }}.</div>
+      <textarea readonly rows="6" spellcheck="false">{{ sp_key.current.certificate }}</textarea>
+    </div>
+    {% if sp_key.next %}
+    <div class="field"><label>Next signing certificate (published, not used yet)</label>
+      <div class="mono">SHA-256 fingerprint {{ sp_key.next.fingerprint }}</div>
+      <div class="hint">It is in the metadata too, so they can add it to their provider before the switch. An administrator of this server makes it the signing key with <code>bin/keys saml-activate</code>.</div>
+    </div>
+    {% endif %}
+    {% endif %}
   </div>
 </div>
 {% endif %}
@@ -38,6 +51,15 @@
         <textarea id="idp_certificate" name="idp_certificate" rows="6" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----">{{ item.idp_certificate }}</textarea>
         <div class="hint">The X.509 certificate their provider signs answers with. Answers not signed with it are refused.{% if cert_expires %} This one is valid until {{ cert_expires|date('j M Y') }}.{% endif %}</div>
         {{ m.error(errors, 'idp_certificate') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>Our requests</h2><p>Most providers do not need this: the signed answer is the proof. Turn it on when they ask for signed requests.</p></header>
+    <div class="fields">
+      <div class="field">
+        <label class="option"><input type="checkbox" name="sign_requests" {{ item.sign_requests ? 'checked' }}><div><b>Sign our sign-in requests</b><span>With a key of this server (made the first time you turn this on). Their administrator then gets our certificate with the metadata and must trust it, or they will refuse our requests.</span></div></label>
       </div>
     </div>
   </div>

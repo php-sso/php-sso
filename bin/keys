@@ -8,9 +8,14 @@ declare(strict_types=1);
 //   bin/keys rotate                add a new key: published now, signs from one hour later (apps that cache the keys have it by then)
 //   bin/keys rotate --delay=900    the same, signing from 900 seconds later
 //   bin/keys rotate --now          the new key signs at once (after a leaked key: apps with a cached key list may refuse tokens until they refresh it)
+//   bin/keys saml-status           the key that signs SAML sign-in requests, and a staged one
+//   bin/keys saml-stage            make a new SAML signing key and publish its certificate in the metadata, without signing with it yet
+//   bin/keys saml-activate         sign with the staged key (companies should have added its certificate by then); the old key is removed
+//   bin/keys saml-discard          remove the staged key
 //   bin/keys prune                 remove the private half of retired keys, and keys past the retention period (SSO_KEY_RETENTION_DAYS)
 
 use PhpSso\Audit\CliAudit;
+use PhpSso\Integration\Saml\SpKeys;
 use PhpSso\Keys;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -18,6 +23,8 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 $config = require dirname(__DIR__) . '/config/config.php';
 $keys = new Keys($config['keys_dir'], $config['key_retention_seconds']);
 $at = static fn (int $time): string => $time === 0 ? 'the beginning' : gmdate('Y-m-d H:i:s', $time) . ' UTC';
+
+$spKeys = new SpKeys($config['keys_dir'], parse_url($config['issuer'], PHP_URL_HOST) ?: 'sso');
 
 $command = $argv[1] ?? 'help';
 switch ($command) {
@@ -60,7 +67,39 @@ switch ($command) {
         echo "Removed {$result['privateRemoved']} private key(s) and {$result['removed']} expired key(s).\n";
         break;
 
+    case 'saml-status':
+        $status = $spKeys->status();
+        foreach (['current' => 'In use', 'next' => 'Staged'] as $which => $label) {
+            $key = $status[$which];
+            echo $key === null
+                ? sprintf("%-7s none%s\n", $label . ':', $which === 'current' ? ' (made the first time a connection is set to sign its requests)' : '')
+                : sprintf("%-7s %s, valid until %s\n", $label . ':', $key['fingerprint'], gmdate('Y-m-d', $key['expires']));
+        }
+        break;
+
+    case 'saml-stage':
+    case 'saml-activate':
+    case 'saml-discard':
+        try {
+            match ($command) {
+                'saml-stage' => $spKeys->stage(),
+                'saml-activate' => $spKeys->activate(),
+                'saml-discard' => $spKeys->discard(),
+            };
+        } catch (RuntimeException $e) {
+            fwrite(STDERR, $e->getMessage() . "\n");
+            exit(1);
+        }
+        $status = $spKeys->status();
+        CliAudit::open($config)?->record('keys.' . str_replace('-', '_', $command), CliAudit::actor(), '', null, ($status['next'] ?? $status['current'])['fingerprint'] ?? null, null, []);
+        echo match ($command) {
+            'saml-stage' => "A new SAML signing key is staged and its certificate is in the metadata. Tell the companies, then run `bin/keys saml-activate`.\n",
+            'saml-activate' => "The staged key signs SAML requests now.\n",
+            'saml-discard' => "The staged key is removed.\n",
+        };
+        break;
+
     default:
-        fwrite(STDERR, "Usage: bin/keys list | rotate [--delay=SECONDS | --now] | prune\n");
+        fwrite(STDERR, "Usage: bin/keys list | rotate [--delay=SECONDS | --now] | prune | saml-status | saml-stage | saml-activate | saml-discard\n");
         exit($command === 'help' ? 0 : 2);
 }

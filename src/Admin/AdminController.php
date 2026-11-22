@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpSso\Admin;
 
 use PhpSso\Auth\PasswordReset;
+use PhpSso\Integration\Saml\SpKeys;
 use PhpSso\Mail\MailFailed;
 use PhpSso\Audit\AdminActions;
 use PhpSso\Audit\Audit;
@@ -91,6 +92,7 @@ final class AdminController
         private Audit $audit,
         private AuditLog $auditLog,
         private ?PasswordReset $passwordReset = null,
+        private ?SpKeys $spKeys = null,
     ) {
     }
 
@@ -1433,7 +1435,7 @@ final class AdminController
 
     private function samlNew(): ResponseInterface
     {
-        return $this->samlForm(null, ['name' => '', 'idp_entity_id' => '', 'idp_sso_url' => '', 'idp_certificate' => '', 'domains' => '', 'enabled' => true, 'create_users' => false, 'link_existing' => false]);
+        return $this->samlForm(null, ['name' => '', 'idp_entity_id' => '', 'idp_sso_url' => '', 'idp_certificate' => '', 'domains' => '', 'enabled' => true, 'create_users' => false, 'link_existing' => false, 'sign_requests' => false]);
     }
 
     private function samlEdit(ServerRequestInterface $request, string $id): ResponseInterface
@@ -1443,7 +1445,7 @@ final class AdminController
         return $connection === null ? $this->notFound('Connection') : $this->samlForm($connection, [
             'name' => $connection['name'], 'idp_entity_id' => $connection['idp_entity_id'], 'idp_sso_url' => $connection['idp_sso_url'],
             'idp_certificate' => $connection['idp_certificate'], 'domains' => implode("\n", $connection['domains']),
-            'enabled' => (bool) $connection['enabled'], 'create_users' => (bool) $connection['create_users'], 'link_existing' => (bool) $connection['link_existing'],
+            'enabled' => (bool) $connection['enabled'], 'create_users' => (bool) $connection['create_users'], 'link_existing' => (bool) $connection['link_existing'], 'sign_requests' => (bool) ($connection['sign_requests'] ?? false),
         ]);
     }
 
@@ -1452,6 +1454,9 @@ final class AdminController
         [$input, $domains, $errors] = $this->validateSaml($request, null);
         if ($errors) {
             return $this->samlForm(null, $input, $errors);
+        }
+        if ($input['sign_requests']) {
+            $this->spKeys?->ensure();
         }
         $id = $this->samlConnections->create($input, $domains);
 
@@ -1467,6 +1472,9 @@ final class AdminController
         [$input, $domains, $errors] = $this->validateSaml($request, (int) $id);
         if ($errors) {
             return $this->samlForm($connection, $input, $errors);
+        }
+        if ($input['sign_requests']) {
+            $this->spKeys?->ensure();
         }
         $this->samlConnections->update((int) $id, $input, $domains);
 
@@ -1500,6 +1508,7 @@ final class AdminController
             'enabled' => isset($body['enabled']),
             'create_users' => isset($body['create_users']),
             'link_existing' => isset($body['link_existing']),
+            'sign_requests' => isset($body['sign_requests']),
         ];
         $errors = [];
         if ($input['name'] === '' || mb_strlen($input['name']) > 100) {
@@ -1569,6 +1578,7 @@ final class AdminController
 
         return $this->render('saml/form.html.twig', [
             'tab' => 'saml', 'connection' => $connection, 'item' => $item, 'errors' => $errors, 'details' => $details,
+            'sp_key' => $connection !== null && ($connection['sign_requests'] ?? false) ? $this->spKeys?->status() : null,
             'cert_expires' => $expires, 'people' => $connection === null ? 0 : $this->samlConnections->peopleCount((int) $connection['id']),
         ], $errors ? 422 : 200);
     }

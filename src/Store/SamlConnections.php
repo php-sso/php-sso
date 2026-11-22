@@ -29,12 +29,12 @@ interface SamlConnections
     public function managesAddress(string $email): bool;
 
     /**
-     * @param array{name: string, idp_entity_id: string, idp_sso_url: string, idp_certificate: string, enabled: bool, create_users: bool, link_existing: bool} $data
+     * @param array{name: string, idp_entity_id: string, idp_sso_url: string, idp_certificate: string, enabled: bool, create_users: bool, link_existing: bool, sign_requests?: bool} $data
      * @param list<string> $domains
      */
     public function create(array $data, array $domains): int;
 
-    /** @param array{name: string, idp_entity_id: string, idp_sso_url: string, idp_certificate: string, enabled: bool, create_users: bool, link_existing: bool} $data @param list<string> $domains */
+    /** @param array{name: string, idp_entity_id: string, idp_sso_url: string, idp_certificate: string, enabled: bool, create_users: bool, link_existing: bool, sign_requests?: bool} $data @param list<string> $domains */
     public function update(int $id, array $data, array $domains): void;
 
     /** Deletes it. People who signed in through it keep their accounts but lose that way in. */
