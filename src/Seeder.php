@@ -16,6 +16,19 @@ final class Seeder
     {
     }
 
+    /** @return string|null why a password may not be used for a first administrator, or null when it may */
+    private static function weakness(string $password): ?string
+    {
+        if (mb_strlen($password) < 12) {
+            return 'is too short: use at least 12 characters.';
+        }
+        if (count(array_unique(mb_str_split($password))) < 4) {
+            return 'is too simple: it repeats the same few characters.';
+        }
+
+        return null;
+    }
+
     public function seed(array $seed): void
     {
         if ($this->users->count() > 0) {
@@ -25,6 +38,9 @@ final class Seeder
         foreach ($seed['users'] as $username => $u) {
             if ($u['password'] === '') {
                 throw new \RuntimeException("The database is empty, so the first user ({$username}) must be created. Set ADMIN_PASSWORD (and start again).");
+            }
+            if (($seed['check_passwords'] ?? false) && ($weakness = self::weakness($u['password'])) !== null) {
+                throw new \RuntimeException("The password for the first user ({$username}), ADMIN_PASSWORD, {$weakness}");
             }
         }
 

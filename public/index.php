@@ -87,6 +87,10 @@ use PhpSso\OAuthServer\Endpoint\Endpoints;
 use PhpSso\OAuthServer\Clock\SystemClock;
 use PhpSso\OAuthServer\Device\DeviceVerifier;
 use PhpSso\OAuthServer\Logout\LogoutSupport;
+use PhpSso\Http\SecurityHeaders;
+use PhpSso\Startup\Checks;
+use Laminas\Diactoros\Response\JsonResponse;
+use Laminas\Diactoros\Response\TextResponse;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -94,7 +98,28 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 $config = require dirname(__DIR__) . '/config/config.php';
 
+$secure = str_starts_with($config['issuer'], 'https://');
+$headers = new SecurityHeaders($config['csp'], $secure);
+$emitter = new SapiEmitter();
+$request = ServerRequestFactory::fromGlobals();
+
+// A setup that would weaken the server stops it, and says why, instead of serving anyone.
+$problems = Checks::problems($config['issuer'], $config['demo'], $config['allow_insecure_http']);
+if ($problems !== []) {
+    error_log('SSO: refusing to start: ' . implode(' ', $problems));
+    $emitter->emit($headers->apply(new TextResponse("php-sso is not set up safely:\n\n- " . implode("\n- ", $problems) . "\n", 500)));
+    exit;
+}
+
 $storage = StorageFactory::create($config['storage'], new StorageOptions($config['session_idle_seconds'], array_keys($config['scopes'])));
+
+// For a load balancer or a container health check: does the server answer, and does the database? Nothing else is said.
+if ($request->getUri()->getPath() === '/healthz' && in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
+    $healthy = $storage->maintenance()->isHealthy();
+    $emitter->emit($headers->apply(new JsonResponse(['status' => $healthy ? 'ok' : 'unavailable'], $healthy ? 200 : 503)));
+    exit;
+}
+
 $keys = new Keys($config['keys_dir']);
 
 $users = $storage->users();
@@ -181,7 +206,6 @@ $verifier = new DeviceVerifier($storage->deviceRequests(), new RegisteredClients
 $sso = new Sso($config, $oauth, $users, new AdminController($twig, $users, $groups, $clients, $roles, $sessions, $attempts, $ipRules, $ipPolicy, $clientIp, new AccessTester($ipPolicy, $clients, $users), new RelationPicker($twig, $storage->relations(), $users, $groups, $clients, $roles), $userRules, $throttle, $mfa, $social, $consents, $samlConnections, $samlService, $scimClients, $scimEvents, $scimUsers, $scimGroups, $config['issuer'], $impersonation, $scopes), $sessions, $attempts, $clients, $pages, new AccountController($pages, $users, $sessions, $userRules, $mfa, $mfaChallenge, $clientIp, $social), new DevicePage($pages, $verifier, $storage->deviceFailures()), $clientIp, $ipPolicy, $loginFlow, new LoginController($pages, $loginFlow, IdentifierResolverFactory::create($config['login']['identifier'], $users), $users, $attempts, $clientIp, $throttle, $mfa, $socialProviders, $samlConnections), new MfaLoginController($pages, $loginFlow, $mfa, $mfaChallenge, $users, $clientIp), new SocialController($social, $loginFlow, $mfa, $clientIp), new SamlController($samlService, $samlConnections, $accountMatcher, $socialPolicy, $loginFlow, $mfa, $clientIp), new RequiredActionController($pages, $loginFlow, $requiredActions, $users, $clientIp), $requiredActions, new ClientAuthThrottle($storage->clientAuthFailures(), $config['client_auth_throttle']), $impersonation);
 
 // Provisioning clients call the SCIM endpoints with a bearer token: no cookie, no session.
-$request = ServerRequestFactory::fromGlobals();
 if (str_starts_with($request->getUri()->getPath(), '/scim/')) {
     $managedUsers = new StoreManagedUsers($scimUsers);
     $managedGroups = new StoreManagedGroups($scimGroups);
@@ -197,13 +221,23 @@ if (str_starts_with($request->getUri()->getPath(), '/scim/')) {
         new StreamFactory(),
         $config['issuer'],
     );
-    (new SapiEmitter())->emit($scim->handle($request));
+    $emitter->emit($headers->apply($scim->handle($request)));
     exit;
 }
 
+// The browser session: its files in our own folder (not the shared temporary one, which other programs read and clean), only ever
+// from a cookie, an id the server did not make is not accepted, and over HTTPS the cookie is bound to this host (`__Host-`) and never sent in the clear.
+if (!is_dir($config['session_dir'])) {
+    mkdir($config['session_dir'], 0700, true);
+}
+ini_set('session.save_path', $config['session_dir']);
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
 ini_set('session.gc_maxlifetime', (string) $config['session_idle_seconds']);
-session_name('sso_session');
-session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
+ini_set('session.gc_probability', '1');
+ini_set('session.gc_divisor', '100');
+session_name($secure ? '__Host-sso_session' : 'sso_session');
+session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax', 'secure' => $secure]);
 session_start();
 
 // Housekeeping rides along with about one request in a hundred, after the response is sent; `bin/maintenance` does it on a schedule.
@@ -211,4 +245,4 @@ if (random_int(1, 100) === 1) {
     register_shutdown_function(static fn () => $storage->maintenance()->purgeExpired());
 }
 
-(new SapiEmitter())->emit($sso->handle($request));
+$emitter->emit($headers->apply($sso->handle($request)));

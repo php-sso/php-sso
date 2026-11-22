@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+// SSO_DEMO_DATA=1 adds people and apps with well-known passwords to a new database: local development only.
+$demo = filter_var(getenv('SSO_DEMO_DATA') ?: false, FILTER_VALIDATE_BOOL);
+
 return [
     'issuer' => getenv('SSO_PUBLIC_URL') ?: 'http://localhost:9000',
     // Where the data lives: SSO_DB_DRIVER is `sqlite` (the default: one file, SSO_DB_PATH), `mysql` (8.0.19 or later) or `pgsql`
@@ -26,6 +29,13 @@ return [
 
     // Reverse proxies / load balancers (addresses or CIDR ranges, comma separated in SSO_TRUSTED_PROXIES) whose
     // X-Forwarded-For header is believed. Leave empty when the app is reached directly: the header is then ignored.
+    'demo' => $demo,
+    // SSO_ALLOW_INSECURE_HTTP=1 lets SSO_PUBLIC_URL be a plain http:// address that is not local (see PhpSso\Startup\Checks).
+    'allow_insecure_http' => filter_var(getenv('SSO_ALLOW_INSECURE_HTTP') ?: false, FILTER_VALIDATE_BOOL),
+    // The Content-Security-Policy to send instead of the default (PhpSso\Http\SecurityHeaders::DEFAULT_CSP), for a theme that needs more.
+    'csp' => getenv('SSO_CSP') ?: null,
+    // PHP's own session files (the browser session's cookie data), kept out of the shared temporary directory.
+    'session_dir' => dirname(__DIR__) . '/var/sessions',
     'trusted_proxies' => array_values(array_filter(array_map('trim', explode(',', getenv('SSO_TRUSTED_PROXIES') ?: '')))),
 
     'login' => [
@@ -87,7 +97,7 @@ return [
     // Inserted once, when the database has no users. Manage everything at /admin afterwards.
     // SSO_DEMO_DATA=1 adds a demo user, group and client with well-known passwords: local development only.
     // Without it, only the administrator is created, and ADMIN_PASSWORD must be set.
-    'seed' => filter_var(getenv('SSO_DEMO_DATA') ?: false, FILTER_VALIDATE_BOOL)
+    'seed' => $demo
         ? [
             'groups' => ['staff' => 'All employees'],
             'users' => [
@@ -126,5 +136,6 @@ return [
                 'admin' => ['password' => getenv('ADMIN_PASSWORD') ?: '', 'name' => 'Administrator', 'email' => getenv('ADMIN_EMAIL') ?: 'admin@example.com', 'is_admin' => true],
             ],
             'clients' => [],
+            'check_passwords' => true, // the first administrator must not have a weak password (the demo has well-known ones)
         ],
 ];

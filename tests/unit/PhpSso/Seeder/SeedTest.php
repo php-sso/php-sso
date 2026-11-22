@@ -62,4 +62,51 @@ final class SeedTest extends TestCase
         // Assert
         $this->assertSame([], $data->roles->all());
     }
+
+    public function testItRefusesAWeakFirstAdministratorPasswordWhenAskedToCheck(): void
+    {
+        // Arrange
+        $data = new TestData();
+        $seeder = new Seeder($data->users, $data->groups, $data->clients, $data->roles);
+        $seed = ['groups' => [], 'clients' => [], 'check_passwords' => true,
+            'users' => ['admin' => ['password' => 'admin123', 'name' => 'Administrator', 'email' => 'admin@example.com', 'is_admin' => true]]];
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('too short');
+
+        // Act
+        $seeder->seed($seed);
+
+        // Assert (the exception above)
+    }
+
+    public function testItRefusesAPasswordThatRepeatsTheSameFewCharacters(): void
+    {
+        // Arrange
+        $data = new TestData();
+        $seeder = new Seeder($data->users, $data->groups, $data->clients, $data->roles);
+        $seed = ['groups' => [], 'clients' => [], 'check_passwords' => true,
+            'users' => ['admin' => ['password' => 'abababababababab', 'name' => 'Administrator', 'email' => 'admin@example.com', 'is_admin' => true]]];
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('too simple');
+
+        // Act
+        $seeder->seed($seed);
+
+        // Assert (the exception above)
+    }
+
+    public function testItAcceptsALongPassword(): void
+    {
+        // Arrange
+        $data = new TestData();
+        $seeder = new Seeder($data->users, $data->groups, $data->clients, $data->roles);
+        $strong = ['groups' => [], 'clients' => [], 'check_passwords' => true,
+            'users' => ['admin' => ['password' => 'correct-horse-battery', 'name' => 'Administrator', 'email' => 'admin@example.com', 'is_admin' => true]]];
+
+        // Act
+        $seeder->seed($strong);
+
+        // Assert
+        $this->assertNotNull($data->users->findByUsername('admin'));
+    }
 }

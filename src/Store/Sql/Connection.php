@@ -27,6 +27,11 @@ final class Connection
             PDO::ATTR_STATEMENT_CLASS => [SqlStatement::class, [$dialect]],
         ]);
         $pdo->exec('PRAGMA foreign_keys = ON');
+        $pdo->exec('PRAGMA busy_timeout = 5000'); // wait for another request's write instead of failing at once
+        if ($path !== ':memory:') {
+            $pdo->exec('PRAGMA journal_mode = WAL'); // readers and the writer do not block each other
+            $pdo->exec('PRAGMA synchronous = NORMAL'); // safe with WAL: a power cut can lose the last moments, not corrupt the file
+        }
         (new SqliteSchema($pdo))->install();
 
         return new self($pdo, $dialect);

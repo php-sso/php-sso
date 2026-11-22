@@ -32,3 +32,5 @@ RUN mkdir -p var && chown www-data:www-data var
 USER www-data
 VOLUME /app/var
 EXPOSE 8080
+# Answers while the server and its database do (see /healthz).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD curl -fsS -o /dev/null http://127.0.0.1:8080/healthz || exit 1
