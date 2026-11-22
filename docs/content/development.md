@@ -66,6 +66,9 @@ final class AddAuditLog extends SqlMigration
 - **MySQL cannot roll back DDL**, so write every step to be safe to run twice, with the guards `$db->tableExists()`, `columnExists()` and
   `indexExists()` (or `addColumn()` in `SqlMigration`). A migration that fails on MySQL is retried from its first step.
 - Keep the schema parity test green: a table or column added by a migration must exist in all three databases (`SameTablesAsSqliteTest`).
+- **A new column is nullable or has a default.** A [backup]({{< relref "backup.md" >}}) from before the migration has no value for it, and restoring one into a newer
+  version must keep working.
+- **A new table goes into `BackupTables::ORDER`** (`src/Backup/BackupTables.php`), after the tables it points at, so that backups include it. A test fails until it is there.
 - Test a migration with the real database through `TestConnection`; the `Migrator` takes a list of migrations, so a test can run fakes
   (see `tests/unit/PhpSso/Support/FakeMigration.php` and `UsesMigrationSandbox.php`) without touching the real list.
 
