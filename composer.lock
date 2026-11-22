@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "06ab52c5b0f20d3963ed7f69973fdc99",
+    "content-hash": "ec657f15f74952865f39cce24a800c19",
     "packages": [
         {
             "name": "laminas/laminas-diactoros",
@@ -409,16 +409,16 @@
         },
         {
             "name": "php-sso/saml",
-            "version": "v1.0.0",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-sso/saml.git",
-                "reference": "0f5d2fcd160bf37b3c5f7d0daad52216a44d3f9b"
+                "reference": "583c84c4616fa8d335beed0a8540ecdbbf705875"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-sso/saml/zipball/0f5d2fcd160bf37b3c5f7d0daad52216a44d3f9b",
-                "reference": "0f5d2fcd160bf37b3c5f7d0daad52216a44d3f9b",
+                "url": "https://api.github.com/repos/php-sso/saml/zipball/583c84c4616fa8d335beed0a8540ecdbbf705875",
+                "reference": "583c84c4616fa8d335beed0a8540ecdbbf705875",
                 "shasum": ""
             },
             "require": {
@@ -458,20 +458,20 @@
                 "issues": "https://github.com/php-sso/saml/issues",
                 "source": "https://github.com/php-sso/saml"
             },
-            "time": "2026-11-21T15:38:38+00:00"
+            "time": "2026-11-22T21:34:53+00:00"
         },
         {
             "name": "php-sso/scim-server",
-            "version": "v1.0.0",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-sso/scim-server.git",
-                "reference": "3154119514c831f6c71df10481b67292afc99d07"
+                "reference": "4cdc6255c9ddbc70192cb44597a2889d5e8e49fe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-sso/scim-server/zipball/3154119514c831f6c71df10481b67292afc99d07",
-                "reference": "3154119514c831f6c71df10481b67292afc99d07",
+                "url": "https://api.github.com/repos/php-sso/scim-server/zipball/4cdc6255c9ddbc70192cb44597a2889d5e8e49fe",
+                "reference": "4cdc6255c9ddbc70192cb44597a2889d5e8e49fe",
                 "shasum": ""
             },
             "require": {
@@ -511,20 +511,20 @@
                 "issues": "https://github.com/php-sso/scim-server/issues",
                 "source": "https://github.com/php-sso/scim-server"
             },
-            "time": "2026-11-21T15:38:38+00:00"
+            "time": "2026-11-22T21:35:39+00:00"
         },
         {
             "name": "phpseclib/phpseclib",
-            "version": "3.0.58",
+            "version": "3.0.59",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpseclib/phpseclib.git",
-                "reference": "91f3a6436bb84040ac0cf49e761977f17d16a39b"
+                "reference": "527959f6f26591d532c07cf1c426585ef7279fa9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpseclib/phpseclib/zipball/91f3a6436bb84040ac0cf49e761977f17d16a39b",
-                "reference": "91f3a6436bb84040ac0cf49e761977f17d16a39b",
+                "url": "https://api.github.com/repos/phpseclib/phpseclib/zipball/527959f6f26591d532c07cf1c426585ef7279fa9",
+                "reference": "527959f6f26591d532c07cf1c426585ef7279fa9",
                 "shasum": ""
             },
             "require": {
@@ -605,7 +605,7 @@
             ],
             "support": {
                 "issues": "https://github.com/phpseclib/phpseclib/issues",
-                "source": "https://github.com/phpseclib/phpseclib/tree/3.0.58"
+                "source": "https://github.com/phpseclib/phpseclib/tree/3.0.59"
             },
             "funding": [
                 {
@@ -621,7 +621,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-11-02T10:45:48+00:00"
+            "time": "2026-11-20T07:39:42+00:00"
         },
         {
             "name": "psr/clock",
