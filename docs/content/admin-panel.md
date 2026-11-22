@@ -1,6 +1,6 @@
 ---
 title: "Admin panel"
-weight: 13
+weight: 33
 lead: "Manage people, groups, clients and settings."
 group: "Users and access"
 ---

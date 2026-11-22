@@ -1,8 +1,8 @@
 ---
 title: "Security"
-weight: 22
+weight: 21
 lead: "What php-sso does to protect people and data, page by page."
-group: "Run in production"
+group: "Operate"
 ---
 
 This section describes what the server does by itself, and what it expects of you. Where something is a setting, the page says which.

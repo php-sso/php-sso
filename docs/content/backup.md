@@ -1,8 +1,8 @@
 ---
 title: "Backup and restore"
-weight: 21
+weight: 20
 lead: "Everything the server needs, in one file."
-group: "Run in production"
+group: "Operate"
 ---
 
 ```bash

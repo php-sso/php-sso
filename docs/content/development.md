@@ -1,6 +1,6 @@
 ---
 title: "Development"
-weight: 40
+weight: 50
 lead: "Run the demo, and the tests, from a checkout."
 group: "Contribute"
 ---

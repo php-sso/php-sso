@@ -1,6 +1,6 @@
 ---
 title: "Code layout"
-weight: 41
+weight: 51
 lead: "Where things are in the source."
 group: "Contribute"
 ---

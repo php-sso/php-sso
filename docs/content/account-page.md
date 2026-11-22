@@ -1,6 +1,6 @@
 ---
 title: "Account page"
-weight: 12
+weight: 32
 lead: "What people can change about themselves."
 group: "Users and access"
 ---

@@ -1,6 +1,6 @@
 ---
 title: "IP rules"
-weight: 14
+weight: 34
 lead: "Allow or deny network addresses."
 group: "Users and access"
 ---

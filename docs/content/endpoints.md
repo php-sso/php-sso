@@ -1,6 +1,6 @@
 ---
 title: "Endpoints"
-weight: 30
+weight: 40
 lead: "The addresses the server answers on."
 group: "Reference"
 ---

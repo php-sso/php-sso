@@ -1,6 +1,6 @@
 ---
 title: "Signing in"
-weight: 10
+weight: 30
 lead: "Passwords, outside accounts, companies and a second step."
 group: "Users and access"
 ---
