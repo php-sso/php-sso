@@ -5,6 +5,7 @@ lead: "Logout, and how it reaches the apps."
 group: "Users and access"
 ---
 
+- **Signing out of the server** is a link to `/logout`. It asks "Sign out?" and signs out only when the person presses the button (a `POST` with the form token), so a link on another website cannot sign someone out. The page is [themable]({{< relref "theming.md" >}}) (`logout`). Apps that want to sign a person out use `/end-session`.
 - **Ending a session** (by the person, by an administrator, on password change, or when the user is
   deleted) revokes the auth codes, access tokens and refresh tokens issued during it. Refreshing and
   `/userinfo` stop working at once. Idle expiry alone does not revoke anything.
