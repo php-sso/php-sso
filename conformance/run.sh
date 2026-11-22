@@ -26,7 +26,7 @@ up() {
     docker run -d --name sso-conformance --network "$NETWORK" --network-alias sso --user "$(id -u):$(id -g)" \
         -v "$ROOT":/work -v "$STATE/var":/work/php-sso/var -w /work/php-sso \
         -e SSO_PUBLIC_URL=http://sso:9000 -e ADMIN_PASSWORD=conformance-admin \
-        -e SSO_PKCE_OPTIONAL_FOR_CONFIDENTIAL_CLIENTS=1 -e PHP_CLI_SERVER_WORKERS=4 \
+        -e SSO_PKCE_OPTIONAL_FOR_CONFIDENTIAL_CLIENTS=1 -e SSO_ALLOW_INSECURE_HTTP=1 -e PHP_CLI_SERVER_WORKERS=4 \
         php:8.4-cli php -S 0.0.0.0:9000 -t public >/dev/null
     until docker exec sso-conformance php -r 'exit(@file_get_contents("http://sso:9000/.well-known/openid-configuration") ? 0 : 1);' 2>/dev/null; do sleep 1; done
     docker exec sso-conformance php conformance/setup.php
