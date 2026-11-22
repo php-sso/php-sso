@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * docs/theming.md is what theme authors rely on, and the app skeleton copies it. A page or block that is added without
+ * docs/content/theming.md is what theme authors rely on, and the app skeleton copies it. A page or block that is added without
  * the docs noticing is invisible to them, so these checks fail the build when the docs, the pages and the skeleton drift.
  */
 #[CoversNothing]
@@ -22,7 +22,15 @@ final class ThemingDocsTest extends TestCase
 
     private static function docs(): string
     {
-        return (string) file_get_contents(self::root() . '/docs/theming.md');
+        return (string) file_get_contents(self::root() . '/docs/content/theming.md');
+    }
+
+    /** The page without its Hugo front matter, under the heading the skeleton's README has. */
+    private static function docsAsReadme(): string
+    {
+        $body = (string) preg_replace('/\A---\n.*?\n---\n\n/s', '', self::docs());
+
+        return "# Theming\n\n" . $body;
     }
 
     /** @return string[] page templates a theme may replace (files that start with an underscore are helpers) */
@@ -65,7 +73,7 @@ final class ThemingDocsTest extends TestCase
         $listed = str_contains($docs, $page);
 
         // Assert
-        $this->assertTrue($listed, "docs/theming.md does not list {$page}");
+        $this->assertTrue($listed, "docs/content/theming.md does not list {$page}");
     }
 
     #[DataProvider('blocks')]
@@ -78,7 +86,7 @@ final class ThemingDocsTest extends TestCase
         $listed = str_contains($docs, '`' . $block . '`');
 
         // Assert
-        $this->assertTrue($listed, "docs/theming.md does not mention the block `{$block}`");
+        $this->assertTrue($listed, "docs/content/theming.md does not mention the block `{$block}`");
     }
 
     public function testSkeletonThemeReadmeIsACopyOfTheDocs(): void
@@ -90,10 +98,10 @@ final class ThemingDocsTest extends TestCase
         }
 
         // Act
-        $same = file_get_contents($copy) === self::docs();
+        $same = file_get_contents($copy) === self::docsAsReadme();
 
         // Assert
-        $this->assertTrue($same, 'app-skeleton/theme/README.md differs from docs/theming.md: copy the docs over it.');
+        $this->assertTrue($same, 'app-skeleton/theme/README.md differs from docs/content/theming.md: copy the page (without its front matter, under a \'# Theming\' heading) over it.');
     }
 
     /** @return iterable<string, array{string}> */

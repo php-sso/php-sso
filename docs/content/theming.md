@@ -1,4 +1,8 @@
-# Theming
+---
+title: Theming
+weight: 8
+lead: Change the pages people see without rebuilding the image.
+---
 
 The pages people see (sign in, account settings, "no access", errors) are Twig templates that you can
 override without changing or rebuilding the SSO image. Mount a folder at `/theme`:
