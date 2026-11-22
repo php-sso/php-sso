@@ -5,6 +5,6 @@ lead: "What is still missing."
 ---
 
 - No consent screen (first-party apps only; `prompt=consent` is refused), no front-channel logout.
-- php-sso has not had an independent security review (see [Security]({{< relref "security/_index.md" >}})).
+- php-sso has not had an independent security review. The author's own [threat model and checks]({{< relref "security/threat-model.md" >}}) are published, with the known gaps.
 - The development setup (`docker compose`, see [Development]({{< relref "development.md" >}})) has demo passwords, PHP's built-in web server and HTTP. It is for
   working on php-sso. The [Docker image]({{< relref "docker.md" >}}) is what to run: it refuses weak first passwords and public HTTP addresses.

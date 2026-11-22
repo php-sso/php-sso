@@ -9,6 +9,7 @@ This section describes what the server does by itself, and what it expects of yo
 | Page | What it covers |
 | --- | --- |
 | [Security headers]({{< relref "security/headers.md" >}}) | The headers every response carries, the default `Content-Security-Policy`, and how to change it for a theme |
+| [Threat model and checks]({{< relref "security/threat-model.md" >}}) | Who could attack, what stops them, what is still open, and the checks that can be run again |
 | [Sessions and cookies]({{< relref "security/sessions.md" >}}) | The browser session cookie, where its files live, and how long a session lasts |
 | [Signing keys]({{< relref "security/signing-keys.md" >}}) | How tokens are signed, rotating the key, and what to back up |
 | [Audit log]({{< relref "security/audit-log.md" >}}) | Who changed what and when, what is recorded, how long it is kept, and sending it elsewhere |
