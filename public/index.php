@@ -120,7 +120,7 @@ if ($request->getUri()->getPath() === '/healthz' && in_array($request->getMethod
     exit;
 }
 
-$keys = new Keys($config['keys_dir']);
+$keys = new Keys($config['keys_dir'], $config['key_retention_seconds']);
 
 $users = $storage->users();
 $userRules = new UserRules($users, $config['login']['identifier']);

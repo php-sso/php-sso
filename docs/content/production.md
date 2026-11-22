@@ -27,6 +27,7 @@ The production image runs Apache as an unprivileged user on port 8080. Mount a v
 | `SSO_DB_HOST`, `SSO_DB_PORT`, `SSO_DB_NAME`, `SSO_DB_USER`, `SSO_DB_PASSWORD` | The MySQL or PostgreSQL server (the port defaults to 3306 and 5432) |
 | `SSO_ALLOW_INSECURE_HTTP` | `1` lets `SSO_PUBLIC_URL` be a plain `http://` address that is not local. Without it the server refuses to start (see [Safe startup]({{< relref "security/startup-checks.md" >}})) |
 | `SSO_CSP` | The `Content-Security-Policy` to send instead of the default, for a theme that loads fonts or images from another server (see [Security headers]({{< relref "security/headers.md" >}})) |
+| `SSO_KEY_RETENTION_DAYS` | How long a signing key that has been replaced stays published, default 30 (see [Signing keys]({{< relref "security/signing-keys.md" >}})) |
 | `SSO_THEME_DIR` | Theme folder, default `/theme` |
 | `SSO_DEBUG` | `1` shows theme errors instead of falling back |
 | `SSO_TRUSTED_PROXIES` | Comma separated addresses or CIDR ranges of your reverse proxies. Only their `X-Forwarded-For` is believed; set it when behind a proxy, or IP rules see the proxy's address |

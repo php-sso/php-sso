@@ -19,6 +19,8 @@ return [
         'username' => getenv('SSO_DB_USER') ?: '',
         'password' => getenv('SSO_DB_PASSWORD') ?: '',
     ],
+    // How long a signing key that has been replaced stays published (SSO_KEY_RETENTION_DAYS): tokens it signed verify until then. See bin/keys.
+    'key_retention_seconds' => max(1, (int) (getenv('SSO_KEY_RETENTION_DAYS') ?: 30)) * 86400,
     'keys_dir' => dirname(__DIR__) . '/var/keys',
     'twig_cache' => dirname(__DIR__) . '/var/cache/twig',
 

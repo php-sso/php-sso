@@ -1,0 +1,61 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// The signing keys of the server. Run it where the server's `var/keys` is (inside the container for the Docker image).
+//   bin/keys list                  every key, what it does now, and until when it is published
+//   bin/keys rotate                add a new key: published now, signs from one hour later (apps that cache the keys have it by then)
+//   bin/keys rotate --delay=900    the same, signing from 900 seconds later
+//   bin/keys rotate --now          the new key signs at once (after a leaked key: apps with a cached key list may refuse tokens until they refresh it)
+//   bin/keys prune                 remove the private half of retired keys, and keys past the retention period (SSO_KEY_RETENTION_DAYS)
+
+use PhpSso\Keys;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$config = require dirname(__DIR__) . '/config/config.php';
+$keys = new Keys($config['keys_dir'], $config['key_retention_seconds']);
+$at = static fn (int $time): string => $time === 0 ? 'the beginning' : gmdate('Y-m-d H:i:s', $time) . ' UTC';
+
+$command = $argv[1] ?? 'help';
+switch ($command) {
+    case 'list':
+        printf("%-18s %-8s %-25s %-12s %s\n", 'KEY', 'STATE', 'SIGNS FROM', 'PRIVATE KEY', 'PUBLISHED UNTIL');
+        foreach ($keys->status() as $row) {
+            printf("%-18s %-8s %-25s %-12s %s\n", $row['kid'], $row['state'], $at($row['activeFrom']), $row['hasPrivateKey'] ? 'yes' : 'no',
+                $row['state'] === 'signing' || $row['state'] === 'pending' ? 'while it is in use' : ($row['publishedUntil'] === null ? '' : $at($row['publishedUntil'])));
+        }
+        break;
+
+    case 'rotate':
+        $delay = 3600;
+        foreach (array_slice($argv, 2) as $argument) {
+            if ($argument === '--now') {
+                $delay = 0;
+            } elseif (preg_match('/^--delay=(\d+)$/', $argument, $m) === 1) {
+                $delay = (int) $m[1];
+            } else {
+                fwrite(STDERR, "Unknown option {$argument}.\n");
+                exit(2);
+            }
+        }
+        try {
+            $new = $keys->rotate($delay);
+        } catch (RuntimeException $e) {
+            fwrite(STDERR, $e->getMessage() . "\n");
+            exit(1);
+        }
+        echo "New key {$new['kid']} is published now and signs from {$at($new['activeFrom'])}.\n";
+        echo "Run `bin/keys prune` after the retention period to remove the old key.\n";
+        break;
+
+    case 'prune':
+        $result = $keys->prune();
+        echo "Removed {$result['privateRemoved']} private key(s) and {$result['removed']} expired key(s).\n";
+        break;
+
+    default:
+        fwrite(STDERR, "Usage: bin/keys list | rotate [--delay=SECONDS | --now] | prune\n");
+        exit($command === 'help' ? 0 : 2);
+}

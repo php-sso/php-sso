@@ -10,6 +10,7 @@ This section describes what the server does by itself, and what it expects of yo
 | --- | --- |
 | [Security headers]({{< relref "security/headers.md" >}}) | The headers every response carries, the default `Content-Security-Policy`, and how to change it for a theme |
 | [Sessions and cookies]({{< relref "security/sessions.md" >}}) | The browser session cookie, where its files live, and how long a session lasts |
+| [Signing keys]({{< relref "security/signing-keys.md" >}}) | How tokens are signed, rotating the key, and what to back up |
 | [Safe startup]({{< relref "security/startup-checks.md" >}}) | What the server refuses to start with, and why: plain HTTP, demo data, a weak first password |
 
 Related, described where they belong:
@@ -26,11 +27,11 @@ Related, described where they belong:
 - **Authenticator secrets** (two-step verification) are encrypted with AES-256-GCM before they go into the database. The key is the file
   `var/keys/mfa.key`: back it up with the rest of `var/keys`, because without it every saved authenticator stops working.
 - **Signing keys** for tokens are in `var/keys` too. Whoever has them can make tokens that every app will believe, so keep that folder
-  readable only by the server.
+  readable only by the server. [Rotate them]({{< relref "security/signing-keys.md" >}}) with `bin/keys`.
 
 ## What is not there yet
 
-- Signing keys are not rotated, and there is no audit log: see [Not production ready]({{< relref "not-production-ready.md" >}}).
+- There is no audit log yet: see [Not production ready]({{< relref "not-production-ready.md" >}}).
 - php-sso has not had an independent security review. The code and the tests are public, and the Basic OP plan of the OpenID Connect conformance
   suite can be run against it (`conformance/README.md` says what has been run), but neither is an independent review.
 
