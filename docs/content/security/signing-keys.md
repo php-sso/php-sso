@@ -41,5 +41,5 @@ Only one rotation can wait at a time: while a new key is pending, `bin/keys rota
 ## Back it up
 
 Whoever has `var/keys` can make tokens that every app believes, so the folder is readable only by the server (`0700`, and the private keys `0600`).
-Back it up with the database: without the keys, the server makes a new one, and everyone is signed out. The same folder holds `mfa.key`, which
+[Back it up]({{< relref "backup.md" >}}) with the database (`bin/backup` includes it): without the keys, the server makes a new one, and everyone is signed out. The same folder holds `mfa.key`, which
 encrypts the saved authenticator secrets; without it every one of them stops working.

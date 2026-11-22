@@ -1,0 +1,27 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// A backup of everything the server needs to start again: the data (in a form that restores into SQLite, MySQL or PostgreSQL alike) and var/keys.
+//   bin/backup [FILE]    FILE ends in .tar.gz (default: php-sso-backup-<date>.tar.gz in the current folder). An existing file is never overwritten.
+// The server may keep running: the data is read in one consistent snapshot. The archive holds password hashes and the signing keys, so keep it private
+// (it is written readable by you only) and store it encrypted.
+
+use PhpSso\Store\StorageFactory;
+use PhpSso\Store\StorageOptions;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$config = require dirname(__DIR__) . '/config/config.php';
+$storage = StorageFactory::create($config['storage'], new StorageOptions($config['session_idle_seconds'], array_keys($config['scopes'])));
+$target = $argv[1] ?? getcwd() . '/php-sso-backup-' . gmdate('Ymd-His') . '.tar.gz';
+
+try {
+    $result = $storage->backup()->export($config['keys_dir'], $target);
+} catch (RuntimeException $e) {
+    fwrite(STDERR, $e->getMessage() . "\n");
+    exit(1);
+}
+echo "Backup written to {$target}: {$result['rows']} rows in {$result['tables']} tables, {$result['keyFiles']} key files.\n";
+echo "It holds password hashes and the signing keys: keep it private.\n";

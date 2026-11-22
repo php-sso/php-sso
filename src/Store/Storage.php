@@ -70,6 +70,9 @@ interface Storage
 
     public function revokedAccessTokens(): RevokedAccessTokens;
 
+    /** Backing up everything, and loading a backup (see bin/backup and bin/restore). */
+    public function backup(): Backup;
+
     /**
      * Makes email addresses unique (ignoring case), or stops requiring it. Signing in by email needs it. Fails, naming the
      * addresses, when the data already has duplicates.

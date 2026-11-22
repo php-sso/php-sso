@@ -1,0 +1,45 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Loads a backup made by bin/backup into the database this installation is set up for (SSO_DB_*), and its key files into var/keys.
+//   bin/restore FILE                   into an empty database and a folder without keys (a new installation)
+//   bin/restore FILE --replace         empty the database first, and move the existing var/keys aside
+//   bin/restore FILE --without-keys    the data only
+// Stop the server first. The backup may come from another kind of database: restoring is also how to move from SQLite to MySQL or PostgreSQL.
+
+use PhpSso\Store\StorageFactory;
+use PhpSso\Store\StorageOptions;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$file = null;
+$replace = false;
+$withKeys = true;
+foreach (array_slice($argv, 1) as $argument) {
+    match (true) {
+        $argument === '--replace' => $replace = true,
+        $argument === '--without-keys' => $withKeys = false,
+        $file === null && !str_starts_with($argument, '--') => $file = $argument,
+        default => (function () use ($argument): never {
+            fwrite(STDERR, "Unknown argument {$argument}.\nUsage: bin/restore FILE [--replace] [--without-keys]\n");
+            exit(2);
+        })(),
+    };
+}
+if ($file === null || !is_file($file)) {
+    fwrite(STDERR, "Usage: bin/restore FILE [--replace] [--without-keys]\n");
+    exit(2);
+}
+
+$config = require dirname(__DIR__) . '/config/config.php';
+$storage = StorageFactory::create($config['storage'], new StorageOptions($config['session_idle_seconds'], array_keys($config['scopes'])));
+
+try {
+    $result = $storage->backup()->import($file, $config['keys_dir'], $replace, $withKeys);
+} catch (RuntimeException $e) {
+    fwrite(STDERR, $e->getMessage() . "\n");
+    exit(1);
+}
+echo "Restored {$result['rows']} rows in {$result['tables']} tables and {$result['keyFiles']} key files.\n";
