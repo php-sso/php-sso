@@ -1,6 +1,6 @@
 ---
 title: "Production and configuration"
-weight: 7
+weight: 9
 lead: "The production image and every environment variable."
 ---
 

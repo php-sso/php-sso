@@ -13,18 +13,26 @@ This application is a demo and a starting point, not a hardened product: see [No
 
 ## Run
 
+There are two ways to run php-sso.
+
+**With Docker.** The image is published for every release:
+
 ```bash
-docker compose up --build
+docker run -d --name sso -p 8080:8080 -v sso-data:/app/var \
+  -e SSO_PUBLIC_URL=https://sso.example.com -e ADMIN_PASSWORD='choose-a-long-password' \
+  ghcr.io/php-sso/php-sso:latest
 ```
 
-- SSO server: http://localhost:9000
-- Demo client: http://localhost:9001 (click "Sign in with php-sso", user `alice` / `password123`)
-- Second demo client: http://localhost:9002. Sign in on one and the other signs you in without asking for a password; signing out of one ends both.
-- Admin panel: http://localhost:9000/admin (user `admin` / `admin123`, or `ADMIN_PASSWORD` if set)
+Build your own image `FROM` it to add your theme: see [Run with Docker](https://php-sso.github.io/php-sso/docker/).
 
-The first start runs `composer install` into `./vendor` (the libraries come from Packagist) and generates signing keys in
-`./var/keys`. The production image is built with `docker build -f Dockerfile.production -t php-sso:local .`.
-If your host user id is not 1000, set `UID` and `GID` in a `.env` file.
+**With Composer**, on your own PHP and web server:
+
+```bash
+composer create-project --no-dev php-sso/php-sso my-sso
+```
+
+See [Install with Composer](https://php-sso.github.io/php-sso/composer/). To work on php-sso itself, `docker compose up --build` starts
+a development setup with demo users and two demo apps: see [Development](https://php-sso.github.io/php-sso/development/).
 
 ## Documentation
 

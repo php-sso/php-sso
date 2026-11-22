@@ -1,6 +1,6 @@
 ---
 title: "Not production ready"
-weight: 11
+weight: 13
 lead: "What the demo leaves out."
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "Signing in"
-weight: 5
+weight: 7
 lead: "Passwords, outside accounts, companies and a second step."
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "IP rules"
-weight: 6
+weight: 8
 lead: "Allow or deny network addresses."
 ---
 

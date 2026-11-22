@@ -2,8 +2,10 @@
 title: php-sso
 lead: An OpenID Connect provider with SCIM provisioning, SAML sign-in and an admin panel, in one container.
 actions:
-  - name: Run it
-    url: /run/
+  - name: Run with Docker
+    url: /docker/
+  - name: Install with Composer
+    url: /composer/
   - name: Sign-in methods
     url: /sign-in/
 ---

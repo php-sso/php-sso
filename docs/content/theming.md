@@ -1,6 +1,6 @@
 ---
 title: Theming
-weight: 8
+weight: 10
 lead: Change the pages people see without rebuilding the image.
 ---
 

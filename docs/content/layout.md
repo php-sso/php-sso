@@ -1,6 +1,6 @@
 ---
 title: "Code layout"
-weight: 10
+weight: 12
 lead: "Where things are in the source."
 ---
 

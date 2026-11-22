@@ -1,6 +1,6 @@
 ---
 title: "Signing out"
-weight: 3
+weight: 5
 lead: "Logout, and how it reaches the apps."
 ---
 
