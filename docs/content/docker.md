@@ -13,7 +13,7 @@ docker run -d --name sso -p 8080:8080 \
   ghcr.io/php-sso/php-sso:latest
 ```
 
-That starts the server on port 8080. Sign in at `/admin` as `admin` with the password you gave. `ADMIN_PASSWORD` is only read
+That starts the server on port 8080. Sign in at `/admin` as `admin` (or the name you gave in `ADMIN_USERNAME`) with the password you gave. `ADMIN_PASSWORD` is only read
 while the database is empty: it creates the first administrator, so change the password in the admin panel afterwards.
 
 ## Tags

@@ -15,6 +15,7 @@ The production image runs Apache as an unprivileged user on port 8080. Mount a v
 | Variable | Purpose |
 | --- | --- |
 | `SSO_PUBLIC_URL` | Public base URL; becomes the token issuer |
+| `ADMIN_USERNAME` | Username of the first administrator (optional, `admin` by default: 2 to 64 letters, digits or `_ . @ -`) |
 | `ADMIN_PASSWORD` | Password of the first administrator (required while the database is empty) |
 | `ADMIN_EMAIL` | Email of that administrator (optional) |
 | `SSO_APP_NAME` | Name shown on the pages |

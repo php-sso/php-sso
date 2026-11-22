@@ -79,6 +79,38 @@ final class SeedTest extends TestCase
         // Assert (the exception above)
     }
 
+    public function testItRefusesAFirstAdministratorUsernameWithUnsafeCharactersWhenAskedToCheck(): void
+    {
+        // Arrange
+        $data = new TestData();
+        $seeder = new Seeder($data->users, $data->groups, $data->clients, $data->roles);
+        $seed = ['groups' => [], 'clients' => [], 'check_passwords' => true,
+            'users' => ['bad name/<x>' => ['password' => 'a-long-enough-password-9', 'name' => 'Administrator', 'email' => 'admin@example.com', 'is_admin' => true]]];
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('ADMIN_USERNAME');
+
+        // Act
+        $seeder->seed($seed);
+
+        // Assert (the exception above)
+    }
+
+    public function testItCreatesTheFirstAdministratorUnderTheGivenUsername(): void
+    {
+        // Arrange
+        $data = new TestData();
+        $seeder = new Seeder($data->users, $data->groups, $data->clients, $data->roles);
+        $seed = ['groups' => [], 'clients' => [], 'check_passwords' => true,
+            'users' => ['walter' => ['password' => 'a-long-enough-password-9', 'name' => 'Administrator', 'email' => 'admin@example.com', 'is_admin' => true]]];
+
+        // Act
+        $seeder->seed($seed);
+
+        // Assert
+        $this->assertNotNull($data->users->findByUsername('walter'));
+        $this->assertNull($data->users->findByUsername('admin'));
+    }
+
     public function testItRefusesAPasswordThatRepeatsTheSameFewCharacters(): void
     {
         // Arrange

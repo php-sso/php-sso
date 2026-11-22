@@ -22,33 +22,12 @@
 </nav>
 {% endif %}
 
-{% if lock %}
-  <div class="zone plain">
-    <div>
-      <h2>{{ lock.locked ? 'Locked out of signing in' : 'Failed sign-in attempts' }}</h2>
-      <p>{{ lock.failures }} failed {{ lock.failures == 1 ? 'attempt' : 'attempts' }} in the last {{ limits.window_seconds // 60 }} min (the limit is {{ lock.limit }}).
-        {% if not limits.enabled %}Limiting is off, so nothing is blocked.{% elseif lock.locked %}They can try again {{ until(lock.until) }}, or you can let them in now.{% else %}They are not locked out.{% endif %}</p>
-    </div>
-    {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/reset-lock', csrf, 'Reset attempts', 'Reset failed attempts?', 'The failed attempts of ' ~ user.name ~ ' stop counting, so they can try signing in again right away. They stay in the sign-in history.', 'btn ghost') }}
-  </div>
-{% endif %}
-
 {% if scim %}
   <div class="zone plain">
     <div>
       <h2>Provisioned automatically</h2>
       <p>This person is managed by <a href="/admin/scim/{{ scim.id }}/edit">{{ scim.name }}</a> (SCIM). Their name, email and whether they can sign in are set there, and a change made here is overwritten the next time it syncs.</p>
     </div>
-  </div>
-{% endif %}
-
-{% if reset_available %}
-  <div class="zone plain">
-    <div>
-      <h2>Password reset</h2>
-      <p>{% if reset_refusal %}{{ reset_refusal }}{% else %}Send {{ user.name }} an email at {{ user.email }} with a link to choose a new password. The link works once and for a limited time, and when it is used {{ user.name }} is signed out everywhere.{% endif %}</p>
-    </div>
-    {% if not reset_refusal %}{{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/send-reset', csrf, 'Send reset email', 'Send a password reset email?', 'An email with a link goes to ' ~ user.email ~ '. Their password stays as it is until they use the link.', 'btn ghost') }}{% endif %}
   </div>
 {% endif %}
 
@@ -140,6 +119,25 @@
   {% endif %}
 </section>
 {% elseif tab == 'danger' %}
+{% if lock %}
+  <div class="zone plain">
+    <div>
+      <h2>{{ lock.locked ? 'Locked out of signing in' : 'Failed sign-in attempts' }}</h2>
+      <p>{{ lock.failures }} failed {{ lock.failures == 1 ? 'attempt' : 'attempts' }} in the last {{ limits.window_seconds // 60 }} min (the limit is {{ lock.limit }}).
+        {% if not limits.enabled %}Limiting is off, so nothing is blocked.{% elseif lock.locked %}They can try again {{ until(lock.until) }}, or you can let them in now.{% else %}They are not locked out.{% endif %}</p>
+    </div>
+    {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/reset-lock', csrf, 'Reset attempts', 'Reset failed attempts?', 'The failed attempts of ' ~ user.name ~ ' stop counting, so they can try signing in again right away. They stay in the sign-in history.', 'btn ghost') }}
+  </div>
+{% endif %}
+{% if reset_available %}
+  <div class="zone plain">
+    <div>
+      <h2>Password reset</h2>
+      <p>{% if reset_refusal %}{{ reset_refusal }}{% else %}Send {{ user.name }} an email at {{ user.email }} with a link to choose a new password. The link works once and for a limited time, and when it is used {{ user.name }} is signed out everywhere.{% endif %}</p>
+    </div>
+    {% if not reset_refusal %}{{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/send-reset', csrf, 'Send reset email', 'Send a password reset email?', 'An email with a link goes to ' ~ user.email ~ '. Their password stays as it is until they use the link.', 'btn ghost') }}{% endif %}
+  </div>
+{% endif %}
   {% if not impersonation_refusal %}
   <div class="zone">
     <div><h2>Browse as {{ user.name }}</h2><p>Sign this browser in as {{ user.name }} to see the apps the way they do. You are signed out of the admin panel meanwhile, and the session is recorded as started by you.</p></div>

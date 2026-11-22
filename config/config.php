@@ -163,7 +163,7 @@ return [
         : [
             'groups' => [],
             'users' => [
-                'admin' => ['password' => getenv('ADMIN_PASSWORD') ?: '', 'name' => 'Administrator', 'email' => getenv('ADMIN_EMAIL') ?: 'admin@example.com', 'is_admin' => true],
+                (getenv('ADMIN_USERNAME') ?: 'admin') => ['password' => getenv('ADMIN_PASSWORD') ?: '', 'name' => 'Administrator', 'email' => getenv('ADMIN_EMAIL') ?: 'admin@example.com', 'is_admin' => true],
             ],
             'clients' => [],
             'check_passwords' => true, // the first administrator must not have a weak password (the demo has well-known ones)

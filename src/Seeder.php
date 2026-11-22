@@ -39,6 +39,9 @@ final class Seeder
             if ($u['password'] === '') {
                 throw new \RuntimeException("The database is empty, so the first user ({$username}) must be created. Set ADMIN_PASSWORD (and start again).");
             }
+            if (($seed['check_passwords'] ?? false) && !preg_match('/^[A-Za-z0-9_.@-]{2,64}$/', (string) $username)) {
+                throw new \RuntimeException("The username of the first user, ADMIN_USERNAME ({$username}), must be 2 to 64 letters, digits or _ . @ -");
+            }
             if (($seed['check_passwords'] ?? false) && ($weakness = self::weakness($u['password'])) !== null) {
                 throw new \RuntimeException("The password for the first user ({$username}), ADMIN_PASSWORD, {$weakness}");
             }

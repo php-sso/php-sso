@@ -66,7 +66,7 @@ their authenticator needs an administrator to reset that.
 
 ## The administrator can send the link
 
-On a person's page, **Send reset email** sends them the link at once (and says if it could not: no mail server, a locked account, an account with no password, or what the mail server answered). The email says an administrator
+On a person's page, under the **Danger** tab, **Send reset email** sends them the link at once (and says if it could not: no mail server, a locked account, an account with no password, or what the mail server answered). The email says an administrator
 sent it. It is written to the audit log as `user.send_reset`. Use it for someone who is locked out of their mailbox flow, or to give a new person a way to choose their own first password.
 
 ## The look of the emails

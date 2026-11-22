@@ -58,7 +58,7 @@ unless the pool has `clear_env = no` (or lists each variable with `env[NAME] = .
 `my-sso/var/` must be writable by the web server user. It holds the SQLite database, the keys and a cache. Keep it out of backups
 you do not trust, and in the ones you do.
 
-The first time it runs with an empty database, it creates the administrator `admin` with the password in `ADMIN_PASSWORD`.
+The first time it runs with an empty database, it creates the administrator (`admin`, or the name in `ADMIN_USERNAME`) with the password in `ADMIN_PASSWORD`.
 
 Run `bin/maintenance` from cron, every minute or every few minutes, to remove expired sessions and tokens and to send again the logout notifications that apps did not accept:
 
