@@ -150,7 +150,7 @@ final class HandleTest extends TestCase
 
         // Assert
         $this->assertTrue($config['patch']['supported']);
-        $this->assertFalse($config['bulk']['supported']);
+        $this->assertTrue($config['bulk']['supported']);
         $this->assertSame('/Users', $types['Resources'][0]['endpoint']);
         $this->assertSame('urn:ietf:params:scim:schemas:core:2.0:User', $schemas['Resources'][0]['id']);
     }
@@ -161,7 +161,7 @@ final class HandleTest extends TestCase
         $app = new Support();
 
         // Act
-        $response = $app->controller->handle($app->request('POST', '/Bulk', ['Operations' => []]));
+        $response = $app->controller->handle($app->request('POST', '/Nothing', ['Operations' => []]));
 
         // Assert
         $this->assertSame(404, $response->getStatusCode());

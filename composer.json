@@ -26,7 +26,7 @@
         "php": "^8.3",
         "php-sso/oauth-server": "^1.0",
         "php-sso/saml": "^1.1",
-        "php-sso/scim-server": "^1.0",
+        "php-sso/scim-server": "^1.1",
         "psr/http-client": "^1.0",
         "twig/twig": "^3.0"
     },

@@ -45,4 +45,16 @@ plus `ServiceProviderConfig`, `ResourceTypes` and `Schemas`. A person needs a `u
   Deactivating a person leaves their groups alone.
 - A group's page says it is provisioned, and changes made to it by hand are overwritten at the next sync.
 
-Not supported yet: bulk, sorting, ETags, filters other than `eq`, and pushing people out to apps.
+## Bulk operations
+
+`POST /scim/v2/Bulk` does many creates, replaces, patches and deletes of people and groups in one request, as providers use to load a whole company. Each
+operation does exactly what the single request would (same rules, same limits to what the client manages) and is written to the client's request log
+like one, next to a line for the bulk itself. The rules worth knowing:
+
+- Up to **100 operations** and **1 MiB** per request; more is refused with `413`.
+- Not atomic: an operation that fails is reported in the answer and the others stay done. `failOnErrors` stops after that many errors.
+- A POST needs a `bulkId`. The value `bulkId:xyz` anywhere in a later (or earlier) operation, such as a group's `members[].value`, stands for the id that POST created, so a
+  person and the group they belong to can go in the same request in any order. A reference to nothing, to an operation that failed, or in a circle, fails that operation.
+- Not supported inside a bulk: `version` (no ETags) and GET.
+
+Not supported yet: sorting, ETags, filters other than `eq`, and pushing people out to apps.
