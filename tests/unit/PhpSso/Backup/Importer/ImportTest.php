@@ -53,9 +53,10 @@ final class ImportTest extends TestCase
         $tar = $dir . '.tar';
         $built = new PharData($tar);
         $built->buildFromDirectory($dir);
-        $built->compress(Phar::GZ);
         unset($built);
-        unlink($tar);
+        // Plain gzip, not PharData::compress(): before PHP 8.4 the same process then reads the .tar.gz back empty.
+        copy($tar, 'compress.zlib://' . $tar . '.gz');
+        Phar::unlinkArchive($tar);
 
         return $tar . '.gz';
     }

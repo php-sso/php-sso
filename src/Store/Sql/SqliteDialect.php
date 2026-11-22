@@ -110,9 +110,19 @@ final class SqliteDialect implements Dialect
     public function beginMigration(PDO $pdo): void
     {
         $pdo->exec('PRAGMA foreign_keys = OFF'); // a table rebuild needs it, and SQLite ignores the pragma inside a transaction
+        // Read before the transaction opens: a read that comes first would hold a shared lock that cannot be upgraded while another
+        // process waits for the write lock, and the busy timeout does not help against that.
+        $version = (int) $pdo->query('PRAGMA user_version')->fetchColumn();
         try {
-            $pdo->exec('BEGIN IMMEDIATE'); // the write lock: another process that migrates waits here (busy_timeout)
+            // PDO's own transaction (not raw `BEGIN`), so that inTransaction() tells the truth on every PHP version before 8.4 too.
+            $pdo->beginTransaction();
+            // A plain BEGIN takes no lock yet. Writing the value that is there takes the write lock now: another process that
+            // migrates waits here (busy_timeout) instead of in the middle of the migration.
+            $pdo->exec('PRAGMA user_version = ' . $version);
         } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             $pdo->exec('PRAGMA foreign_keys = ON');
             throw $e;
         }
@@ -125,7 +135,7 @@ final class SqliteDialect implements Dialect
             throw new RuntimeException('The migration broke a foreign key; nothing was changed.');
         }
         try {
-            $pdo->exec('COMMIT');
+            $pdo->commit();
         } finally {
             $pdo->exec('PRAGMA foreign_keys = ON');
         }
@@ -134,7 +144,7 @@ final class SqliteDialect implements Dialect
     public function rollbackMigration(PDO $pdo): void
     {
         if ($pdo->inTransaction()) {
-            $pdo->exec('ROLLBACK');
+            $pdo->rollBack();
         }
         $pdo->exec('PRAGMA foreign_keys = ON');
     }

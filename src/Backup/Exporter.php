@@ -17,7 +17,8 @@ use RuntimeException;
  */
 final class Exporter
 {
-    public function __construct(private Connection $db, private string $keysDir)
+    /** @param string|null $tempDir where the archive is put together before it is written (the system's temporary folder by default) */
+    public function __construct(private Connection $db, private string $keysDir, private ?string $tempDir = null)
     {
     }
 
@@ -34,7 +35,7 @@ final class Exporter
             throw new RuntimeException("{$target} exists already: a backup never overwrites one.");
         }
 
-        $work = sys_get_temp_dir() . '/php-sso-backup-' . bin2hex(random_bytes(6));
+        $work = ($this->tempDir ?? sys_get_temp_dir()) . '/php-sso-backup-' . bin2hex(random_bytes(6));
         $previous = umask(0077);
         try {
             mkdir($work . '/database', 0700, true);
@@ -52,8 +53,11 @@ final class Exporter
             $tar = substr($target, 0, -3);
             $archive = new PharData($tar);
             $archive->buildFromDirectory($work);
-            $archive->compress(Phar::GZ);
             unset($archive);
+            // Not PharData::compress(): before PHP 8.4 the process then keeps a copy of the .tar.gz that reads back empty.
+            if (!copy($tar, 'compress.zlib://' . $target)) {
+                throw new RuntimeException('Cannot write the backup file.');
+            }
             Phar::unlinkArchive($tar);
             chmod($target, 0600);
         } finally {
@@ -88,7 +92,7 @@ final class Exporter
                 $counts[$table] = $rows;
             }
         } finally {
-            $pdo->commit(); // nothing was written: this only ends the snapshot
+            $pdo->exec('COMMIT'); // nothing was written: this only ends the snapshot (raw SQL like the BEGIN, which PHP before 8.4 does not track for commit())
         }
 
         return $counts;

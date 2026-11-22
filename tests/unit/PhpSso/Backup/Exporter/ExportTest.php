@@ -120,13 +120,13 @@ final class ExportTest extends TestCase
     {
         // Arrange
         $data = new TestData();
-        $before = glob(sys_get_temp_dir() . '/php-sso-backup-*') ?: [];
+        mkdir($this->work . '/tmp');
 
         // Act
-        (new Exporter($data->db, $this->work . '/keys'))->export($this->work . '/backup.tar.gz');
+        (new Exporter($data->db, $this->work . '/keys', $this->work . '/tmp'))->export($this->work . '/backup.tar.gz');
 
         // Assert
-        $this->assertSame(count($before), count(glob(sys_get_temp_dir() . '/php-sso-backup-*') ?: []));
-        $this->assertSame(['backup.tar.gz'], array_values(array_diff(scandir($this->work), ['.', '..', 'keys'])));
+        $this->assertSame([], array_values(array_diff(scandir($this->work . '/tmp'), ['.', '..'])));
+        $this->assertSame(['backup.tar.gz'], array_values(array_diff(scandir($this->work), ['.', '..', 'keys', 'tmp'])));
     }
 }
