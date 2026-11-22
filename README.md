@@ -5,9 +5,9 @@ on three libraries that you can also use on their own, and laminas-diactoros:
 
 | Package | What it is |
 | --- | --- |
-| [`php-sso/oauth-server`](https://github.com/php-sso/oauth-server) | The OAuth 2.0 and OpenID Connect authorization server |
-| [`php-sso/scim-server`](https://github.com/php-sso/scim-server) | SCIM 2.0 provisioning of users and groups |
-| [`php-sso/saml`](https://github.com/php-sso/saml) | SAML 2.0 sign-in through a company's identity provider |
+| [`php-sso/oauth-server`](https://php-sso.github.io/oauth-server/) | The OAuth 2.0 and OpenID Connect authorization server |
+| [`php-sso/scim-server`](https://php-sso.github.io/scim-server/) | SCIM 2.0 provisioning of users and groups |
+| [`php-sso/saml`](https://php-sso.github.io/saml/) | SAML 2.0 sign-in through a company's identity provider |
 
 This application is a demo and a starting point, not a hardened product: see [Not production ready](https://php-sso.github.io/php-sso/not-production-ready/).
 
