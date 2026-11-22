@@ -43,7 +43,7 @@
     {% endfor %}
     </tbody>
   </table>
-  <div class="listfoot"><span class="muted">{{ pager.total }} {{ pager.total == 1 ? 'entry' : 'entries' }}{% if pager.pages > 1 %}, page {{ pager.page }} of {{ pager.pages }}{% endif %}</span></div>
+  {{ m.listfoot(pager, 'entry', 'entries') }}
   {{ m.pager(pager, base) }}
 {% elseif filter or from or to %}
   <div class="empty"><h2>Nothing matches</h2><p>No entry fits these filters.</p><a class="btn" href="/admin/audit">Clear the filters</a></div>

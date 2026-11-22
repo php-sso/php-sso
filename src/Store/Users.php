@@ -9,6 +9,17 @@ interface Users
     /** All users, each with a `groups` list of group names. */
     public function all(): array;
 
+    /**
+     * One page of people, by username, each with a `groups` list of group names. With text, only those whose name, username or email contains it.
+     * The group names of the page come in one query, so a page costs the same however many people there are.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function page(string $q, int $limit, int $offset): array;
+
+    /** How many people {@see page()} has in all for this text (everyone when it is empty). */
+    public function countMatching(string $q): int;
+
     /** Administrators only, without the per-user group lookup that all() does. */
     public function admins(): array;
 

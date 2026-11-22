@@ -3,9 +3,13 @@
 
 declare(strict_types=1);
 
-// Housekeeping for the stored data. Run it from cron (for example hourly); it is safe to run at any time.
-//   bin/maintenance          drop ended sessions, expired codes and tokens, and old failures
+// Housekeeping for the stored data. Run it from cron, every minute or every few minutes; it is safe to run at any time.
+//   bin/maintenance          drop ended sessions, expired codes and tokens, old failures and old audit entries,
+//                            and try again the logout notifications that apps did not accept
 
+use PhpSso\Audit\Audit;
+use PhpSso\Keys;
+use PhpSso\OAuth\Wiring;
 use PhpSso\Store\StorageFactory;
 use PhpSso\Store\StorageOptions;
 
@@ -14,4 +18,8 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 $config = require dirname(__DIR__) . '/config/config.php';
 $storage = StorageFactory::create($config['storage'], StorageOptions::fromConfig($config));
 $storage->maintenance()->purgeExpired();
+$retried = Wiring::logoutRetrier($config, $storage, new Keys($config['keys_dir'], $config['key_retention_seconds']), new Audit($storage->auditLog(), (bool) $config['audit']['stream']))->run(50);
 fwrite(STDOUT, "Expired data removed.\n");
+if (array_sum($retried) > 0) {
+    fwrite(STDOUT, "Logout notifications tried again: {$retried['delivered']} delivered, {$retried['retrying']} to try again later, {$retried['gave_up']} given up, {$retried['gone']} no longer needed.\n");
+}

@@ -15,6 +15,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - **Backup and restore** with `bin/backup` and `bin/restore`: one file with the data and the keys, consistent while the server runs, and restorable into any of the three databases (also how to move from SQLite to MySQL or PostgreSQL).
 - **Housekeeping** with `bin/maintenance`, and automatically on about one request in a hundred.
 - **An audit log** at `/admin/audit`: every change made in the admin panel, the changes people make to their own account, and key, backup and restore commands. Entries are kept 365 days (`SSO_AUDIT_RETENTION_DAYS`) and can be streamed to the error log (`SSO_AUDIT_STREAM`).
+- **Paged lists:** Users, Groups and Clients show 25 to a page with a search box, and cost the same however many there are (the dashboard and the access test no longer load everyone).
+- **Back-channel logout is retried:** a notification an app did not accept is sent again after 1 minute, 5 minutes, 30 minutes, 2 hours and 12 hours, with a fresh token each time, and then given up on and audited (`logout.undelivered`).
 - Documentation sections for running with Docker and with Composer, security, backup and restore, and development.
 
 ### Changed
@@ -25,6 +27,8 @@ Read this before upgrading.
 - **Everyone signs in again once over HTTPS:** the session cookie is now named `__Host-sso_session`.
 - **The server may refuse to start** where it used to run: a public `http://` `SSO_PUBLIC_URL`, `SSO_DEMO_DATA` on a public address, a weak `ADMIN_PASSWORD` on an empty database (see Added).
 - **`config/config.php`:** the `database` setting is now `storage`, an array with the driver and its settings. This only matters if you edited that file.
+- **Run `bin/maintenance` every minute or every few minutes** rather than hourly: it also retries logout notifications. The server does the same on some requests if you do not.
+- **The access test** takes a username (or an id) for the person instead of a drop-down of everyone.
 - **For code that builds on the app:** the store classes (`PhpSso\Store\Users` and the others) are interfaces now, their SQL implementations are in `PhpSso\Store\Sql` (`SqlUsers` and so on), and `PhpSso\Database` is `PhpSso\Store\Sql\Connection`.
 
 ## 0.1.0 - 2026-11-21

@@ -9,7 +9,7 @@ lead: "Where things are in the source."
 - `src/Admin/` + `templates/admin/`: the admin panel (Twig): `AdminController`, the picker for who is in a group, and the pager the lists share
 - `src/Pages.php`, `src/Account/`, `templates/pages/`: themeable pages (login, account, errors)
 - `src/Auth/`: signing in: the login steps and their controllers, throttling, two-step verification (`Mfa/`), outside providers and SAML, the steps a person must take before they are in (`Actions/`), what people type to identify themselves (`Identifier/`), and impersonation
-- `src/OAuth/`: what `php-sso/oauth-server` needs from us: clients from the database, the access policy, the sign-in, "no access" and logout screens, the device page, and what it asks of the token stores
+- `src/OAuth/`: what `php-sso/oauth-server` needs from us: clients from the database, the access policy, the sign-in, "no access" and logout screens, the device page, the retry of [logout notifications]({{< relref "signing-out.md" >}}) that failed, and what it asks of the token stores
 - `src/Audit/`: the [audit log]({{< relref "security/audit-log.md" >}}): `Audit` writes entries, and `AdminActions` and `AccountActions` say what each change is called and what is kept of it
 - `src/Backup/`: [backup and restore]({{< relref "backup.md" >}}): the exporter, the importer and the list of tables a backup holds
 - `src/Http/`: the [security headers]({{< relref "security/headers.md" >}})

@@ -25,6 +25,7 @@ Reachable at `/admin` for users with the administrator flag; it reuses the SSO l
   without a scope list of its own may ask for the built-in scopes only. You cannot remove a scope an app may still ask for. Taking a scope
   away from an app also takes it off refresh tokens already issued: their next refresh carries only what is still allowed, though
   access tokens already issued keep it until they expire (an hour).
+- **Lists:** Users, Groups and Clients show 25 to a page, with a search box (people by name, username or email; groups by name or description; clients by name or id). The search text is kept while you page.
 - **Audit log:** who changed what, and when: every change made here, with filters and pages. See [Audit log]({{< relref "security/audit-log.md" >}}).
 - **Who can sign in to a client:** *Everyone*, or *Only selected groups and people*. A restricted client
   accepts the members of its groups plus the people added by name; with nobody added, nobody gets in.

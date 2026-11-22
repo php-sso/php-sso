@@ -24,6 +24,43 @@ final class SqlGroups implements \PhpSso\Store\Groups
             FROM user_group g ORDER BY g.name')->fetchAll();
     }
 
+    public function page(string $q, int $limit, int $offset): array
+    {
+        [$where, $params] = $this->matching($q);
+        $stmt = $this->pdo->prepare('SELECT g.*, (SELECT COUNT(*) FROM user_group_member m WHERE m.group_id = g.id) AS members
+            FROM user_group g' . $where . ' ORDER BY g.name LIMIT :l OFFSET :o');
+        foreach ($params as $name => $value) {
+            $stmt->bindValue($name, $value);
+        }
+        $stmt->bindValue(':l', max(1, $limit), PDO::PARAM_INT);
+        $stmt->bindValue(':o', max(0, $offset), PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public function countMatching(string $q): int
+    {
+        [$where, $params] = $this->matching($q);
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM user_group g' . $where);
+        foreach ($params as $name => $value) {
+            $stmt->bindValue($name, $value);
+        }
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** @return array{string, array<string, string>} */
+    private function matching(string $q): array
+    {
+        if (trim($q) === '') {
+            return ['', []];
+        }
+
+        return [' WHERE (' . $this->dialect->like('g.name', ':q') . ' OR ' . $this->dialect->like('g.description', ':q') . ')', [':q' => self::like(trim($q))]];
+    }
+
     public function find(int $id): ?array
     {
         $stmt = $this->pdo->prepare('SELECT * FROM user_group WHERE id = ?');

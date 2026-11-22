@@ -23,6 +23,7 @@ actions, a few details. The names are copied into the entry, so it still says `c
 | `scim_client`, `saml_connection`, `consent` | `create`, `update`, `delete`; `rotate_token` for SCIM; `ask_everyone_again` for a notice |
 | `security` | `accounts`, `settings`, `reset_failures`, `mfa_policy`, `social`: the sign-in protection pages (an entry names the fields that were saved, not their values; `mfa_policy` also says which policy) |
 | `account` | What people do to their own account: `profile_update`, `password_change`, `mfa_enable`, `mfa_disable`, `mfa_recovery_codes`, `social_unlink`, `session_end`, `sessions_end_others` |
+| `logout` | `undelivered`: an app did not accept a [logout notification](../../signing-out/) after every attempt. The person is `system` |
 | `keys`, `backup` | From the command line: `keys.rotate`, `keys.prune`, `backup.create`, `backup.restore`. The person is `cli:` and the name of the user who ran the command |
 
 An entry is written only when the change was made. A form that was refused, a page that was not found and a code that was wrong leave nothing, so the log is not full of mistakes.

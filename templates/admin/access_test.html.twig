@@ -21,13 +21,8 @@
           {% for c in client_options %}<option value="{{ c.client_id }}"{{ input.client == c.client_id ? ' selected' }}>{{ c.name }}</option>{% endfor %}
         </select>
       </div>
-      <div class="field">
-        <label for="user">Person</label>
-        <select id="user" name="user">
-          <option value="">Anyone (don't check a person)</option>
-          {% for u in user_options %}<option value="{{ u.sub }}"{{ input.user == u.sub ? ' selected' }}>{{ u.name }} ({{ u.username }})</option>{% endfor %}
-        </select>
-      </div>
+      {{ m.input('user', 'Person', target ? target.username : input.user, user_error ? {user: user_error} : {}, 'text', 'A username, or an id. Leave it empty to skip the person.', 'list="people" autocomplete="off"') }}
+      <datalist id="people">{% for u in user_options %}<option value="{{ u.username }}">{{ u.name }}</option>{% endfor %}</datalist>
     </div>
   </div>
   <div class="formbar inline"><button class="btn">{{ i.icon('flask') }}Run test</button></div>

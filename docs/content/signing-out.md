@@ -9,8 +9,12 @@ lead: "Logout, and how it reaches the apps."
   `/userinfo` stop working at once. Idle expiry alone does not revoke anything.
 - **Back-channel logout:** give a client a *Back-channel logout URL* and it gets a signed logout token
   (`sid` and `sub` claims) by POST whenever a session it took part in ends. ID tokens carry the matching
-  `sid`. Delivery is attempted once, with a 3 second timeout, by the OAuth server's logout service;
-  failures are returned to us and logged.
+  `sid`. The first attempt has a 3 second timeout. If the app cannot be reached or does not answer 2xx, the notification is kept and sent again after
+  1 minute, 5 minutes, 30 minutes, 2 hours and 12 hours (six attempts in all), each time with a fresh token, because a logout token is valid for two minutes only.
+  The retries are made by [`bin/maintenance`]({{< relref "production.md#monitoring" >}}) and by the server itself on some requests, so they happen even if nobody runs the
+  command, only later and less exactly. An app that has not answered after the last attempt is given up on: that is written to the error log and to the
+  [audit log]({{< relref "security/audit-log.md" >}}) as `logout.undelivered`. An app may receive the same notification twice (it answered with an error after it had acted on it),
+  so it should treat a repeated `jti` or `sid` as already handled.
 - **Single logout from an app:** the app sends the browser to `/end-session` with `id_token_hint`. Register
   its *Post-logout redirect URIs* in the client to let it come back. Without a hint, the person is asked
   to confirm first.

@@ -9,6 +9,7 @@
   <a class="btn" href="/admin/users/new">{{ i.icon('plus') }}New user</a>
 </div>
 
+{% if users or q %}{{ m.listbar('/admin/users', q, 'Search people by name, username or email') }}{% endif %}
 {% if users %}
   <table class="list">
     <thead><tr><th>Person</th><th class="hide-sm">Email</th><th>Groups</th></tr></thead>
@@ -30,6 +31,10 @@
     {% endfor %}
     </tbody>
   </table>
+  {{ m.listfoot(pager, 'person', 'people') }}
+  {{ m.pager(pager, base) }}
+{% elseif q %}
+  <div class="empty"><h2>Nothing matches</h2><p>No one has "{{ q }}" in their name, username or email.</p><a class="btn" href="/admin/users">Clear the search</a></div>
 {% else %}
   <div class="empty"><h2>No users yet</h2><p>Add the first person who should be able to sign in.</p><a class="btn" href="/admin/users/new">New user</a></div>
 {% endif %}

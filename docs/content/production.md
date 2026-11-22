@@ -43,7 +43,10 @@ The production image runs Apache as an unprivileged user on port 8080. Mount a v
 monitor may call it without being signed in. The Docker image checks it with a `HEALTHCHECK`, so `docker ps` shows `healthy` or `unhealthy`. If the server
 refused to start because of a [setting]({{< relref "security/startup-checks.md" >}}), it fails too.
 
-Run `bin/maintenance` from cron (for example hourly) to remove expired sessions, codes and tokens. The server also does it on about one request in a hundred.
+Run `bin/maintenance` from cron, every minute or every few minutes. It removes expired sessions, codes and tokens and old audit entries, and it sends again the
+[logout notifications]({{< relref "signing-out.md" >}}) that apps did not accept. The server does the same on some requests (clearing about one in a hundred, retrying about one in ten),
+so with steady traffic nothing else is needed; the command makes the retries timely and covers a quiet server. With the Docker image, run it from the host's cron:
+`docker exec sso php bin/maintenance`.
 
 ## Databases
 
@@ -66,8 +69,7 @@ write that meets another one waits instead of failing. It needs a local disk: ke
 
 One more thing to know:
 
-- **Housekeeping.** Run `bin/maintenance` from cron (for example hourly) to remove expired sessions, codes and tokens. The server also does it on
-  about one request in a hundred.
+- **Housekeeping.** Run `bin/maintenance` from cron, every minute or every few minutes (see [Monitoring](#monitoring)).
 
 ### Migrations
 

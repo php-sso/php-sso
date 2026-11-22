@@ -9,6 +9,16 @@ interface Groups
     /** All groups, each with a `members` count. */
     public function all(): array;
 
+    /**
+     * One page of groups, by name, each with a `members` count. With text, only those whose name or description contains it.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function page(string $q, int $limit, int $offset): array;
+
+    /** How many groups {@see page()} has in all for this text (all of them when it is empty). */
+    public function countMatching(string $q): int;
+
     public function find(int $id): ?array;
 
     public function findByName(string $name): ?array;

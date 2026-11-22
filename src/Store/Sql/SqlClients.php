@@ -26,6 +26,42 @@ final class SqlClients implements \PhpSso\Store\Clients
         return array_map($this->decode(...), $this->pdo->query('SELECT * FROM clients ORDER BY name')->fetchAll());
     }
 
+    public function page(string $q, int $limit, int $offset): array
+    {
+        [$where, $params] = $this->matching($q);
+        $stmt = $this->pdo->prepare('SELECT * FROM clients' . $where . ' ORDER BY ' . $this->dialect->ci('name') . ', client_id LIMIT :l OFFSET :o');
+        foreach ($params as $name => $value) {
+            $stmt->bindValue($name, $value);
+        }
+        $stmt->bindValue(':l', max(1, $limit), PDO::PARAM_INT);
+        $stmt->bindValue(':o', max(0, $offset), PDO::PARAM_INT);
+        $stmt->execute();
+
+        return array_map($this->decode(...), $stmt->fetchAll());
+    }
+
+    public function countMatching(string $q): int
+    {
+        [$where, $params] = $this->matching($q);
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM clients' . $where);
+        foreach ($params as $name => $value) {
+            $stmt->bindValue($name, $value);
+        }
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** @return array{string, array<string, string>} */
+    private function matching(string $q): array
+    {
+        if (trim($q) === '') {
+            return ['', []];
+        }
+
+        return [' WHERE (' . $this->dialect->like('name', ':q') . ' OR ' . $this->dialect->like('client_id', ':q') . ')', [':q' => '%' . addcslashes(trim($q), '%_\\') . '%']];
+    }
+
     /**
      * The clients that may ask for this scope. A client with no list of its own (an old record) may ask for the built-in
      * scopes only, so it never counts for one an administrator added.
@@ -186,14 +222,19 @@ final class SqlClients implements \PhpSso\Store\Clients
     }
 
     /** Who each restricted client is limited to, for the list page: client id => group names and number of people. */
-    public function accessSummary(): array
+    public function accessSummary(array $clientIds = []): array
     {
+        $only = $clientIds === [] ? '' : ' WHERE client_id IN (' . implode(', ', array_fill(0, count($clientIds), '?')) . ')';
         $out = [];
-        $rows = $this->pdo->query('SELECT cg.client_id, g.name FROM client_group cg JOIN user_group g ON g.id = cg.group_id ORDER BY ' . $this->dialect->ci('g.name'))->fetchAll();
-        foreach ($rows as $row) {
+        $groups = $this->pdo->prepare('SELECT cg.client_id, g.name FROM client_group cg JOIN user_group g ON g.id = cg.group_id'
+            . ($clientIds === [] ? '' : ' WHERE cg.client_id IN (' . implode(', ', array_fill(0, count($clientIds), '?')) . ')') . ' ORDER BY ' . $this->dialect->ci('g.name'));
+        $groups->execute($clientIds);
+        foreach ($groups->fetchAll() as $row) {
             $out[$row['client_id']]['groups'][] = $row['name'];
         }
-        foreach ($this->pdo->query('SELECT client_id, COUNT(*) AS n FROM client_user GROUP BY client_id')->fetchAll() as $row) {
+        $people = $this->pdo->prepare('SELECT client_id, COUNT(*) AS n FROM client_user' . $only . ' GROUP BY client_id');
+        $people->execute($clientIds);
+        foreach ($people->fetchAll() as $row) {
             $out[$row['client_id']]['people'] = (int) $row['n'];
         }
 

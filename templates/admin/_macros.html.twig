@@ -23,6 +23,20 @@
 <label class="check-row"><input type="checkbox" name="{{ field }}[]" value="{{ value }}"{{ checked ? ' checked' }}><span class="check-text"><b class="mono">{{ value }}</b>{% if meaning %}<small>{{ meaning }}</small>{% endif %}</span></label>
 {% endmacro %}
 
+{# The search box above a list page: the text goes in `q`, and the page goes back to the first. #}
+{% macro listbar(action, q, placeholder) %}
+<form class="listbar" method="get" action="{{ action }}" role="search">
+  <input type="search" name="q" value="{{ q }}" placeholder="{{ placeholder }}" aria-label="{{ placeholder }}" autocomplete="off">
+  <button class="btn ghost">Search</button>
+  {% if q %}<a class="btn ghost" href="{{ action }}">Clear</a>{% endif %}
+</form>
+{% endmacro %}
+
+{# Under a list: how many there are (of what matches the search), and which page this is. #}
+{% macro listfoot(pager, one, many) %}
+<div class="listfoot"><span class="muted">{{ pager.total }} {{ pager.total == 1 ? one : many }}{% if pager.pages > 1 %}, page {{ pager.page }} of {{ pager.pages }}{% endif %}</span></div>
+{% endmacro %}
+
 {# A numbered pager for a PhpSso\Admin\Pager. `base` is the address up to and including `?` (and any other parameters, each followed by `&`). #}
 {% macro pager(pager, base, param = 'page', anchor = '') %}
 {% if pager.pages > 1 %}

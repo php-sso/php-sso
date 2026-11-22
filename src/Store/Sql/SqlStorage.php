@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhpSso\Store\Sql;
 
-use PhpSso\Store\{AuditLog, Backup, ClientAuthFailures, Clients, Consents, DeviceFailures, Groups, HttpCache, Identities, IpRules, LoginAttempts, Maintenance, MfaFactors, Relations, Roles, SamlConnections, SamlRequests, ScimClients, ScimEvents, ScimGroups, ScimUsers, Scopes, Sessions, Settings, Storage, StorageOptions, Users};
+use PhpSso\Store\{AuditLog, Backup, LogoutRetries, ClientAuthFailures, Clients, Consents, DeviceFailures, Groups, HttpCache, Identities, IpRules, LoginAttempts, Maintenance, MfaFactors, Relations, Roles, SamlConnections, SamlRequests, ScimClients, ScimEvents, ScimGroups, ScimUsers, Scopes, Sessions, Settings, Storage, StorageOptions, Users};
 use PhpSso\OAuthServer\Grant\AuthorizationCodeStore;
 use PhpSso\OAuthServer\Grant\RefreshTokenStore;
 use PhpSso\OAuthServer\Grant\DeviceAuthorizationStore;
@@ -158,6 +158,11 @@ final class SqlStorage implements Storage
     public function auditLog(): AuditLog
     {
         return $this->made[__FUNCTION__] ??= new SqlAuditLog($this->db);
+    }
+
+    public function logoutRetries(): LogoutRetries
+    {
+        return $this->made[__FUNCTION__] ??= new SqlLogoutRetries($this->db);
     }
 
     public function backup(): Backup

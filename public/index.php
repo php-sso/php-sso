@@ -82,12 +82,13 @@ use Laminas\Diactoros\ServerRequestFactory;
 use Laminas\Diactoros\StreamFactory;
 use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
 use PhpSso\OAuthServer\AuthorizationServer;
-use PhpSso\OAuthServer\Config\ServerConfig;
 use PhpSso\OAuthServer\Endpoint\Endpoints;
 use PhpSso\OAuthServer\Clock\SystemClock;
 use PhpSso\OAuthServer\Device\DeviceVerifier;
 use PhpSso\OAuthServer\Logout\LogoutSupport;
 use PhpSso\Audit\Audit;
+use PhpSso\OAuth\Wiring;
+use PhpSso\OAuth\RetryingLogoutClient;
 use PhpSso\Http\SecurityHeaders;
 use PhpSso\Startup\Checks;
 use PhpSso\Store\SchemaTooNew;
@@ -167,16 +168,9 @@ $pages = new Pages(dirname(__DIR__) . '/templates/pages', $config['theme_dir'], 
 $claims = new Claims($users, $roles, $config['scopes']);
 
 $sessionLinks = new SessionLinks($sessions);
+$logoutRetrier = Wiring::logoutRetrier($config, $storage, $keys, $audit);
 $oauth = new AuthorizationServer(
-    config: new ServerConfig(
-        issuer: $config['issuer'],
-        scopes: $scopes->names(),
-        authorizationCodeTtl: $config['auth_code_ttl'],
-        accessTokenTtl: $config['access_token_ttl'],
-        idTokenTtl: $config['access_token_ttl'],
-        refreshTokenTtl: $config['refresh_token_ttl'],
-        requirePkceForConfidentialClients: $config['require_pkce_for_confidential_clients'],
-    ),
+    config: Wiring::serverConfig($config, $storage),
     endpoints: new Endpoints(), // the library's default paths are ours
     clients: new RegisteredClients($clients, $scopes->builtinNames()),
     claims: $claims,
@@ -187,7 +181,7 @@ $oauth = new AuthorizationServer(
     refreshTokens: $refreshTokens,
     devices: $storage->deviceRequests(),
     revokedAccessTokens: $storage->revokedAccessTokens(),
-    logout: new LogoutSupport($sessionLinks, $sessionLinks, new LogoutScreens($pages, $users), new StreamHttpClient(), new RequestFactory()),
+    logout: new LogoutSupport($sessionLinks, $sessionLinks, new LogoutScreens($pages, $users), new RetryingLogoutClient(new StreamHttpClient(), $logoutRetrier), new RequestFactory()),
     responseFactory: new ResponseFactory(),
     streamFactory: new StreamFactory(),
     claimNames: ['sub', 'iss', 'aud', 'exp', 'iat', 'nonce', 'auth_time', 'amr', 'name', 'email', 'email_verified', 'groups', 'roles'],
@@ -258,9 +252,15 @@ session_name($secure ? '__Host-sso_session' : 'sso_session');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax', 'secure' => $secure]);
 session_start();
 
-// Housekeeping rides along with about one request in a hundred, after the response is sent; `bin/maintenance` does it on a schedule.
-if (random_int(1, 100) === 1) {
-    register_shutdown_function(static fn () => $storage->maintenance()->purgeExpired());
+// Housekeeping rides along with some requests, after the response is sent: clearing what expired about one in a hundred, and trying again the logout
+// notifications that failed about one in ten. `bin/maintenance` does both on a schedule.
+$purge = random_int(1, 100) === 1;
+$retry = random_int(1, 10) === 1;
+if ($purge || $retry) {
+    register_shutdown_function(static function () use ($storage, $logoutRetrier, $purge, $retry): void {
+        $purge && $storage->maintenance()->purgeExpired();
+        $retry && $logoutRetrier->run(3);
+    });
 }
 
 $emitter->emit($headers->apply($sso->handle($request)));

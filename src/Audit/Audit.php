@@ -19,7 +19,7 @@ use Throwable;
 final class Audit
 {
     /** The first part of the actions' names, for the filter of the audit page: `user.lock` is in the group `user`. */
-    public const GROUPS = ['user', 'client', 'group', 'role', 'scope', 'ip_rule', 'session', 'scim_client', 'saml_connection', 'consent', 'security', 'relation', 'account', 'impersonation', 'keys', 'backup'];
+    public const GROUPS = ['user', 'client', 'group', 'role', 'scope', 'ip_rule', 'session', 'scim_client', 'saml_connection', 'consent', 'security', 'relation', 'account', 'impersonation', 'keys', 'backup', 'logout'];
 
     public function __construct(private AuditLog $log, private bool $stream = false)
     {

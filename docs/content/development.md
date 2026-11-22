@@ -20,6 +20,13 @@ The first start runs `composer install` into `./vendor` (the libraries come from
 `./var/keys`. The production image is built with `docker build -f Dockerfile.production -t php-sso:local .`.
 If your host user id is not 1000, set `UID` and `GID` in a `.env` file.
 
+## Paging a list
+
+A list page that can grow long pages its rows and has a search box. The store has two methods, `page($q, $limit, $offset)` and `countMatching($q)` (see `Users`, `Groups`
+and `Clients`), so that a page costs the same whatever the number of rows, and fetches what it shows about each row (like a person's groups) for the page in one query.
+The controller makes a `PhpSso\Admin\Pager` from the count and the requested page, and the template uses the macros in `templates/admin/_macros.html.twig`:
+`m.listbar` (the search box), `m.listfoot` (how many, and which page) and `m.pager` (the numbered pages, keeping the search text). The audit log page is the other example.
+
 ## Tests
 
 ```bash

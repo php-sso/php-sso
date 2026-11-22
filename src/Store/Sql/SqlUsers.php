@@ -28,6 +28,63 @@ final class SqlUsers implements \PhpSso\Store\Users
         return $users;
     }
 
+    public function page(string $q, int $limit, int $offset): array
+    {
+        [$where, $params] = $this->matching($q);
+        $stmt = $this->pdo->prepare('SELECT * FROM users' . $where . ' ORDER BY username LIMIT :l OFFSET :o');
+        foreach ($params as $name => $value) {
+            $stmt->bindValue($name, $value);
+        }
+        $stmt->bindValue(':l', max(1, $limit), PDO::PARAM_INT);
+        $stmt->bindValue(':o', max(0, $offset), PDO::PARAM_INT);
+        $stmt->execute();
+        $users = $stmt->fetchAll();
+        foreach ($users as &$user) {
+            $user['groups'] = [];
+        }
+        unset($user);
+        if ($users === []) {
+            return [];
+        }
+
+        $subs = array_column($users, 'sub');
+        $names = $this->pdo->prepare('SELECT m.user_sub, g.name FROM user_group g JOIN user_group_member m ON m.group_id = g.id
+            WHERE m.user_sub IN (' . implode(', ', array_fill(0, count($subs), '?')) . ') ORDER BY g.name');
+        $names->execute($subs);
+        $bySub = [];
+        foreach ($names->fetchAll() as $row) {
+            $bySub[$row['user_sub']][] = $row['name'];
+        }
+        foreach ($users as &$user) {
+            $user['groups'] = $bySub[$user['sub']] ?? [];
+        }
+
+        return $users;
+    }
+
+    public function countMatching(string $q): int
+    {
+        [$where, $params] = $this->matching($q);
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM users' . $where);
+        foreach ($params as $name => $value) {
+            $stmt->bindValue($name, $value);
+        }
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** @return array{string, array<string, string>} the WHERE clause (with its leading space) and its parameters for a search text */
+    private function matching(string $q): array
+    {
+        if (trim($q) === '') {
+            return ['', []];
+        }
+
+        return [' WHERE (' . $this->dialect->like('username', ':q') . ' OR ' . $this->dialect->like('name', ':q') . ' OR ' . $this->dialect->like('email', ':q') . ')',
+            [':q' => '%' . addcslashes(trim($q), '%_\\') . '%']];
+    }
+
     /** Administrators only, without the per-user group lookup that all() does. */
     public function admins(): array
     {

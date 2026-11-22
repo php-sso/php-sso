@@ -274,8 +274,6 @@ final class AdminController
 
     private function dashboard(): ResponseInterface
     {
-        $users = $this->users->all();
-
         $attempts = $this->attempts->recent(15);
 
         return $this->render('dashboard.html.twig', [
@@ -284,8 +282,8 @@ final class AdminController
             'failed_24h' => $this->attempts->failedSince(time() - 86400),
             'locked_now' => $this->throttle->lockedCount(),
             'current_sid' => $_SESSION['sid'] ?? '',
-            'groups' => $this->groups->all(),
-            'clients' => $this->clients->all(),
+            'groups' => $this->groups->page('', 8, 0),
+            'clients' => $this->clients->page('', 5, 0),
             'admins' => $this->users->admins(),
         ]);
     }
@@ -339,9 +337,30 @@ final class AdminController
 
     // -------------------------------------------------------------------- users
 
-    private function userList(): ResponseInterface
+    private const LIST_PAGE_SIZE = 25;
+
+    /** The text typed in the search box of a list page: trimmed, and not endless. */
+    private static function listText(ServerRequestInterface $request): string
     {
-        return $this->render('users/list.html.twig', ['users' => $this->users->all()]);
+        $q = $request->getQueryParams()['q'] ?? '';
+
+        return is_string($q) ? mb_substr(trim($q), 0, 100) : '';
+    }
+
+    /** The address of a list page up to its page number, with the search text kept. */
+    private static function listBase(string $path, string $q): string
+    {
+        return $path . '?' . ($q !== '' ? 'q=' . rawurlencode($q) . '&' : '');
+    }
+
+    private function userList(ServerRequestInterface $request): ResponseInterface
+    {
+        $q = self::listText($request);
+        $pager = new Pager($this->users->countMatching($q), self::LIST_PAGE_SIZE, $request->getQueryParams()['page'] ?? 1);
+
+        return $this->render('users/list.html.twig', [
+            'users' => $this->users->page($q, $pager->perPage, $pager->offset), 'pager' => $pager, 'q' => $q, 'base' => self::listBase('/admin/users', $q),
+        ]);
     }
 
     private function userNew(): ResponseInterface
@@ -618,9 +637,14 @@ final class AdminController
 
     // ------------------------------------------------------------------- groups
 
-    private function groupList(): ResponseInterface
+    private function groupList(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->render('groups/list.html.twig', ['groups' => $this->groups->all()]);
+        $q = self::listText($request);
+        $pager = new Pager($this->groups->countMatching($q), self::LIST_PAGE_SIZE, $request->getQueryParams()['page'] ?? 1);
+
+        return $this->render('groups/list.html.twig', [
+            'groups' => $this->groups->page($q, $pager->perPage, $pager->offset), 'pager' => $pager, 'q' => $q, 'base' => self::listBase('/admin/groups', $q),
+        ]);
     }
 
     private function groupNew(): ResponseInterface
@@ -729,9 +753,16 @@ final class AdminController
 
     // ------------------------------------------------------------------ clients
 
-    private function clientList(): ResponseInterface
+    private function clientList(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->render('clients/list.html.twig', ['clients' => $this->clients->all(), 'access' => $this->clients->accessSummary()]);
+        $q = self::listText($request);
+        $pager = new Pager($this->clients->countMatching($q), self::LIST_PAGE_SIZE, $request->getQueryParams()['page'] ?? 1);
+        $clients = $this->clients->page($q, $pager->perPage, $pager->offset);
+
+        return $this->render('clients/list.html.twig', [
+            'clients' => $clients, 'access' => $this->clients->accessSummary(array_map(static fn (array $c): string => (string) $c['client_id'], $clients)),
+            'pager' => $pager, 'q' => $q, 'base' => self::listBase('/admin/clients', $q),
+        ]);
     }
 
     private function clientNew(): ResponseInterface
@@ -1869,20 +1900,24 @@ final class AdminController
         $input = [
             'ip' => trim((string) ($q['ip'] ?? $this->clientIp->of($request))),
             'client' => (string) ($q['client'] ?? ''),
-            'user' => (string) ($q['user'] ?? ''),
+            'user' => trim((string) ($q['user'] ?? '')),
         ];
         $error = null;
         $result = null;
+
+        // A person is typed in as a username (or an id, which is what a shared link holds); the test itself works with the id.
+        $person = $input['user'] === '' ? null : ($this->users->find($input['user']) ?? $this->users->findByUsername($input['user']));
+        $userError = $asked && $input['user'] !== '' && $person === null ? 'No one has that username or id.' : null;
 
         if ($asked) {
             if (!AccessTester::validIp($input['ip'])) {
                 $error = 'Enter a single IP address, for example 203.0.113.7 or 2001:db8::1.';
             } else {
-                $result = $this->tester->evaluate($input['ip'], $input['client'] ?: null, $input['user'] ?: null);
+                $result = $userError !== null ? null : $this->tester->evaluate($input['ip'], $input['client'] ?: null, $person['sub'] ?? null);
             }
         }
 
-        $target = $input['user'] === '' ? null : $this->users->find($input['user']);
+        $target = $person;
 
         return $this->render('access_test.html.twig', [
             'target' => $target,
@@ -1891,9 +1926,10 @@ final class AdminController
             'error' => $error,
             'result' => $result,
             'client_options' => $this->clients->all(),
-            'user_options' => $this->users->all(),
+            'user_options' => $this->users->page('', 30, 0),
+            'user_error' => $userError,
             'my_ip' => $this->clientIp->of($request),
-        ], $error ? 422 : 200);
+        ], $error || $userError ? 422 : 200);
     }
 
     /** Signs this browser in as the chosen person, to see the apps the way they do. Stopping is done from the banner. */

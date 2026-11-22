@@ -9,6 +9,7 @@
   <a class="btn" href="/admin/groups/new">{{ i.icon('plus') }}New group</a>
 </div>
 
+{% if groups or q %}{{ m.listbar('/admin/groups', q, 'Search groups by name or description') }}{% endif %}
 {% if groups %}
   <table class="list">
     <thead><tr><th>Group</th><th class="hide-sm">Description</th><th>Members</th></tr></thead>
@@ -22,6 +23,10 @@
     {% endfor %}
     </tbody>
   </table>
+  {{ m.listfoot(pager, 'group', 'groups') }}
+  {{ m.pager(pager, base) }}
+{% elseif q %}
+  <div class="empty"><h2>Nothing matches</h2><p>No group has "{{ q }}" in its name or description.</p><a class="btn" href="/admin/groups">Clear the search</a></div>
 {% else %}
   <div class="empty"><h2>No groups yet</h2><p>Groups let apps decide what each person may do, for example staff or finance.</p><a class="btn" href="/admin/groups/new">New group</a></div>
 {% endif %}

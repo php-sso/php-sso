@@ -9,6 +9,7 @@
   <a class="btn" href="/admin/clients/new">{{ i.icon('plus') }}New client</a>
 </div>
 
+{% if clients or q %}{{ m.listbar('/admin/clients', q, 'Search clients by name or id') }}{% endif %}
 {% if clients %}
   <table class="list">
     <thead><tr><th>App</th><th>Type</th><th>Who can sign in</th><th class="hide-sm">Redirect URI</th></tr></thead>
@@ -23,6 +24,10 @@
     {% endfor %}
     </tbody>
   </table>
+  {{ m.listfoot(pager, 'client', 'clients') }}
+  {{ m.pager(pager, base) }}
+{% elseif q %}
+  <div class="empty"><h2>Nothing matches</h2><p>No client has "{{ q }}" in its name or id.</p><a class="btn" href="/admin/clients">Clear the search</a></div>
 {% else %}
   <div class="empty"><h2>No clients yet</h2><p>Register an app to let its users sign in here.</p><a class="btn" href="/admin/clients/new">New client</a></div>
 {% endif %}

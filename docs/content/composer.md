@@ -59,10 +59,10 @@ you do not trust, and in the ones you do.
 
 The first time it runs with an empty database, it creates the administrator `admin` with the password in `ADMIN_PASSWORD`.
 
-Run `bin/maintenance` from cron, for example hourly, to remove expired sessions and tokens:
+Run `bin/maintenance` from cron, every minute or every few minutes, to remove expired sessions and tokens and to send again the logout notifications that apps did not accept:
 
 ```
-0 * * * * cd /var/www/my-sso && php bin/maintenance
+* * * * * cd /var/www/my-sso && php bin/maintenance
 ```
 
 ## Your own look

@@ -13,6 +13,16 @@ interface Clients
     public function all(): array;
 
     /**
+     * One page of clients, by name. With text, only those whose name or id contains it.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function page(string $q, int $limit, int $offset): array;
+
+    /** How many clients {@see page()} has in all for this text (all of them when it is empty). */
+    public function countMatching(string $q): int;
+
+    /**
      * The clients that may ask for this scope. A client with no list of its own (an old record) may ask for the built-in
      * scopes only, so it never counts for one an administrator added.
      *
@@ -61,6 +71,10 @@ interface Clients
      */
     public function explainAccess(string $clientId, string $userSub): array;
 
-    /** Who each restricted client is limited to, for the list page: client id => group names and number of people. */
-    public function accessSummary(): array;
+    /**
+     * Who each restricted client is limited to, for the list page: client id => group names and number of people.
+     *
+     * @param list<string> $clientIds only these clients (every client when empty)
+     */
+    public function accessSummary(array $clientIds = []): array;
 }

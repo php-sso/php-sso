@@ -72,6 +72,8 @@ interface Storage
 
     public function auditLog(): AuditLog;
 
+    public function logoutRetries(): LogoutRetries;
+
     /** Backing up everything, and loading a backup (see bin/backup and bin/restore). */
     public function backup(): Backup;
 
