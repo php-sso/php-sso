@@ -1,6 +1,6 @@
 ---
 title: "Account page"
-weight: 11
+weight: 12
 lead: "What people can change about themselves."
 ---
 

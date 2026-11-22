@@ -1,6 +1,6 @@
 ---
 title: "Development"
-weight: 14
+weight: 15
 lead: "Run the demo, and the tests, from a checkout."
 ---
 

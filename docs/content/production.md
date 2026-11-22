@@ -1,6 +1,6 @@
 ---
 title: "Production and configuration"
-weight: 9
+weight: 10
 lead: "The production image and every environment variable."
 ---
 
@@ -25,33 +25,21 @@ The production image runs Apache as an unprivileged user on port 8080. Mount a v
 | `SSO_DB_DRIVER` | Where the data lives: `sqlite` (default), `mysql` or `pgsql`. See [Databases](#databases) |
 | `SSO_DB_PATH` | The SQLite file, default `var/sso.sqlite` |
 | `SSO_DB_HOST`, `SSO_DB_PORT`, `SSO_DB_NAME`, `SSO_DB_USER`, `SSO_DB_PASSWORD` | The MySQL or PostgreSQL server (the port defaults to 3306 and 5432) |
-| `SSO_ALLOW_INSECURE_HTTP` | `1` lets `SSO_PUBLIC_URL` be a plain `http://` address that is not local. Without it the server refuses to start (see [Security](#security)) |
-| `SSO_CSP` | The `Content-Security-Policy` to send instead of the default, for a theme that loads fonts or images from another server (see [Security](#security)) |
+| `SSO_ALLOW_INSECURE_HTTP` | `1` lets `SSO_PUBLIC_URL` be a plain `http://` address that is not local. Without it the server refuses to start (see [Safe startup]({{< relref "security/startup-checks.md" >}})) |
+| `SSO_CSP` | The `Content-Security-Policy` to send instead of the default, for a theme that loads fonts or images from another server (see [Security headers]({{< relref "security/headers.md" >}})) |
 | `SSO_THEME_DIR` | Theme folder, default `/theme` |
 | `SSO_DEBUG` | `1` shows theme errors instead of falling back |
 | `SSO_TRUSTED_PROXIES` | Comma separated addresses or CIDR ranges of your reverse proxies. Only their `X-Forwarded-For` is believed; set it when behind a proxy, or IP rules see the proxy's address |
 | `SSO_PKCE_OPTIONAL_FOR_CONFIDENTIAL_CLIENTS` | `1` stops requiring PKCE of confidential clients. Public clients always need it. It exists so the OpenID conformance suite can run (see `conformance/README.md`); leave it off in production |
 | `SSO_DEMO_DATA` | `1` seeds a demo user, group and client with known passwords (development only) |
 
-## Security
+## Monitoring
 
-What the server does for you, and what it refuses to do:
+`GET /healthz` answers `200 {"status":"ok"}` when the server can reach its database, and `503` when it cannot. It says nothing else, so a load balancer or
+monitor may call it without being signed in. The Docker image checks it with a `HEALTHCHECK`, so `docker ps` shows `healthy` or `unhealthy`. If the server
+refused to start because of a [setting]({{< relref "security/startup-checks.md" >}}), it fails too.
 
-- **It refuses to start in a setup that would weaken it,** and says why on every page and in the log: `SSO_PUBLIC_URL` must be
-  an `https://` address (a reverse proxy may do the TLS; a local address such as `localhost` may use `http://`, and so may anything if you set
-  `SSO_ALLOW_INSECURE_HTTP=1`), and `SSO_DEMO_DATA`, which creates people with well-known passwords, only runs on a local address.
-- **The first administrator needs a real password.** `ADMIN_PASSWORD` must be at least 12 characters and not the same few characters
-  repeated. It is only read while the database is empty.
-- **Every response carries security headers:** a `Content-Security-Policy` that allows scripts, styles and fonts only from the server itself and
-  forbids framing the pages, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, `Cache-Control: no-store` (unless the response chose
-  its own), and, over HTTPS, `Strict-Transport-Security`. If your theme needs another source (a font from a font service, say), set `SSO_CSP` to the
-  whole policy you want; start from the default in `src/Http/SecurityHeaders.php`.
-- **The browser session cookie** is `HttpOnly` and `SameSite=Lax`, and over HTTPS also `Secure` and named `__Host-sso_session`, which stops
-  other sites and subdomains from setting it. PHP's session files are in `var/sessions`, not in the shared temporary folder.
-- **`GET /healthz`** answers `200 {"status":"ok"}` when the server can reach its database and `503` when it cannot. It says nothing else, so a load
-  balancer or monitor may call it. The image checks it with a Docker `HEALTHCHECK`.
-- **SQLite runs in write-ahead-log mode** with a five second wait for a locked database, so readers and the writer do not block each other.
-  It needs a local disk: keep `var/` off network file systems (NFS, SMB), where SQLite's locking is not reliable.
+Run `bin/maintenance` from cron (for example hourly) to remove expired sessions, codes and tokens. The server also does it on about one request in a hundred.
 
 ## Databases
 
@@ -68,6 +56,9 @@ start. The production image includes both drivers.
 
 The three behave the same: the application's test suite runs against every one of them. Nothing in the app depends on a particular
 database. Another one is a new implementation of the `PhpSso\Store\Storage` interface (see [code layout](../layout/)).
+
+**SQLite** runs in write-ahead-log mode with a five second wait for a locked database, so readers and the writer do not block each other, and a
+write that meets another one waits instead of failing. It needs a local disk: keep `var/` off network file systems (NFS, SMB), where SQLite's locking is not reliable.
 
 Two things to know:
 
