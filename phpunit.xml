@@ -5,8 +5,13 @@
          colors="true"
          cacheDirectory="var/.phpunit.cache">
     <testsuites>
+        <!-- Never touches a database or the network: fast, and the first thing to run. -->
         <testsuite name="unit">
             <directory>tests/unit</directory>
+        </testsuite>
+        <!-- Talks to a real database (SQLite by default, MySQL or PostgreSQL with SSO_TEST_DATABASE), a local HTTP server or a test mailbox. -->
+        <testsuite name="integration">
+            <directory>tests/integration</directory>
         </testsuite>
     </testsuites>
     <source>

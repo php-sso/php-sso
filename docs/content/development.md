@@ -37,15 +37,22 @@ email the server sends is kept in Mailpit's inbox at <http://localhost:8025>. No
 ## Tests
 
 ```bash
-docker compose exec sso vendor/bin/phpunit
+docker compose exec sso vendor/bin/phpunit --testsuite unit         # seconds: no database, no network
+docker compose exec sso vendor/bin/phpunit --testsuite integration  # minutes: real databases
+docker compose exec sso vendor/bin/phpunit                          # both
 ```
 
-The suite runs on SQLite. To run it against MySQL or PostgreSQL, start them and name the (empty) database it may use:
+The tests are in two suites, and the rule that separates them is simple: **a unit test never talks to a database, a local server or a mailbox.** Anything that does is an
+integration test and lives in `tests/integration` (the same folder layout as `tests/unit`, with the shared database fixtures `TestData` and `TestConnection`). A unit
+test of a class that needs a store uses a fake of the store's interface, not a database. A test in `tests/unit` that mentions a database, a socket or a test service fails
+`SuiteRulesTest`, so the rule keeps itself.
+
+The integration suite runs on SQLite. To run it against MySQL or PostgreSQL, start them and name the (empty) database it may use:
 
 ```bash
 docker compose --profile databases up -d
-docker compose exec -e SSO_TEST_DATABASE=mysql://sso:sso@mysql/sso_test sso vendor/bin/phpunit
-docker compose exec -e SSO_TEST_DATABASE=pgsql://sso:sso@postgres/sso_test sso vendor/bin/phpunit
+docker compose exec -e SSO_TEST_DATABASE=mysql://sso:sso@mysql/sso_test sso vendor/bin/phpunit --testsuite integration
+docker compose exec -e SSO_TEST_DATABASE=pgsql://sso:sso@postgres/sso_test sso vendor/bin/phpunit --testsuite integration
 ```
 
 ## Writing a migration

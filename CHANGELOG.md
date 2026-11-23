@@ -2,6 +2,12 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/) and the project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- **Tests are split in two suites.** `tests/unit` (no database, no network, runs in seconds) and `tests/integration` (real databases, a local server, the test mailbox). Run them with `composer test:unit` and `composer test:integration`; `composer test` runs both. `SuiteRulesTest` keeps database use out of the unit suite.
+
 ## 0.2.0 - 2026-11-22
 
 ### Added
