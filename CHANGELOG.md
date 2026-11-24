@@ -2,7 +2,7 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/) and the project follows [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.3.0 - 2026-11-24
 
 ### Added
 
@@ -16,6 +16,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 ### Fixed
 
 - An administrator can save a client whose ID has capital letters (the random IDs of apps that registered themselves). The lowercase rule now applies only when the ID is being created or changed.
+
+### Security
+
+- **Twig 3.31.1.** Fixes nine advisories in Twig 3.30.0: sandbox bypasses (CVE-2026-133763 to CVE-2026-133768, CVE-2026-133770, CVE-2026-133772) and a case of missing autoescaping (CVE-2026-133771). The dependency audit in CI is green again.
 
 ## 0.2.0 - 2026-11-22
 
