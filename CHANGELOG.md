@@ -2,6 +2,12 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/) and the project follows [Semantic Versioning](https://semver.org/).
 
+## 0.4.1 - 2026-11-24
+
+### Fixed
+
+- The note "You cannot lock or delete your own account." on a user's Danger tab had no space above it, so it stuck to the box above.
+
 ## 0.4.0 - 2026-11-24
 
 ### Added

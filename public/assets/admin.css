@@ -200,6 +200,7 @@ textarea { height: auto; min-height: 84px; padding: 7px 10px; font-family: var(-
 .zone.plain { border-color: var(--line); }
 .zone h2 { font-size: 14px; }
 .zone p { margin: 2px 0 0; color: var(--muted); font-size: 13px; max-width: 56ch; }
+.zone + .quiet { margin-top: 20px; }
 
 /* ---- Client secret card -------------------------------------------------------- */
 /* ---- Confirmation dialog -------------------------------------------------------- */
