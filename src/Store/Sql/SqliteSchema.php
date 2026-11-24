@@ -431,12 +431,13 @@ final class SqliteSchema
             if ($own) {
                 $this->pdo->beginTransaction();
             }
+            $before = SqliteDialect::foreignKeyViolations($this->pdo);
             $this->pdo->exec('CREATE TABLE users_rebuilt (' . self::USERS_COLUMNS . ')');
             $this->pdo->exec('INSERT INTO users_rebuilt (sub, username, password_hash, name, email, email_verified, is_admin)
                 SELECT sub, username, password_hash, name, email, email_verified, is_admin FROM users');
             $this->pdo->exec('DROP TABLE users');
             $this->pdo->exec('ALTER TABLE users_rebuilt RENAME TO users');
-            if ($this->pdo->query('PRAGMA foreign_key_check')->fetchAll() !== []) {
+            if (SqliteDialect::introducedViolations($before, SqliteDialect::foreignKeyViolations($this->pdo)) !== []) {
                 throw new \RuntimeException('Rebuilding the users table broke a foreign key; nothing was changed.');
             }
             if ($own) {

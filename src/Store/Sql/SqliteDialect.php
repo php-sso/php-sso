@@ -10,6 +10,9 @@ use RuntimeException;
 
 final class SqliteDialect implements Dialect
 {
+    /** What `PRAGMA foreign_key_check` found when the running migration began: rows that were already orphans, which it did not cause. @var array<string, int> */
+    private array $violationsBefore = [];
+
     public function name(): string
     {
         return 'sqlite';
@@ -119,6 +122,7 @@ final class SqliteDialect implements Dialect
             // A plain BEGIN takes no lock yet. Writing the value that is there takes the write lock now: another process that
             // migrates waits here (busy_timeout) instead of in the middle of the migration.
             $pdo->exec('PRAGMA user_version = ' . $version);
+            $this->violationsBefore = self::foreignKeyViolations($pdo);
         } catch (\Throwable $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
@@ -130,7 +134,9 @@ final class SqliteDialect implements Dialect
 
     public function commitMigration(PDO $pdo): void
     {
-        if ($pdo->query('PRAGMA foreign_key_check')->fetchAll() !== []) {
+        // Only what this migration broke counts. Orphan rows that were there before (left by an earlier crash or a manual delete)
+        // must not stop every later migration; they stay as they were.
+        if (self::introducedViolations($this->violationsBefore, self::foreignKeyViolations($pdo)) !== []) {
             $this->rollbackMigration($pdo);
             throw new RuntimeException('The migration broke a foreign key; nothing was changed.');
         }
@@ -139,6 +145,41 @@ final class SqliteDialect implements Dialect
         } finally {
             $pdo->exec('PRAGMA foreign_keys = ON');
         }
+    }
+
+    /**
+     * The rows that point at a parent that is not there, counted per table, parent and key. Counts, not row ids, so that a table
+     * rebuild which renumbers rows is not mistaken for new damage.
+     *
+     * @return array<string, int>
+     */
+    public static function foreignKeyViolations(PDO $pdo): array
+    {
+        $found = [];
+        foreach ($pdo->query('PRAGMA foreign_key_check')->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $key = $row['table'] . '|' . $row['parent'] . '|' . $row['fkid'];
+            $found[$key] = ($found[$key] ?? 0) + 1;
+        }
+
+        return $found;
+    }
+
+    /**
+     * @param array<string, int> $before
+     * @param array<string, int> $after
+     *
+     * @return array<string, int> what is orphaned now beyond what already was
+     */
+    public static function introducedViolations(array $before, array $after): array
+    {
+        $new = [];
+        foreach ($after as $key => $count) {
+            if ($count > ($before[$key] ?? 0)) {
+                $new[$key] = $count - ($before[$key] ?? 0);
+            }
+        }
+
+        return $new;
     }
 
     public function rollbackMigration(PDO $pdo): void
