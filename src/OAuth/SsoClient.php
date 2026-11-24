@@ -7,6 +7,7 @@ namespace PhpSso\OAuth;
 use PhpSso\OAuthServer\Client\Client;
 use PhpSso\OAuthServer\Client\SupportsLogout;
 use PhpSso\OAuthServer\Grant\GrantType;
+use PhpSso\Store\ScopeName;
 
 /** A client from the database, as the OAuth server sees it. */
 final readonly class SsoClient implements Client, SupportsLogout
@@ -27,6 +28,7 @@ final readonly class SsoClient implements Client, SupportsLogout
         private ?array $scopes,
         private ?string $backchannelLogoutUri,
         private array $postLogoutRedirectUris,
+        private bool $mayRegister = false,
     ) {
     }
 
@@ -41,6 +43,7 @@ final readonly class SsoClient implements Client, SupportsLogout
         return new self(
             $row['client_id'], $row['name'], array_values($row['redirect_uris']), $row['confidential'], array_values($row['grants']), $row['secret_hash'],
             $row['scopes'] === null ? $scopesWhenUnlisted : array_values($row['scopes']), $row['backchannel_logout_uri'], array_values($row['post_logout_redirect_uris']),
+            ($row['registrar'] ?? null) !== null,
         );
     }
 
@@ -64,9 +67,16 @@ final readonly class SsoClient implements Client, SupportsLogout
         return in_array($grant->value, $this->grants, true);
     }
 
-    /** A client with no scope list of its own (older ones) may ask for every scope the server offers. */
+    /**
+     * A client with no scope list of its own (older ones) may ask for every scope the server offers. The scope that lets a client
+     * register apps is the exception: only the client's own "may register apps" setting decides it, never a list.
+     */
     public function allowsScope(string $scope): bool
     {
+        if ($scope === ScopeName::REGISTER) {
+            return $this->mayRegister;
+        }
+
         return $this->scopes === null || in_array($scope, $this->scopes, true);
     }
 

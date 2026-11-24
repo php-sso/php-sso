@@ -269,8 +269,10 @@ final class AdminController
             ['GET', '#^/clients/([^/]+)/danger$#', 'clientDanger'],
             ['GET', '#^/clients/([^/]+)/advanced$#', 'clientDanger'], // the tab's old name, for bookmarks
             ['GET', '#^/clients/([^/]+)/roles$#', 'clientRoles'],
+            ['GET', '#^/clients/([^/]+)/registration$#', 'clientRegistrationPage'],
             ['POST', '#^/clients/([^/]+)$#', 'clientUpdate'],
             ['POST', '#^/clients/([^/]+)/access$#', 'clientAccess'],
+            ['POST', '#^/clients/([^/]+)/registration$#', 'clientRegistrar'],
             ['POST', '#^/clients/([^/]+)/secret$#', 'clientRotateSecret'],
             ['POST', '#^/clients/([^/]+)/delete$#', 'clientDelete'],
         ];
@@ -789,7 +791,7 @@ final class AdminController
 
         $client['scopes'] ??= $this->scopes->builtinNames();
 
-        return $this->clientForm($client, $client + ['redirect_uris_text' => implode("\n", $client['redirect_uris']), 'post_logout_redirect_uris_text' => implode("\n", $client['post_logout_redirect_uris'])]);
+        return $this->clientForm($client, $client + ['redirect_uris_text' => implode("\n", $client['redirect_uris']), 'post_logout_redirect_uris_text' => implode("\n", $client['post_logout_redirect_uris']), 'resources_text' => implode("\n", $client['resources'])]);
     }
 
     private function clientAccessPage(ServerRequestInterface $request, string $clientId): ResponseInterface
@@ -800,6 +802,42 @@ final class AdminController
     private function clientDanger(ServerRequestInterface $request, string $clientId): ResponseInterface
     {
         return $this->clientTab($clientId, 'danger');
+    }
+
+    private function clientRegistrationPage(ServerRequestInterface $request, string $clientId): ResponseInterface
+    {
+        return $this->clientTab($clientId, 'registration');
+    }
+
+    /** Lets a client register apps (RFC 7591), with the scopes those apps may get, or takes the right away. */
+    private function clientRegistrar(ServerRequestInterface $request, string $clientId): ResponseInterface
+    {
+        $client = $this->clients->find($clientId);
+        if ($client === null) {
+            return $this->notFound('Client');
+        }
+        $back = '/admin/clients/' . rawurlencode($clientId) . '/registration';
+        $body = (array) $request->getParsedBody();
+
+        if (!isset($body['registrar'])) {
+            $this->clients->setRegistrar($clientId, null);
+
+            return $this->done($back, "{$client['name']} can no longer register apps. Apps it registered keep working.");
+        }
+        if ($client['registration'] !== null) {
+            return $this->done($back, 'An app that registered itself cannot register others.', 'error');
+        }
+        $scopes = array_values(array_intersect($this->scopes->names(), (array) ($body['reg_scopes'] ?? [])));
+        if ($scopes === []) {
+            return $this->done($back, 'Tick at least one scope the registered apps may get.', 'error');
+        }
+        [$resources, $resourceError] = $this->resourceList((string) ($body['reg_resources'] ?? ''));
+        if ($resourceError !== null) {
+            return $this->done($back, $resourceError, 'error');
+        }
+        $this->clients->setRegistrar($clientId, $scopes, $resources);
+
+        return $this->done($back, "{$client['name']} can register apps now.");
     }
 
     private function clientRoles(ServerRequestInterface $request, string $clientId): ResponseInterface
@@ -874,6 +912,7 @@ final class AdminController
         }
 
         $this->clients->update($clientId, $input['name'], $input['redirect_uris'], $input['grants'], $input['backchannel_logout_uri'], $input['post_logout_redirect_uris'], $input['scopes']);
+        $this->clients->setResources($clientId, $input['resources']);
 
         // A client that becomes confidential needs a secret; it is shown once, like when it is created.
         $secret = $input['confidential'] && !$client['confidential'] ? bin2hex(random_bytes(24)) : null;
@@ -892,7 +931,8 @@ final class AdminController
     /** Why this ID cannot be used, or null. `$current` is the ID the client has now, when it is being edited. */
     private function clientIdError(string $clientId, ?string $current): ?string
     {
-        if (!preg_match('/^[a-z0-9][a-z0-9_-]{1,63}$/', $clientId)) {
+        // An ID that is not being changed is left alone: apps that registered themselves have random IDs with capitals, which the rule below would refuse.
+        if ($clientId !== $current && !preg_match('/^[a-z0-9][a-z0-9_-]{1,63}$/', $clientId)) {
             return 'Use 2-64 lowercase letters, digits, - or _.';
         }
         if ($clientId !== $current && $this->clients->find($clientId) !== null) {
@@ -1074,8 +1114,11 @@ final class AdminController
         $logoutText = (string) ($body['post_logout_redirect_uris'] ?? '');
         $logoutUris = array_values(array_unique(array_filter(array_map('trim', preg_split('/\R/', $logoutText) ?: []))));
         $backchannel = $this->text($body, 'backchannel_logout_uri');
+        [$resources, $resourceError] = $this->resourceList((string) ($body['resources'] ?? ''));
         $input = [
             'name' => $this->text($body, 'name'),
+            'resources' => $resources,
+            'resources_text' => (string) ($body['resources'] ?? ''),
             'redirect_uris' => $uris,
             'redirect_uris_text' => $text,
             'post_logout_redirect_uris' => $logoutUris,
@@ -1106,6 +1149,9 @@ final class AdminController
                 break;
             }
         }
+        if ($resourceError !== null && $existing !== null) {
+            $errors['resources'] = $resourceError;
+        }
         if ($input['backchannel_logout_uri'] !== null && !$this->isHttpUrl($input['backchannel_logout_uri'])) {
             $errors['backchannel_logout_uri'] = 'Enter a valid http(s) URL.';
         }
@@ -1119,6 +1165,24 @@ final class AdminController
         }
 
         return [$input, $errors];
+    }
+
+    /**
+     * The resources (RFC 8707) typed one per line: absolute URIs without a fragment, each once.
+     *
+     * @return array{list<string>, string|null} the list, and what is wrong with it
+     */
+    private function resourceList(string $text): array
+    {
+        $list = array_values(array_unique(array_filter(array_map('trim', preg_split('/\R/', $text) ?: []))));
+        foreach ($list as $resource) {
+            $parts = strlen($resource) <= 2048 && preg_match('/[\x00-\x20\x7F]/', $resource) !== 1 ? parse_url($resource) : false;
+            if ($parts === false || !isset($parts['scheme']) || isset($parts['fragment']) || (in_array(strtolower($parts['scheme']), ['http', 'https'], true) && ($parts['host'] ?? '') === '')) {
+                return [$list, "Not an absolute URI without a fragment: {$resource}"];
+            }
+        }
+
+        return [$list, null];
     }
 
     private function isHttpUrl(string $uri): bool

@@ -30,6 +30,7 @@
   <a href="/admin/clients/{{ client.client_id|url_encode }}/edit"{{ tab == 'settings' ? ' class="here" aria-current="page"' }}>Settings</a>
   <a href="/admin/clients/{{ client.client_id|url_encode }}/access"{{ tab == 'access' ? ' class="here" aria-current="page"' }}>Access</a>
   <a href="/admin/clients/{{ client.client_id|url_encode }}/roles"{{ tab == 'roles' ? ' class="here" aria-current="page"' }}>Roles</a>
+  <a href="/admin/clients/{{ client.client_id|url_encode }}/registration"{{ tab == 'registration' ? ' class="here" aria-current="page"' }}>Registration</a>
   <a href="/admin/clients/{{ client.client_id|url_encode }}/ip-rules"{{ tab == 'ip-rules' ? ' class="here" aria-current="page"' }}>IP rules</a>
   <a href="/admin/clients/{{ client.client_id|url_encode }}/danger"{{ tab == 'danger' ? ' class="here" aria-current="page"' }}>Danger</a>
 </nav>
@@ -114,6 +115,18 @@
   </div>
 
   <div class="section">
+    <header><h2>APIs</h2><p>The resources (RFC 8707) this client may get access tokens for.</p></header>
+    <div class="fields">
+      <div class="field{{ errors.resources is defined ? ' has-error' }}">
+        <label for="resources">Allowed resources</label>
+        <textarea id="resources" name="resources" spellcheck="false" placeholder="https://api.example.com/">{{ item.resources_text }}</textarea>
+        <div class="hint">One per line, each an absolute URI that must match exactly what the app sends as <span class="mono">resource</span>. A token the app gets for a resource is only accepted by that API, and no longer names this client as its audience. Leave empty if the app does not use resource indicators.</div>
+        {{ m.error(errors, 'resources') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
     <header><h2>Sign-out</h2><p>How this app learns that someone signed out, and where it sends them afterwards.</p></header>
     <div class="fields">
       <div class="field{{ errors.backchannel_logout_uri is defined ? ' has-error' }}">
@@ -183,6 +196,49 @@
     {% endif %}
   </div>
 </section>
+{% elseif tab == 'registration' %}
+{% if client.registration %}
+<section class="section" id="registered">
+  <header><h2>How this client was created</h2><p>It registered itself through the registration endpoint (RFC 7591), so an app can change or delete it with the registration token it was given.</p></header>
+  <div class="fields wide">
+    <p><b>Registered by</b>: {% if client.registration.registered_by %}<a href="/admin/clients/{{ client.registration.registered_by|url_encode }}/registration" class="mono">{{ client.registration.registered_by }}</a>{% else %}<span class="muted">unknown</span>{% endif %}</p>
+    <p><b>Registered on</b>: {{ client.registration.issued_at|date('Y-m-d H:i') }}</p>
+    <p class="hint">An app that registered itself cannot register others.</p>
+  </div>
+</section>
+{% else %}
+<section class="section" id="registrar">
+  <header><h2>Register apps</h2><p>Let this client create and manage other apps through the registration endpoint (RFC 7591 and 7592), for example one per connection that a person makes in your product.</p></header>
+  <div class="fields wide">
+    <form method="post" action="/admin/clients/{{ client.client_id|url_encode }}/registration">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="options">
+        <label class="option"><input type="checkbox" name="registrar" value="1" {{ client.registrar ? 'checked' }}><div><b>May register apps</b><span>It can ask for the <span class="mono">client:register</span> scope and register apps at <span class="mono">/register</span>. Switching this off stops it at once, even with a token it already holds.</span></div></label>
+      </div>
+      {% if client.registrar and (not client.confidential or 'client_credentials' not in client.grants) %}
+        <div class="notice error" role="status" style="margin-top:14px">To get a token for the registration scope on its own, this client needs to be confidential and have the client credentials grant. It has not.</div>
+      {% endif %}
+      {% set reg_allowed = client.registrar ? client.registrar.scopes : scope_builtin %}
+      <div class="field" style="margin-top:18px">
+        <label class="lbl">Scopes the registered apps may get</label>
+        <div class="checklist scrolls">
+          {% for scope in scope_names %}
+            {{ m.check_row('reg_scopes', scope, scope_info[scope] is defined ? scope_info[scope] : '', scope in reg_allowed) }}
+          {% endfor %}
+        </div>
+        <div class="hint">An app this client registers can ask for these and nothing else, also when it updates itself later. It never gets the registration scope, and it only uses the authorization code and refresh token grants.</div>
+      </div>
+      <div class="field" style="margin-top:18px">
+        <label for="reg_resources">Resources the registered apps may get tokens for</label>
+        <textarea id="reg_resources" name="reg_resources" spellcheck="false" placeholder="https://mcp.example.com/">{{ client.registrar ? client.registrar.resources|default([])|join("\n") }}</textarea>
+        <div class="hint">One absolute URI per line (RFC 8707). An app this client registers can ask for tokens for these resources, and a token for one is only accepted by that API. Leave empty if they use none.</div>
+      </div>
+      <div class="formbar inline"><button class="btn">Save</button></div>
+    </form>
+    <p class="hint">Registered apps appear in the client list, open to every person like any new client. Restrict them under their Access tab.</p>
+  </div>
+</section>
+{% endif %}
 {% elseif tab == 'ip-rules' %}
 {% include 'admin/_ip_rules.html.twig' %}
 {% elseif tab == 'danger' %}

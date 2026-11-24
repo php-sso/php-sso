@@ -6,7 +6,8 @@ namespace PhpSso\Store;
 
 /**
  * OAuth clients. Rows are returned with `redirect_uris` and `grants` as arrays,
- * `confidential` as bool and `registration` as an array (null for a client an administrator made).
+ * `confidential` as bool and `registration` as an array (null for a client an administrator made) and `registrar` as an array with
+ * the `scopes` and `resources` its apps may get (null for a client that may not register apps), and `resources` as a list.
  */
 interface Clients
 {
@@ -63,6 +64,24 @@ interface Clients
     public function updateSecretHash(string $clientId, string $hash): void;
 
     public function delete(string $clientId): void;
+
+    /**
+     * Lets the client register apps (RFC 7591), and limits what those apps may get; null takes the right away.
+     *
+     * @param list<string>|null $scopes    the scopes the registered apps may ask for
+     * @param list<string>      $resources the resources (RFC 8707) the registered apps may get tokens for
+     */
+    public function setRegistrar(string $clientId, ?array $scopes, array $resources = []): void;
+
+    /**
+     * The resources (APIs, as absolute URIs) the client may get access tokens for (RFC 8707).
+     *
+     * @param list<string> $resources
+     */
+    public function setResources(string $clientId, array $resources): void;
+
+    /** Whether any client may register apps. */
+    public function anyRegistrar(): bool;
 
     public function setRestricted(string $clientId, bool $restricted): void;
 

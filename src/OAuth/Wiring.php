@@ -14,6 +14,7 @@ use PhpSso\OAuthServer\Config\ServerConfig;
 use PhpSso\OAuthServer\Jwt\JwtEncoder;
 use PhpSso\OAuthServer\Logout\BackchannelLogout;
 use PhpSso\OAuthServer\Token\RandomTokenGenerator;
+use PhpSso\Store\ScopeName;
 use PhpSso\Store\Storage;
 
 /** Pieces of the OAuth server's setup that more than one entry point (the web front controller, `bin/maintenance`) needs. */
@@ -24,7 +25,7 @@ final class Wiring
     {
         return new ServerConfig(
             issuer: $config['issuer'],
-            scopes: $storage->scopes()->names(),
+            scopes: array_values(array_unique([...$storage->scopes()->names(), ScopeName::REGISTER])), // the registration scope is built in: a client has it through its own setting
             authorizationCodeTtl: $config['auth_code_ttl'],
             accessTokenTtl: $config['access_token_ttl'],
             idTokenTtl: $config['access_token_ttl'],

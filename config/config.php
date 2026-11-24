@@ -66,14 +66,6 @@ return [
     ],
     // How long the link of a password reset works, in minutes (SSO_PASSWORD_RESET_MINUTES, 5 to 1440).
     'password_reset' => ['minutes' => max(5, min(1440, (int) (getenv('SSO_PASSWORD_RESET_MINUTES') ?: 60)))],
-    // Dynamic client registration (RFC 7591/7592), off by default. When on, a client holding an access token with the
-    // `client:register` scope can register apps at /register; the scope is created for you and given to clients in the admin
-    // panel. Registered apps may ask for `allowed_scopes` only (the built-in scopes when empty).
-    'registration' => [
-        'enabled' => filter_var(getenv('SSO_DYNAMIC_REGISTRATION') ?: false, FILTER_VALIDATE_BOOL),
-        'scope' => 'client:register',
-        'allowed_scopes' => array_values(array_filter(array_map('trim', explode(',', getenv('SSO_REGISTRATION_SCOPES') ?: '')))),
-    ],
     'trusted_proxies' => array_values(array_filter(array_map('trim', explode(',', getenv('SSO_TRUSTED_PROXIES') ?: '')))),
 
     'login' => [

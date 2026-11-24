@@ -26,11 +26,12 @@ final class SqlRefreshTokens implements RefreshTokenStore
     public function save(RefreshTokenRecord $token): void
     {
         $this->pdo->prepare('INSERT INTO oauth_refresh_tokens
-            (token_hash, family_id, client_id, user_id, scopes, session_id, expires_at, used_at, auth_time, amr)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')->execute([
+            (token_hash, family_id, client_id, user_id, scopes, session_id, expires_at, used_at, auth_time, amr, resources)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')->execute([
             $token->tokenHash, $token->familyId, $token->clientId, $token->userId, json_encode($token->scopes),
             $token->sessionId, $token->expiresAt, $token->usedAt, $token->authTime,
             $token->amr === null ? null : json_encode($token->amr),
+            $token->resources === [] ? null : json_encode($token->resources),
         ]);
     }
 
@@ -45,6 +46,7 @@ final class SqlRefreshTokens implements RefreshTokenStore
             $row['session_id'], (int) $row['expires_at'], $row['used_at'] === null ? null : (int) $row['used_at'],
             $row['auth_time'] === null ? null : (int) $row['auth_time'],
             self::methods($row['amr'] ?? null),
+            self::resources($row['resources'] ?? null),
         ) : null;
     }
 
@@ -78,6 +80,14 @@ final class SqlRefreshTokens implements RefreshTokenStore
         $stmt->execute([$familyId]);
 
         return $stmt->fetchColumn() !== false;
+    }
+
+    /** @return list<string> */
+    private static function resources(mixed $json): array
+    {
+        $list = is_string($json) ? json_decode($json, true) : null;
+
+        return is_array($list) ? array_values(array_map('strval', $list)) : [];
     }
 
     /** @return list<string>|null */

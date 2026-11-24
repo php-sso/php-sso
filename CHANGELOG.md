@@ -6,11 +6,16 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ### Added
 
-- **Dynamic client registration** (RFC 7591 and 7592), off unless `SSO_DYNAMIC_REGISTRATION=1`. An app holding an access token with the `client:register` scope registers clients at `POST /register`; each client gets a registration access token to read, replace or delete only itself at `/register/{client_id}`. Registered clients are ordinary clients in the admin panel, limited to the built-in scopes (or `SSO_REGISTRATION_SCOPES`) and to the authorization code and refresh grants. Needs `php-sso/oauth-server` 1.1.1. Migration 0006 adds `clients.registration`. See [Registering apps from code](docs/content/client-registration.md).
+- **Resource indicators** (RFC 8707). Each client has **Allowed resources** on its Settings tab, and each registrar has the resources its registered apps may get on its Registration tab. An app sends `resource` with the authorization and token requests, and the access token is then valid only for that API: its audience is the resource and this server, no longer the app. A refresh can narrow the resources but not widen them. Needs `php-sso/oauth-server` 1.2. Migration 0008 adds `resources` to `oauth_codes`, `oauth_refresh_tokens` and `clients`. See [Tokens for one API](docs/content/resource-indicators.md).
+- **Dynamic client registration** (RFC 7591 and 7592). A client with **May register apps** ticked on its Registration tab in the admin panel (and the built-in `client:register` scope) registers apps at `POST /register`; each app gets a registration access token to read, replace or delete only itself at `/register/{client_id}`. Per registrar, you choose the scopes its apps may get; they only use the authorization code and refresh grants. Registered apps are ordinary clients in the admin panel, marked as registered through the API. No settings in the environment. Needs `php-sso/oauth-server` 1.2. Migrations 0006 and 0007 add `clients.registration` and `clients.registrar`. See [Registering apps from code](docs/content/client-registration.md).
 
 ### Changed
 
 - **Tests are split in two suites.** `tests/unit` (no database, no network, runs in seconds) and `tests/integration` (real databases, a local server, the test mailbox). Run them with `composer test:unit` and `composer test:integration`; `composer test` runs both. `SuiteRulesTest` keeps database use out of the unit suite.
+
+### Fixed
+
+- An administrator can save a client whose ID has capital letters (the random IDs of apps that registered themselves). The lowercase rule now applies only when the ID is being created or changed.
 
 ## 0.2.0 - 2026-11-22
 

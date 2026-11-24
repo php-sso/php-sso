@@ -16,7 +16,7 @@ actions, a few details. The names are copied into the entry, so it still says `c
 | --- | --- |
 | `user` | `create`, `update` (says whether administrator rights are on, and whether they were), `lock`, `unlock`, `delete`, `reset_failures`, `reset_mfa`, `unlink_connection`, `consent_ask_again`, `impersonate`, `send_reset` (an administrator sent a password reset link) |
 | `impersonation` | `stop` (starting is `user.impersonate`) |
-| `client` | `create`, `update`, `access`, `rotate_secret`, `delete`, `ip_rule_create`, `ip_rule_scope`, `ip_rule_delete` |
+| `client` | `create`, `update`, `access`, `registrar`, `rotate_secret`, `delete`, `ip_rule_create`, `ip_rule_scope`, `ip_rule_delete` |
 | `group`, `role` | `create`, `update`, `delete` |
 | `relation` | `add`, `remove`, `remove_all`: people put in or taken out of a group, roles given or taken away (the entry names the group or role, and keeps the id of the person) |
 | `scope`, `ip_rule`, `session` | `create`, `update` and `delete` for scopes; `create` and `delete` for IP rules; `end` for a browser session an administrator ended |

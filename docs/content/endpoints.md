@@ -15,11 +15,13 @@ group: "Reference"
 | `GET`/`POST /device` | The page where a person enters the code and approves the device |
 | `POST /revoke` | Token revocation (RFC 7009) |
 | `POST /introspect` | Token introspection (RFC 7662), for confidential clients such as APIs |
-| `POST /register`, `GET`/`PUT`/`DELETE /register/{client_id}` | Dynamic client registration (RFC 7591, 7592). Off unless `SSO_DYNAMIC_REGISTRATION=1`, see [Registering apps from code]({{< relref "client-registration.md" >}}) |
+| `POST /register`, `GET`/`PUT`/`DELETE /register/{client_id}` | Dynamic client registration (RFC 7591, 7592). Only for clients allowed to register apps, see [Registering apps from code]({{< relref "client-registration.md" >}}) |
 | `GET /userinfo` | Claims for a Bearer access token (needs the `openid` scope) |
 | `GET`/`POST /end-session` | RP-initiated logout (`id_token_hint`, `post_logout_redirect_uri`, `state`) |
 | `GET /login`, `GET` and `POST /logout` | SSO session on this server |
 | `GET /.well-known/oauth-authorization-server` | Same metadata as the discovery document (RFC 8414) |
+
+Both the authorization and token endpoints accept `resource` (RFC 8707) for clients that have allowed resources: see [Tokens for one API]({{< relref "resource-indicators.md" >}}).
 
 Scopes: `openid`, `profile` (name), `email` (email, email_verified), `groups` (names of the user's groups), `roles` (names of the user's roles, see below).
 Each client lists the scopes it may ask for. Add more scopes (a name without claims, such as `invoices:read`) under **Scopes** in the admin panel.

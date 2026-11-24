@@ -63,6 +63,7 @@ final class AdminActions
         'clientCreate' => ['action' => 'client.create', 'type' => 'client', 'label' => 'name'],
         'clientUpdate' => ['action' => 'client.update', 'type' => 'client', 'target' => 0],
         'clientAccess' => ['action' => 'client.access', 'type' => 'client', 'target' => 0],
+        'clientRegistrar' => ['action' => 'client.registrar', 'type' => 'client', 'target' => 0, 'fields' => ['registrar']],
         'clientRotateSecret' => ['action' => 'client.rotate_secret', 'type' => 'client', 'target' => 0],
         'clientDelete' => ['action' => 'client.delete', 'type' => 'client', 'target' => 0],
     ];

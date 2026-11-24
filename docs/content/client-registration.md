@@ -11,16 +11,14 @@ tools (an MCP client, a script) and needs a client here for each connection, wit
 
 It is **off by default**. A registration is only accepted from a caller that holds an access token with the `client:register` scope.
 
-## Turn it on
+## Let a client register apps
 
-Set `SSO_DYNAMIC_REGISTRATION=1` and restart. The server then
+Registration is always there, but only a client you allow can use it. Open the client in the admin panel (a confidential client with the
+`client_credentials` grant), go to its **Registration** tab, tick **May register apps**, and choose the scopes the apps it registers may get.
 
-- creates the scope `client:register` (see **Scopes** in the admin panel),
-- answers on `POST /register` and `GET`, `PUT` and `DELETE /register/{client_id}`,
-- lists `registration_endpoint` in the discovery document.
-
-Then create the app that is allowed to register others (the *registrar*) in the admin panel: a confidential client with the
-`client_credentials` grant and the `client:register` scope ticked. Nothing else gets that scope, and registering never hands it out: a registration that asks for it is refused.
+That is the whole setup. The client can now ask for the `client:register` scope, `POST /register` works for it, and the discovery
+document lists `registration_endpoint` (it is left out while no client may register). Untick the box and it stops at once, even for a token
+the client already holds. The `client:register` scope is built in: it does not appear under **Scopes**, and no list of scopes can hand it out.
 
 ## Register an app
 
@@ -48,12 +46,13 @@ There are two kinds of token. The `client:register` token may create clients. A 
 - **Redirect URIs** are exact, `https`, or `http` for `localhost`, `127.0.0.1` and `[::1]` only. Private-use schemes such as `com.example.app:/cb`
   are fine for native apps. `javascript:`, `data:` and `file:` never are.
 - **Grants:** `authorization_code` and `refresh_token`. Client credentials is refused, so a self-registered app never gets a machine identity.
-- **Scopes:** the built-in ones (`openid profile email groups roles`) unless you list others in `SSO_REGISTRATION_SCOPES` (comma separated). An app that names none gets `openid`.
+- **Scopes:** the ones ticked on the registrar's Registration tab (the built-in ones to begin with). An app that names none gets `openid`.
+- **Resources** (RFC 8707): the ones on the registrar's Registration tab. See [Tokens for one API]({{< relref "resource-indicators.md" >}}).
 - **PKCE** is required of public apps as always. Informational URLs (`client_uri`, `logo_uri`, `tos_uri`, `policy_uri`) must be `https`. Software statements are not supported.
 
 ## What you get in the admin panel
 
-A registered app is an ordinary client: it appears in the list under its `client_name` (or "Registered client" and the start of its id), and you can
+A registered app is an ordinary client: it appears in the list under its `client_name` (or "Registered client" and the start of its id) with a note that it was registered through the API, its Registration tab says which client registered it and when, and you can
 restrict it to chosen people or groups, change it or delete it. **A new client is open to every person, like one you create yourself**, so restrict it if it
 should not be. Deleting it, here or through the API, stops its codes and refresh tokens; access tokens already issued live until they expire.
 

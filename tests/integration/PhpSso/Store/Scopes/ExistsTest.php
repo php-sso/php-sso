@@ -72,4 +72,16 @@ final class ExistsTest extends TestCase
         // Assert
         $this->assertSame($valid, $result);
     }
+
+    public function testTheRegistrationScopeIsReservedSoItCannotBeAddedAsAnOrdinaryOne(): void
+    {
+        // Arrange
+        $scopes = new SqlScopes(TestConnection::open(), ['openid']);
+
+        // Act
+        $results = [$scopes->exists('client:register'), $scopes->exists('Client:Register')];
+
+        // Assert
+        self::assertSame([true, true], $results);
+    }
 }

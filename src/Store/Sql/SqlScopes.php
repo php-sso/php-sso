@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhpSso\Store\Sql;
 
 use PDO;
+use PhpSso\Store\ScopeName;
 
 /**
  * What an app can ask for. The built-in scopes (openid, profile, email, groups, roles) come from the config because the
@@ -76,6 +77,10 @@ final class SqlScopes implements \PhpSso\Store\Scopes
     /** Whether the name is taken, ignoring case so that `Invoices:Read` cannot be mistaken for `invoices:read`. */
     public function exists(string $name): bool
     {
+        if (strcasecmp(ScopeName::REGISTER, $name) === 0) {
+            return true; // reserved, so an administrator cannot hand it out as an ordinary scope
+        }
+
         foreach ($this->names() as $existing) {
             if (strcasecmp($existing, $name) === 0) {
                 return true;

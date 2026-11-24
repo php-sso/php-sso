@@ -186,6 +186,23 @@ final class SqlClients implements \PhpSso\Store\Clients
         $this->pdo->prepare('DELETE FROM clients WHERE client_id = ?')->execute([$clientId]);
     }
 
+    public function setRegistrar(string $clientId, ?array $scopes, array $resources = []): void
+    {
+        $this->pdo->prepare('UPDATE clients SET registrar = ? WHERE client_id = ?')
+            ->execute([$scopes === null ? null : json_encode(['scopes' => array_values($scopes), 'resources' => array_values($resources)]), $clientId]);
+    }
+
+    public function setResources(string $clientId, array $resources): void
+    {
+        $this->pdo->prepare('UPDATE clients SET resources = ? WHERE client_id = ?')
+            ->execute([$resources === [] ? null : json_encode(array_values($resources)), $clientId]);
+    }
+
+    public function anyRegistrar(): bool
+    {
+        return (int) $this->pdo->query('SELECT COUNT(*) FROM clients WHERE registrar IS NOT NULL')->fetchColumn() > 0;
+    }
+
     public function setRestricted(string $clientId, bool $restricted): void
     {
         $this->pdo->prepare('UPDATE clients SET restricted = ? WHERE client_id = ?')->execute([(int) $restricted, $clientId]);
@@ -269,6 +286,8 @@ final class SqlClients implements \PhpSso\Store\Clients
         $row['scopes'] = $row['scopes'] === null ? null : json_decode($row['scopes'], true);
         $row['post_logout_redirect_uris'] = json_decode($row['post_logout_redirect_uris'] ?? '[]', true) ?: [];
         $row['registration'] = ($row['registration'] ?? null) === null ? null : json_decode($row['registration'], true);
+        $row['registrar'] = ($row['registrar'] ?? null) === null ? null : json_decode($row['registrar'], true);
+        $row['resources'] = ($row['resources'] ?? null) === null ? [] : (json_decode($row['resources'], true) ?: []);
 
         return $row;
     }

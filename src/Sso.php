@@ -87,7 +87,7 @@ final class Sso
         if ($request->getMethod() === 'POST' && in_array($path, self::CLIENT_AUTH_PATHS, true)) {
             return $this->clientEndpoint($request, $path);
         }
-        if (($this->config['registration']['enabled'] ?? false) && ($response = $this->registration($request, $path)) !== null) {
+        if (($response = $this->registration($request, $path)) !== null) {
             return $response;
         }
         if ($this->passwordReset !== null && ($response = $this->passwordReset->handle($request, $path)) !== null) {
@@ -144,8 +144,8 @@ final class Sso
     }
 
     /**
-     * Dynamic client registration (RFC 7591 and 7592), when it is switched on. Registering needs an access token with the
-     * registration scope; managing a client needs the registration access token that registering it returned.
+     * Dynamic client registration (RFC 7591 and 7592). Registering needs an access token with the registration scope, which only a
+     * client with the "may register apps" setting can get; managing a client needs the registration access token that registering it returned.
      */
     private function registration(ServerRequestInterface $request, string $path): ?ResponseInterface
     {

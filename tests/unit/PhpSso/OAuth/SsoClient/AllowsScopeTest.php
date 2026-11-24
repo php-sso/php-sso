@@ -5,35 +5,64 @@ declare(strict_types=1);
 namespace Tests\unit\PhpSso\OAuth\SsoClient;
 
 use PhpSso\OAuth\SsoClient;
+use PhpSso\Store\ScopeName;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 
 #[CoversMethod(SsoClient::class, 'allowsScope')]
 final class AllowsScopeTest extends TestCase
 {
-    public function testAClientWithoutAScopeListMayAskForAnything(): void
+    /** @param list<string>|null $scopes */
+    private function client(?array $scopes, bool $mayRegister): SsoClient
     {
-        // Arrange
-        $client = new SsoClient('web', 'Web', [], true, [], null, null, null, []);
-
-        // Act
-        $allowed = $client->allowsScope('groups');
-
-        // Assert
-        self::assertTrue($allowed);
+        return new SsoClient('app', 'App', [], true, ['client_credentials'], null, $scopes, null, [], $mayRegister);
     }
 
-    public function testAClientWithAScopeListIsLimitedToIt(): void
+    public function testAClientThatMayRegisterAppsMayAskForTheRegistrationScope(): void
     {
         // Arrange
-        $client = new SsoClient('web', 'Web', [], true, [], null, ['openid', 'profile'], null, []);
+        $client = $this->client(['api'], mayRegister: true);
 
         // Act
-        $profile = $client->allowsScope('profile');
-        $groups = $client->allowsScope('groups');
+        $allowed = $client->allowsScope(ScopeName::REGISTER);
 
         // Assert
-        self::assertTrue($profile);
-        self::assertFalse($groups);
+        $this->assertTrue($allowed);
+    }
+
+    public function testAListOfScopesNeverGrantsTheRegistrationScope(): void
+    {
+        // Arrange
+        $client = $this->client([ScopeName::REGISTER, 'api'], mayRegister: false);
+
+        // Act
+        $allowed = $client->allowsScope(ScopeName::REGISTER);
+
+        // Assert
+        $this->assertFalse($allowed);
+    }
+
+    public function testAClientWithoutAListOfItsOwnStillNeedsTheSetting(): void
+    {
+        // Arrange
+        $client = $this->client(null, mayRegister: false);
+
+        // Act
+        $allowed = $client->allowsScope(ScopeName::REGISTER);
+
+        // Assert
+        $this->assertFalse($allowed);
+    }
+
+    public function testOtherScopesFollowTheListAsBefore(): void
+    {
+        // Arrange
+        $client = $this->client(['api'], mayRegister: true);
+
+        // Act
+        $results = [$client->allowsScope('api'), $client->allowsScope('openid')];
+
+        // Assert
+        $this->assertSame([true, false], $results);
     }
 }
