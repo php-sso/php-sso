@@ -24,7 +24,7 @@
         "ext-pdo_sqlite": "*",
         "laminas/laminas-diactoros": "^3.0",
         "laminas/laminas-httphandlerrunner": "^2.10",
-        "php-sso/oauth-server": "^1.1",
+        "php-sso/oauth-server": "^1.1.1",
         "php-sso/saml": "^1.1",
         "php-sso/scim-server": "^1.1",
         "psr/http-client": "^1.0",
