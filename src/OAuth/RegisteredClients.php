@@ -8,6 +8,7 @@ use PhpSso\Store\Clients;
 use PhpSso\OAuthServer\Client\Client;
 use PhpSso\OAuthServer\Client\ClientRepository;
 use PhpSso\OAuthServer\Client\EqualisesVerificationTime;
+use PhpSso\OAuthServer\Token\TokenHash;
 
 /** Looks clients up in the database for the OAuth server. */
 final class RegisteredClients implements ClientRepository, EqualisesVerificationTime
@@ -28,7 +29,16 @@ final class RegisteredClients implements ClientRepository, EqualisesVerification
 
     public function verifySecret(Client $client, string $secret): bool
     {
-        return $client instanceof SsoClient && $client->secretHash !== null && password_verify($secret, $client->secretHash);
+        if (!$client instanceof SsoClient || $client->secretHash === null) {
+            return false;
+        }
+        // An administrator's secrets are password hashes ($2y$...). A client that registered itself has a random 256-bit
+        // secret, kept as the library's plain SHA-256 (64 hex digits), which needs no slow hash.
+        if (str_starts_with($client->secretHash, '$')) {
+            return password_verify($secret, $client->secretHash);
+        }
+
+        return hash_equals($client->secretHash, TokenHash::of($secret));
     }
 
     /** A client id that does not exist costs one password check too, like a real client with a wrong secret. */

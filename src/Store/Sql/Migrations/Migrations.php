@@ -16,6 +16,7 @@ final class Migrations
             new CreateLogoutRetries(),
             new CreatePasswordResets(),
             new AddSamlRequestSigning(),
+            new AddClientRegistration(),
         ];
     }
 }

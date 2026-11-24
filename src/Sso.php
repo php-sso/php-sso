@@ -27,6 +27,7 @@ use Laminas\Diactoros\Response\RedirectResponse;
 use Laminas\Diactoros\Response\TextResponse;
 use PhpSso\OAuthServer\AuthorizationServer;
 use PhpSso\OAuthServer\Endpoint\AuthorizationHandler;
+use PhpSso\OAuthServer\Endpoint\ClientConfigurationHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use PhpSso\Store\UserState;
@@ -79,12 +80,15 @@ final class Sso
         if ($this->isBrowserPage($path) && !$this->browserAddressAllowed($request, $path)) {
             return $this->blocked($request, $this->clientIp->of($request));
         }
-        if ($request->getMethod() === 'POST' && in_array($path, ['/token', '/device_authorization'], true)
+        if ($request->getMethod() === 'POST' && in_array($path, ['/token', '/device_authorization', '/register'], true)
             && ($denied = $this->tokenRequestDenied($request)) !== null) {
             return $denied;
         }
         if ($request->getMethod() === 'POST' && in_array($path, self::CLIENT_AUTH_PATHS, true)) {
             return $this->clientEndpoint($request, $path);
+        }
+        if (($this->config['registration']['enabled'] ?? false) && ($response = $this->registration($request, $path)) !== null) {
+            return $response;
         }
         if ($this->passwordReset !== null && ($response = $this->passwordReset->handle($request, $path)) !== null) {
             return $response;
@@ -137,6 +141,22 @@ final class Sso
             ['GET', '/logout'], ['POST', '/logout'] => $this->logout($request),
             default => $this->pages->render('error', ['title' => 'Page not found', 'message' => 'There is nothing at this address.', 'user' => null, 'csrf' => ''], 404),
         };
+    }
+
+    /**
+     * Dynamic client registration (RFC 7591 and 7592), when it is switched on. Registering needs an access token with the
+     * registration scope; managing a client needs the registration access token that registering it returned.
+     */
+    private function registration(ServerRequestInterface $request, string $path): ?ResponseInterface
+    {
+        if ($path === '/register') {
+            return $this->oauth->registrationMiddleware()->process($request, $this->oauth->registrationHandler());
+        }
+        if (preg_match('#^/register/([^/]+)$#', $path, $match) === 1) {
+            return $this->oauth->clientConfigurationHandler()->handle($request->withAttribute(ClientConfigurationHandler::CLIENT_ID, rawurldecode($match[1])));
+        }
+
+        return null;
     }
 
     /**

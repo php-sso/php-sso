@@ -120,6 +120,25 @@ final class SqlClients implements \PhpSso\Store\Clients
         ]);
     }
 
+    public function saveRegistered(array $c): void
+    {
+        $existing = $this->find($c['client_id']);
+        if ($existing === null) {
+            $this->insert($c);
+            $this->pdo->prepare('UPDATE clients SET registration = ? WHERE client_id = ?')->execute([json_encode($c['registration']), $c['client_id']]);
+
+            return;
+        }
+        if ($existing['registration'] === null) {
+            throw new \LogicException('Client ' . $c['client_id'] . ' was not registered through the registration endpoint, so that endpoint cannot replace it.');
+        }
+        $this->pdo->prepare('UPDATE clients SET name = ?, secret_hash = ?, confidential = ?, redirect_uris = ?, grants = ?, backchannel_logout_uri = ?, post_logout_redirect_uris = ?, scopes = ?, registration = ? WHERE client_id = ?')
+            ->execute([
+                $c['name'], $c['secret_hash'], (int) $c['confidential'], json_encode($c['redirect_uris']), json_encode($c['grants']),
+                $c['backchannel_logout_uri'], json_encode($c['post_logout_redirect_uris']), json_encode($c['scopes']), json_encode($c['registration']), $c['client_id'],
+            ]);
+    }
+
     /** @param string[] $redirectUris @param string[] $grants @param string[] $postLogoutUris @param string[] $scopes */
     public function update(string $clientId, string $name, array $redirectUris, array $grants, ?string $backchannelLogoutUri, array $postLogoutUris, array $scopes): void
     {
@@ -249,6 +268,7 @@ final class SqlClients implements \PhpSso\Store\Clients
         $row['grants'] = json_decode($row['grants'], true);
         $row['scopes'] = $row['scopes'] === null ? null : json_decode($row['scopes'], true);
         $row['post_logout_redirect_uris'] = json_decode($row['post_logout_redirect_uris'] ?? '[]', true) ?: [];
+        $row['registration'] = ($row['registration'] ?? null) === null ? null : json_decode($row['registration'], true);
 
         return $row;
     }

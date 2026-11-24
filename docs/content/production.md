@@ -36,6 +36,8 @@ The production image runs Apache as an unprivileged user on port 8080. Mount a v
 | `SSO_SMTP_HOST`, `SSO_MAIL_FROM` | The mail server and the sender address. Both are needed to turn on the [password reset]({{< relref "sign-in/password-reset.md" >}}) |
 | `SSO_SMTP_PORT`, `SSO_SMTP_ENCRYPTION`, `SSO_SMTP_USER`, `SSO_SMTP_PASSWORD`, `SSO_MAIL_FROM_NAME`, `SSO_SMTP_CA_FILE` | The rest of the mail settings: port (587), `starttls`, `tls` or `none`, sign-in, the sender's name, your own certificate authority |
 | `SSO_PASSWORD_RESET_MINUTES` | How long a password reset link works, default 60 |
+| `SSO_DYNAMIC_REGISTRATION` | `1` lets an app with the `client:register` scope create and manage clients at `/register` (see [Registering apps from code]({{< relref "client-registration.md" >}})). Off by default |
+| `SSO_REGISTRATION_SCOPES` | The scopes an app that registered itself may ask for, comma separated. The built-in scopes when empty |
 | `SSO_THEME_DIR` | Theme folder, default `/theme` |
 | `SSO_DEBUG` | `1` shows theme errors instead of falling back |
 | `SSO_TRUSTED_PROXIES` | Comma separated addresses or CIDR ranges of your reverse proxies. Only their `X-Forwarded-For` is believed; set it when behind a proxy, or IP rules see the proxy's address |

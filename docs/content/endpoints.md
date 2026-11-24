@@ -15,6 +15,7 @@ group: "Reference"
 | `GET`/`POST /device` | The page where a person enters the code and approves the device |
 | `POST /revoke` | Token revocation (RFC 7009) |
 | `POST /introspect` | Token introspection (RFC 7662), for confidential clients such as APIs |
+| `POST /register`, `GET`/`PUT`/`DELETE /register/{client_id}` | Dynamic client registration (RFC 7591, 7592). Off unless `SSO_DYNAMIC_REGISTRATION=1`, see [Registering apps from code]({{< relref "client-registration.md" >}}) |
 | `GET /userinfo` | Claims for a Bearer access token (needs the `openid` scope) |
 | `GET`/`POST /end-session` | RP-initiated logout (`id_token_hint`, `post_logout_redirect_uri`, `state`) |
 | `GET /login`, `GET` and `POST /logout` | SSO session on this server |

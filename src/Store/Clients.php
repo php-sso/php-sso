@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace PhpSso\Store;
 
 /**
- * OAuth clients. Rows are returned with `redirect_uris` and `grants` as arrays
- * and `confidential` as bool.
+ * OAuth clients. Rows are returned with `redirect_uris` and `grants` as arrays,
+ * `confidential` as bool and `registration` as an array (null for a client an administrator made).
  */
 interface Clients
 {
@@ -39,6 +39,14 @@ interface Clients
 
     /** @param array{client_id: string, name: string, secret_hash: ?string, confidential: bool, redirect_uris: string[], grants: string[], backchannel_logout_uri?: ?string, post_logout_redirect_uris?: string[], scopes?: ?string[], restricted?: bool} $c */
     public function insert(array $c): void;
+
+    /**
+     * Stores a client that registered itself (RFC 7591): inserts it, or replaces all of it. Whether the client is open to
+     * everyone or restricted is not touched. Never replaces a client an administrator made.
+     *
+     * @param array{client_id: string, name: string, secret_hash: ?string, confidential: bool, redirect_uris: string[], grants: string[], backchannel_logout_uri: ?string, post_logout_redirect_uris: string[], scopes: string[], registration: array<string, mixed>} $c
+     */
+    public function saveRegistered(array $c): void;
 
     /** @param string[] $redirectUris @param string[] $grants @param string[] $postLogoutUris @param string[] $scopes */
     public function update(string $clientId, string $name, array $redirectUris, array $grants, ?string $backchannelLogoutUri, array $postLogoutUris, array $scopes): void;

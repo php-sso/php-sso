@@ -44,6 +44,8 @@ use PhpSso\Keys;
 use PhpSso\OAuth\BrowserErrors;
 use PhpSso\OAuth\ClientAuthThrottle;
 use PhpSso\OAuth\DevicePage;
+use PhpSso\OAuth\StoredRegistrations;
+use PhpSso\OAuthServer\Registration\RegistrationConfig;
 use PhpSso\OAuth\LogoutScreens;
 use PhpSso\OAuth\SessionLinks;
 use PhpSso\OAuth\AuthorizationScreens;
@@ -152,6 +154,9 @@ $clients = $storage->clients();
 $roles = $storage->roles();
 $scopes = $storage->scopes();
 $refreshTokens = $storage->refreshTokens();
+if ($config['registration']['enabled'] && !$scopes->exists($config['registration']['scope'])) {
+    $scopes->create($config['registration']['scope'], 'May register apps (dynamic client registration)');
+}
 $sessions = $storage->sessions();
 $attempts = $storage->loginAttempts();
 $ipRules = $storage->ipRules();
@@ -191,6 +196,11 @@ $oauth = new AuthorizationServer(
     streamFactory: new StreamFactory(),
     claimNames: ['sub', 'iss', 'aud', 'exp', 'iat', 'nonce', 'auth_time', 'amr', 'name', 'email', 'email_verified', 'groups', 'roles'],
     browserErrors: new BrowserErrors($pages),
+    registrations: $config['registration']['enabled'] ? new StoredRegistrations($clients) : null,
+    registration: new RegistrationConfig(
+        scope: $config['registration']['scope'],
+        allowedScopes: $config['registration']['allowed_scopes'] ?: $scopes->builtinNames(),
+    ),
 );
 
 // Whenever a login session ends (sign-out, admin, password change): revoke what it issued, tell the apps.

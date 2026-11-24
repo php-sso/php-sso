@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## Unreleased
 
+### Added
+
+- **Dynamic client registration** (RFC 7591 and 7592), off unless `SSO_DYNAMIC_REGISTRATION=1`. An app holding an access token with the `client:register` scope registers clients at `POST /register`; each client gets a registration access token to read, replace or delete only itself at `/register/{client_id}`. Registered clients are ordinary clients in the admin panel, limited to the built-in scopes (or `SSO_REGISTRATION_SCOPES`) and to the authorization code and refresh grants. Needs `php-sso/oauth-server` 1.1.1. Migration 0006 adds `clients.registration`. See [Registering apps from code](docs/content/client-registration.md).
+
 ### Changed
 
 - **Tests are split in two suites.** `tests/unit` (no database, no network, runs in seconds) and `tests/integration` (real databases, a local server, the test mailbox). Run them with `composer test:unit` and `composer test:integration`; `composer test` runs both. `SuiteRulesTest` keeps database use out of the unit suite.

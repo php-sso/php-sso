@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ec657f15f74952865f39cce24a800c19",
+    "content-hash": "4ccec9ee289dbcac167181aa99cb6cf8",
     "packages": [
         {
             "name": "laminas/laminas-diactoros",
@@ -348,16 +348,16 @@
         },
         {
             "name": "php-sso/oauth-server",
-            "version": "v1.0.0",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-sso/oauth-server.git",
-                "reference": "35e67c612cc7866d7cccb495e93cdb5fec5c54e3"
+                "reference": "72bc62a122783a491f7a858fa883ed9f5ee4c479"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-sso/oauth-server/zipball/35e67c612cc7866d7cccb495e93cdb5fec5c54e3",
-                "reference": "35e67c612cc7866d7cccb495e93cdb5fec5c54e3",
+                "url": "https://api.github.com/repos/php-sso/oauth-server/zipball/72bc62a122783a491f7a858fa883ed9f5ee4c479",
+                "reference": "72bc62a122783a491f7a858fa883ed9f5ee4c479",
                 "shasum": ""
             },
             "require": {
@@ -405,7 +405,7 @@
                 "issues": "https://github.com/php-sso/oauth-server/issues",
                 "source": "https://github.com/php-sso/oauth-server"
             },
-            "time": "2026-11-21T15:38:38+00:00"
+            "time": "2026-11-24T14:22:40+00:00"
         },
         {
             "name": "php-sso/saml",
@@ -3081,9 +3081,9 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
+        "php": "^8.3",
         "ext-openssl": "*",
-        "ext-pdo_sqlite": "*",
-        "php": "^8.3"
+        "ext-pdo_sqlite": "*"
     },
     "platform-dev": {},
     "plugin-api-version": "2.9.0"
