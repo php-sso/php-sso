@@ -2,6 +2,16 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/) and the project follows [Semantic Versioning](https://semver.org/).
 
+## 0.4.0 - 2026-11-24
+
+### Added
+
+- **IP rules per user.** Each user has an IP rules tab with allow and deny rules (addresses or CIDR ranges) that limit where that person may sign in from, on top of the general rules and those of each app. They are checked at sign-in and on every browser page of an open session, and the access test shows them as a step. Migration 0009 adds `user_ip_rules`. See [IP rules](docs/content/ip-rules.md).
+
+### Changed
+
+- The "Two-step verification is on" box with the reset button moved from a user's Details tab to the Danger tab.
+
 ## 0.3.0 - 2026-11-24
 
 ### Added

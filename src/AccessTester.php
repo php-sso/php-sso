@@ -44,6 +44,10 @@ final class AccessTester
             $steps[] = $this->step("Who may use {$client['name']}", $this->clients->explainAccess($client['client_id'], $user['sub']));
         }
 
+        $steps[] = $user === null
+            ? $this->skipped('IP rules of the person', 'No person chosen.')
+            : $this->step("IP rules of {$user['name']}", $this->ipPolicy->explainUser($ip, $user['sub']));
+
         $failed = array_filter($steps, static fn (array $s): bool => $s['status'] === 'fail');
 
         return ['allowed' => $failed === [], 'steps' => $steps];

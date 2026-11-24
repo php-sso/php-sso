@@ -28,4 +28,18 @@ interface IpRules
     public function create(string $type, string $cidr, string $note, ?string $clientId = null): int;
 
     public function delete(int $id): void;
+
+    /** @return array<int, array{id: int, user_sub: string, type: string, cidr: string, note: string, created_at: int}> the rules of one person */
+    public function allForUser(string $sub): array;
+
+    /** @return string[] ranges of the given type ('allow' or 'deny') that belong to the person */
+    public function userRanges(string $type, string $sub): array;
+
+    public function findForUser(int $id): ?array;
+
+    public function existsForUser(string $type, string $cidr, string $sub): bool;
+
+    public function createForUser(string $type, string $cidr, string $note, string $sub): int;
+
+    public function deleteForUser(int $id): void;
 }

@@ -16,6 +16,7 @@ final class BackupTables
         'oauth_revoked_families', 'oauth_revoked_tokens', 'role', 'role_client', 'role_group', 'role_user', 'saml_connections', 'saml_domains',
         'saml_requests', 'scim_clients', 'scim_events', 'scim_groups', 'scim_users', 'scopes', 'session_clients', 'settings', 'user_consents',
         'user_group_member', 'user_identities', 'user_mfa', 'audit_log', 'logout_retries', 'password_resets',
+        'user_ip_rules',
     ];
 
     /** Tables that belong to the database software or to the schema's own bookkeeping, not to the data. */

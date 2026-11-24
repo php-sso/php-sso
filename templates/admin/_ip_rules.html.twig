@@ -1,10 +1,10 @@
 {# Rules table and add form. `base` is the page the rules live on; with a client, only that client's rules show. #}
 {% import 'admin/_macros.html.twig' as m %}
 {% import 'admin/_icons.html.twig' as i %}
-{% set scope = client ? client.name : 'sign-in' %}
+{% set scope = client ? client.name : (person ? person.name : 'sign-in') %}
 <div class="notice" role="note">
-  Deny rules always win. {% if allow_active %}Allow rules exist, so <b>only</b> addresses that match one of them can {{ client ? 'sign in to ' ~ client.name : 'sign in' }}.{% else %}With no allow rules, every address that is not denied may {{ client ? 'sign in to ' ~ client.name : 'sign in' }}.{% endif %}
-  {% if client %}{% if ignores_general %}The general <a href="/admin/ip-rules">IP rules</a> do not apply to this client.{% else %}The general <a href="/admin/ip-rules">IP rules</a> apply as well.{% endif %}{% else %}Rules apply to sign-in, the admin panel, the account pages and requests for tokens. Each client can add its own rules on its IP rules tab, or ignore these general rules.{% endif %}
+  Deny rules always win. {% if person %}{% if allow_active %}Allow rules exist, so <b>only</b> addresses that match one of them can sign in as {{ person.name }}.{% else %}With no allow rules, every address that is not denied may sign in as {{ person.name }}.{% endif %} These rules come on top of the <a href="/admin/ip-rules">general rules</a> and those of each app: an address has to pass all of them. They apply to signing in and to a session that is already open; tokens an app already holds keep working until they expire.{% elseif allow_active %}Allow rules exist, so <b>only</b> addresses that match one of them can {{ client ? 'sign in to ' ~ client.name : 'sign in' }}.{% else %}With no allow rules, every address that is not denied may {{ client ? 'sign in to ' ~ client.name : 'sign in' }}.{% endif %}
+  {% if person %}{% elseif client %}{% if ignores_general %}The general <a href="/admin/ip-rules">IP rules</a> do not apply to this client.{% else %}The general <a href="/admin/ip-rules">IP rules</a> apply as well.{% endif %}{% else %}Rules apply to sign-in, the admin panel, the account pages and requests for tokens. Each client can add its own rules on its IP rules tab, or ignore these general rules.{% endif %}
 </div>
 
 {% if client %}
@@ -52,10 +52,10 @@
     </tbody>
   </table>
 {% else %}
-  <div class="empty"><h2>No rules yet</h2><p>{{ client ? 'Every address can sign in to ' ~ client.name ~ (ignores_general ? '.' : ' unless the general rules say otherwise.') : 'Everyone can sign in from any address.' }} Add a rule below to change that.</p></div>
+  <div class="empty"><h2>No rules yet</h2><p>{{ person ? person.name ~ ' can sign in from any address that the general rules and the apps allow.' : client ? 'Every address can sign in to ' ~ client.name ~ (ignores_general ? '.' : ' unless the general rules say otherwise.') : 'Everyone can sign in from any address.' }} Add a rule below to change that.</p></div>
 {% endif %}
 
-<form method="post" action="{{ client ? '/admin/clients/' ~ client.client_id|url_encode ~ '/ip-rules' : '/admin/ip-rules' }}" novalidate>
+<form method="post" action="{{ base }}" novalidate>
   <input type="hidden" name="_csrf" value="{{ csrf }}">
   <div class="section spaced">
     <header><h2>Add a rule</h2><p>Use a single address or a range in CIDR notation. IPv4 and IPv6 both work. Your address is <span class="mono">{{ my_ip ?: 'unknown' }}</span>.</p></header>

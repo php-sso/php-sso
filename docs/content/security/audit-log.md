@@ -14,7 +14,7 @@ actions, a few details. The names are copied into the entry, so it still says `c
 
 | Group | Actions |
 | --- | --- |
-| `user` | `create`, `update` (says whether administrator rights are on, and whether they were), `lock`, `unlock`, `delete`, `reset_failures`, `reset_mfa`, `unlink_connection`, `consent_ask_again`, `impersonate`, `send_reset` (an administrator sent a password reset link) |
+| `user` | `create`, `update` (says whether administrator rights are on, and whether they were), `lock`, `unlock`, `delete`, `reset_failures`, `reset_mfa`, `unlink_connection`, `consent_ask_again`, `impersonate`, `ip_rule_create`, `ip_rule_delete`, `send_reset` (an administrator sent a password reset link) |
 | `impersonation` | `stop` (starting is `user.impersonate`) |
 | `client` | `create`, `update`, `access`, `registrar`, `rotate_secret`, `delete`, `ip_rule_create`, `ip_rule_scope`, `ip_rule_delete` |
 | `group`, `role` | `create`, `update`, `delete` |

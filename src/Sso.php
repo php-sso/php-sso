@@ -80,6 +80,10 @@ final class Sso
         if ($this->isBrowserPage($path) && !$this->browserAddressAllowed($request, $path)) {
             return $this->blocked($request, $this->clientIp->of($request));
         }
+        // A signed-in person is also held to their own rules, for every page and also for a session that started elsewhere.
+        if ($this->isBrowserPage($path) && !in_array($path, ['/logout', '/end-session'], true) && !$this->userAddressAllowed($request)) {
+            return $this->pages->render('error', ['title' => 'Access not allowed', 'message' => 'Your account is not allowed to sign in from your network address.', 'user' => null, 'csrf' => ''], 403);
+        }
         if ($request->getMethod() === 'POST' && in_array($path, ['/token', '/device_authorization', '/register'], true)
             && ($denied = $this->tokenRequestDenied($request)) !== null) {
             return $denied;
@@ -228,6 +232,14 @@ final class Sso
         };
 
         return is_string($clientId) && $this->ipPolicy->ignoresGeneral($clientId) && $this->ipPolicy->allowsClient($ip, $clientId);
+    }
+
+    /** Whether the person signed in on this browser (if anyone) may use the address, by the IP rules of their own. */
+    private function userAddressAllowed(ServerRequestInterface $request): bool
+    {
+        $sub = $_SESSION['user'] ?? null;
+
+        return !is_string($sub) || $this->ipPolicy->allowsUser($this->clientIp->of($request), $sub);
     }
 
     /** Refuses a browser request from an address the IP rules do not allow. Refused sign-ins are kept in the history. */

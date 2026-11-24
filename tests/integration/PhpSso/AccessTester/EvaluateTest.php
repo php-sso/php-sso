@@ -35,7 +35,7 @@ final class EvaluateTest extends TestCase
 
         // Assert
         $this->assertTrue($result['allowed']);
-        $this->assertSame(['pass', 'skipped', 'skipped'], array_column($result['steps'], 'status'));
+        $this->assertSame(['pass', 'skipped', 'skipped', 'skipped'], array_column($result['steps'], 'status'));
     }
 
     public function testAGeneralDenyRuleBlocksEverything(): void
@@ -50,7 +50,7 @@ final class EvaluateTest extends TestCase
 
         // Assert
         $this->assertFalse($result['allowed']);
-        $this->assertSame(['fail', 'pass', 'pass'], array_column($result['steps'], 'status'));
+        $this->assertSame(['fail', 'pass', 'pass', 'pass'], array_column($result['steps'], 'status'));
     }
 
     public function testAClientRuleBlocksOnlyThatClient(): void
@@ -96,6 +96,23 @@ final class EvaluateTest extends TestCase
 
         // Assert
         $this->assertTrue($result['allowed']);
-        $this->assertSame(['skipped', 'pass', 'pass'], array_column($result['steps'], 'status'));
+        $this->assertSame(['skipped', 'pass', 'pass', 'pass'], array_column($result['steps'], 'status'));
+    }
+
+    public function testAPersonsOwnRuleBlocksOnlyThatPerson(): void
+    {
+        // Arrange
+        $this->data->client('app');
+        $alice = $this->data->user('alice');
+        $bob = $this->data->user('bob');
+        $this->rules->createForUser('allow', '203.0.113.0/24', '', $alice);
+
+        // Act
+        $blocked = $this->tester->evaluate('8.8.8.8', 'app', $alice);
+        $allowed = $this->tester->evaluate('8.8.8.8', 'app', $bob);
+
+        // Assert
+        $this->assertSame([false, true], [$blocked['allowed'], $allowed['allowed']]);
+        $this->assertSame('fail', $blocked['steps'][3]['status']);
     }
 }

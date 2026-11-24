@@ -43,6 +43,31 @@ final class IpPolicy
         return $this->decide($this->rules->ranges('allow', $clientId), $this->rules->ranges('deny', $clientId), $ip);
     }
 
+    /**
+     * Whether the person may sign in from the address, by their own rules. These come on top of the general and the client's
+     * rules and are never skipped: a client that ignores the general rules does not ignore a person's.
+     */
+    public function allowsUser(string $ip, string $sub): bool
+    {
+        return $this->explainUser($ip, $sub)['allowed'];
+    }
+
+    /** @return array{allowed: bool, reason: string} */
+    public function explainUser(string $ip, string $sub): array
+    {
+        return $this->decide($this->rules->userRanges('allow', $sub), $this->rules->userRanges('deny', $sub), $ip);
+    }
+
+    /** Whether the address would still be allowed for the person after adding one of their rules, used to warn about lock-outs. */
+    public function allowsUserAfterAdding(string $type, string $cidr, string $ip, string $sub): bool
+    {
+        $allow = $this->rules->userRanges('allow', $sub);
+        $deny = $this->rules->userRanges('deny', $sub);
+        ${$type === 'allow' ? 'allow' : 'deny'}[] = $cidr;
+
+        return $this->decide($allow, $deny, $ip)['allowed'];
+    }
+
     /** Whether the address would still be allowed after adding a rule of this type, used to warn about lock-outs. */
     public function allowsAfterAdding(string $type, string $cidr, string $ip, ?string $clientId = null): bool
     {

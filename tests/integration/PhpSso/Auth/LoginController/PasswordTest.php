@@ -50,6 +50,39 @@ final class PasswordTest extends TestCase
         $this->assertSame(1, count($app->attempts->failureTimesForIdentifier('alice', $sub, 0)));
     }
 
+    public function testItRefusesAPersonWhoseOwnRulesDoNotAllowTheAddress(): void
+    {
+        // Arrange
+        $app = new Support();
+        $sub = $app->data->user('alice');
+        $app->ipRules->createForUser('allow', '198.51.100.0/24', '', $sub);
+        $app->flow->begin('alice', $sub);
+
+        // Act
+        $response = $app->controller->password(Support::post(['password' => 'secret-pass']));
+
+        // Assert
+        $this->assertSame(403, $response->getStatusCode());
+        $this->assertArrayNotHasKey('user', $_SESSION);
+        $this->assertSame(1, (int) $app->attempts->recent(1)[0]['blocked']);
+    }
+
+    public function testItSignsInAPersonWhoseOwnRulesAllowTheAddress(): void
+    {
+        // Arrange
+        $app = new Support();
+        $sub = $app->data->user('alice');
+        $app->ipRules->createForUser('deny', '198.51.100.0/24', '', $sub);
+        $app->flow->begin('alice', $sub);
+
+        // Act
+        $response = $app->controller->password(Support::post(['password' => 'secret-pass']));
+
+        // Assert
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertSame($sub, $_SESSION['user']);
+    }
+
     public function testItRejectsAnUnknownIdentifierWithTheSameAnswerAsAWrongPassword(): void
     {
         // Arrange

@@ -19,6 +19,7 @@ final class Migrations
             new AddClientRegistration(),
             new AddClientRegistrar(),
             new AddResourceIndicators(),
+            new CreateUserIpRules(),
         ];
     }
 }

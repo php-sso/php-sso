@@ -81,4 +81,49 @@ class SqlIpRules implements \PhpSso\Store\IpRules
     {
         $this->pdo->prepare('DELETE FROM ip_rules WHERE id = ?')->execute([$id]);
     }
+
+    public function allForUser(string $sub): array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM user_ip_rules WHERE user_sub = ? ORDER BY type, id');
+        $stmt->execute([$sub]);
+
+        return $stmt->fetchAll();
+    }
+
+    public function userRanges(string $type, string $sub): array
+    {
+        $stmt = $this->pdo->prepare('SELECT cidr FROM user_ip_rules WHERE type = ? AND user_sub = ?');
+        $stmt->execute([$type, $sub]);
+
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    public function findForUser(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM user_ip_rules WHERE id = ?');
+        $stmt->execute([$id]);
+
+        return $stmt->fetch() ?: null;
+    }
+
+    public function existsForUser(string $type, string $cidr, string $sub): bool
+    {
+        $stmt = $this->pdo->prepare('SELECT 1 FROM user_ip_rules WHERE type = ? AND cidr = ? AND user_sub = ?');
+        $stmt->execute([$type, $cidr, $sub]);
+
+        return (bool) $stmt->fetchColumn();
+    }
+
+    public function createForUser(string $type, string $cidr, string $note, string $sub): int
+    {
+        $this->pdo->prepare('INSERT INTO user_ip_rules (user_sub, type, cidr, note, created_at) VALUES (?, ?, ?, ?, ?)')
+            ->execute([$sub, $type, $cidr, $note, time()]);
+
+        return $this->dialect->lastInsertId($this->pdo, 'user_ip_rules');
+    }
+
+    public function deleteForUser(int $id): void
+    {
+        $this->pdo->prepare('DELETE FROM user_ip_rules WHERE id = ?')->execute([$id]);
+    }
 }

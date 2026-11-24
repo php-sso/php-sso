@@ -46,6 +46,8 @@ final class AdminActions
         'relation' => ['action' => 'relation', 'type' => '*'],
         'userCreate' => ['action' => 'user.create', 'type' => 'user', 'label' => 'username', 'fields' => ['is_admin']],
         'userResetLock' => ['action' => 'user.reset_failures', 'type' => 'user', 'target' => 0],
+        'userIpRuleCreate' => ['action' => 'user.ip_rule_create', 'type' => 'user', 'target' => 0, 'fields' => ['type', 'cidr']],
+        'userIpRuleDelete' => ['action' => 'user.ip_rule_delete', 'type' => 'user', 'target' => 0, 'args' => [1 => 'rule']],
         'userLock' => ['action' => 'user.lock', 'type' => 'user', 'target' => 0],
         'userUnlock' => ['action' => 'user.unlock', 'type' => 'user', 'target' => 0],
         'userSendReset' => ['action' => 'user.send_reset', 'type' => 'user', 'target' => 0],

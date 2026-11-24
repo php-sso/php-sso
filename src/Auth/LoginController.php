@@ -7,6 +7,7 @@ namespace PhpSso\Auth;
 use PhpSso\Auth\Identifier\IdentifierResolver;
 use PhpSso\Auth\Mfa\Mfa;
 use PhpSso\Auth\Social\SocialProviders;
+use PhpSso\IpPolicy;
 use PhpSso\Net\ClientIp;
 use PhpSso\Pages;
 use PhpSso\Store\LoginAttempts;
@@ -37,6 +38,7 @@ final class LoginController
         private Mfa $mfa,
         private SocialProviders $social,
         private SamlConnections $saml,
+        private IpPolicy $ipPolicy,
     ) {
     }
 
@@ -155,6 +157,13 @@ final class LoginController
             $this->attempts->record($identifier, $user['sub'], false, $ip, $agent);
 
             return $form('This account is locked. Ask an administrator to unlock it.', 403);
+        }
+
+        // Also said only after the right password. The person's own IP rules come on top of the general ones, which Sso already applied.
+        if (!$this->ipPolicy->allowsUser($ip, $user['sub'])) {
+            $this->attempts->record($identifier, $user['sub'], false, $ip, $agent, true);
+
+            return $form('Signing in is not allowed from your network address.', 403);
         }
 
         // The password is right. A person with a second factor (or whom the policy makes set one up) is not signed in yet.

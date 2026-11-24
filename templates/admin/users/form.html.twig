@@ -18,6 +18,7 @@
   <a href="/admin/users/{{ user.sub|url_encode }}/edit"{{ tab == 'details' ? ' class="here" aria-current="page"' }}>Details</a>
   <a href="/admin/users/{{ user.sub|url_encode }}/groups"{{ tab == 'groups' ? ' class="here" aria-current="page"' }}>Groups</a>
   <a href="/admin/users/{{ user.sub|url_encode }}/notices"{{ tab == 'notices' ? ' class="here" aria-current="page"' }}>Notices</a>
+  <a href="/admin/users/{{ user.sub|url_encode }}/ip-rules"{{ tab == 'ip-rules' ? ' class="here" aria-current="page"' }}>IP rules</a>
   <a href="/admin/users/{{ user.sub|url_encode }}/danger"{{ tab == 'danger' ? ' class="here" aria-current="page"' }}>Danger</a>
 </nav>
 {% endif %}
@@ -28,16 +29,6 @@
       <h2>Provisioned automatically</h2>
       <p>This person is managed by <a href="/admin/scim/{{ scim.id }}/edit">{{ scim.name }}</a> (SCIM). Their name, email and whether they can sign in are set there, and a change made here is overwritten the next time it syncs.</p>
     </div>
-  </div>
-{% endif %}
-
-{% if mfa and mfa.enrolled %}
-  <div class="zone plain">
-    <div>
-      <h2>Two-step verification is on</h2>
-      <p>{{ mfa.codes_left }} unused recovery {{ mfa.codes_left == 1 ? 'code' : 'codes' }} left. If {{ user.name }} lost their phone and codes, reset it: they are signed out everywhere and set it up again at their next sign-in (when it is required).</p>
-    </div>
-    {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/reset-mfa', csrf, 'Reset two-step', 'Reset two-step verification?', user.name ~ ' loses their authenticator app and recovery codes and is signed out everywhere. Only do this once you are sure it is really them asking.', 'btn ghost') }}
   </div>
 {% endif %}
 
@@ -138,6 +129,15 @@
     {% if not reset_refusal %}{{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/send-reset', csrf, 'Send reset email', 'Send a password reset email?', 'An email with a link goes to ' ~ user.email ~ '. Their password stays as it is until they use the link.', 'btn ghost') }}{% endif %}
   </div>
 {% endif %}
+{% if mfa and mfa.enrolled %}
+  <div class="zone plain">
+    <div>
+      <h2>Two-step verification is on</h2>
+      <p>{{ mfa.codes_left }} unused recovery {{ mfa.codes_left == 1 ? 'code' : 'codes' }} left. If {{ user.name }} lost their phone and codes, reset it: they are signed out everywhere and set it up again at their next sign-in (when it is required).</p>
+    </div>
+    {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/reset-mfa', csrf, 'Reset two-step', 'Reset two-step verification?', user.name ~ ' loses their authenticator app and recovery codes and is signed out everywhere. Only do this once you are sure it is really them asking.', 'btn ghost') }}
+  </div>
+{% endif %}
   {% if not impersonation_refusal %}
   <div class="zone">
     <div><h2>Browse as {{ user.name }}</h2><p>Sign this browser in as {{ user.name }} to see the apps the way they do. You are signed out of the admin panel meanwhile, and the session is recorded as started by you.</p></div>
@@ -161,6 +161,8 @@
     {{ m.confirm_button('/admin/users/' ~ user.sub|url_encode ~ '/delete', csrf, 'Delete user', 'Delete ' ~ user.name ~ '?', user.username ~ ' will be removed from all groups and can no longer sign in. This cannot be undone.') }}
   </div>
 {% endif %}
+{% elseif tab == 'ip-rules' %}
+{% include 'admin/_ip_rules.html.twig' with {client: null, person: user, inherited: [], ignores_general: false} %}
 {% elseif rel %}
 {% include 'admin/_relation.html.twig' with {r: rel} %}
 {% endif %}

@@ -115,18 +115,6 @@
   </div>
 
   <div class="section">
-    <header><h2>APIs</h2><p>The resources (RFC 8707) this client may get access tokens for.</p></header>
-    <div class="fields">
-      <div class="field{{ errors.resources is defined ? ' has-error' }}">
-        <label for="resources">Allowed resources</label>
-        <textarea id="resources" name="resources" spellcheck="false" placeholder="https://api.example.com/">{{ item.resources_text }}</textarea>
-        <div class="hint">One per line, each an absolute URI that must match exactly what the app sends as <span class="mono">resource</span>. A token the app gets for a resource is only accepted by that API, and no longer names this client as its audience. Leave empty if the app does not use resource indicators.</div>
-        {{ m.error(errors, 'resources') }}
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
     <header><h2>Sign-out</h2><p>How this app learns that someone signed out, and where it sends them afterwards.</p></header>
     <div class="fields">
       <div class="field{{ errors.backchannel_logout_uri is defined ? ' has-error' }}">
@@ -140,6 +128,18 @@
         <textarea id="post_logout_redirect_uris" name="post_logout_redirect_uris" spellcheck="false">{{ item.post_logout_redirect_uris_text }}</textarea>
         <div class="hint">One per line. Where the app may send people after it asks this server to sign them out. Each must match exactly.</div>
         {{ m.error(errors, 'post_logout_redirect_uris') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <header><h2>APIs</h2><p>The resources (RFC 8707) this client may get access tokens for.</p></header>
+    <div class="fields">
+      <div class="field{{ errors.resources is defined ? ' has-error' }}">
+        <label for="resources">Allowed resources</label>
+        <textarea id="resources" name="resources" spellcheck="false" placeholder="https://api.example.com/">{{ item.resources_text }}</textarea>
+        <div class="hint">One per line, each an absolute URI that must match exactly what the app sends as <span class="mono">resource</span>. A token the app gets for a resource is only accepted by that API, and no longer names this client as its audience. Leave empty if the app does not use resource indicators.</div>
+        {{ m.error(errors, 'resources') }}
       </div>
     </div>
   </div>

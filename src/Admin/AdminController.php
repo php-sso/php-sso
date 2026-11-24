@@ -232,6 +232,9 @@ final class AdminController
             ['GET', '#^/users/([^/]+)/groups$#', 'userGroups'],
             ['GET', '#^/users/([^/]+)/notices$#', 'userNotices'],
             ['GET', '#^/users/([^/]+)/danger$#', 'userDanger'],
+            ['GET', '#^/users/([^/]+)/ip-rules$#', 'userIpRules'],
+            ['POST', '#^/users/([^/]+)/ip-rules$#', 'userIpRuleCreate'],
+            ['POST', '#^/users/([^/]+)/ip-rules/(\d+)/delete$#', 'userIpRuleDelete'],
             ['POST', '#^/users/([^/]+)/reset-lock$#', 'userResetLock'],
             ['POST', '#^/users/([^/]+)/lock$#', 'userLock'],
             ['POST', '#^/users/([^/]+)/unlock$#', 'userUnlock'],
@@ -403,6 +406,81 @@ final class AdminController
         return $user === null ? $this->notFound('User') : $this->userForm($user, $user, [], 'notices');
     }
 
+    private function userIpRules(ServerRequestInterface $request, string $sub): ResponseInterface
+    {
+        $user = $this->users->find($sub);
+
+        return $user === null ? $this->notFound('User') : $this->userIpRuleForm($request, $user, ['type' => 'deny', 'cidr' => '', 'note' => '']);
+    }
+
+    private function userIpRuleCreate(ServerRequestInterface $request, string $sub): ResponseInterface
+    {
+        $user = $this->users->find($sub);
+        if ($user === null) {
+            return $this->notFound('User');
+        }
+        $body = (array) $request->getParsedBody();
+        $input = ['type' => $this->text($body, 'type'), 'cidr' => $this->text($body, 'cidr'), 'note' => $this->text($body, 'note')];
+        $errors = [];
+
+        $cidr = Cidr::normalize($input['cidr']);
+        if (!in_array($input['type'], ['allow', 'deny'], true)) {
+            $errors['type'] = 'Choose allow or deny.';
+        }
+        if ($cidr === null) {
+            $errors['cidr'] = 'Enter an IP address or a range such as 203.0.113.0/24 or 2001:db8::/32.';
+        } elseif (!$errors && $this->ipRules->existsForUser($input['type'], $cidr, $sub)) {
+            $errors['cidr'] = 'This rule already exists.';
+        }
+        if (mb_strlen($input['note']) > 255) {
+            $errors['note'] = 'Max 255 characters.';
+        }
+        // Your own account: never lock yourself out by accident. Other people can be fixed from here.
+        $mine = $this->clientIp->of($request);
+        if ($sub === $this->admin['sub'] && !$errors && !$this->ipPolicy->allowsUserAfterAdding($input['type'], $cidr, $mine, $sub)) {
+            $errors['cidr'] = "This rule would block your own address ({$mine}), so you could not sign in again. "
+                . ($input['type'] === 'allow' ? 'Include your address in the range.' : 'Use a range that does not contain your address.');
+        }
+        if ($errors) {
+            return $this->userIpRuleForm($request, $user, $input, $errors);
+        }
+        $this->ipRules->createForUser($input['type'], $cidr, $input['note'], $sub);
+
+        return $this->done($this->userIpRulesUrl($sub), ucfirst($input['type']) . " rule for {$cidr} added for {$user['name']}.");
+    }
+
+    private function userIpRuleDelete(ServerRequestInterface $request, string $sub, string $id): ResponseInterface
+    {
+        $rule = $this->ipRules->findForUser((int) $id);
+        // A rule can only be removed from the page of the person it belongs to.
+        if ($this->users->find($sub) === null || $rule === null || $rule['user_sub'] !== $sub) {
+            return $this->notFound('Rule');
+        }
+        $this->ipRules->deleteForUser($rule['id']);
+
+        return $this->done($this->userIpRulesUrl($sub), "Rule for {$rule['cidr']} removed.");
+    }
+
+    private function userIpRulesUrl(string $sub): string
+    {
+        return '/admin/users/' . rawurlencode($sub) . '/ip-rules';
+    }
+
+    /** @param array{type: string, cidr: string, note: string} $item */
+    private function userIpRuleForm(ServerRequestInterface $request, array $user, array $item, array $errors = []): ResponseInterface
+    {
+        $rules = $this->ipRules->allForUser($user['sub']);
+
+        return $this->userForm($user, $user, [], 'ip-rules', [
+            'rules' => $rules,
+            'item' => $item,
+            'errors' => $errors,
+            'my_ip' => $this->clientIp->of($request),
+            'allow_active' => (bool) array_filter($rules, static fn (array $r): bool => $r['type'] === 'allow'),
+            'base' => $this->userIpRulesUrl($user['sub']),
+        ], $errors ? 422 : 200);
+    }
+
     private function userDanger(ServerRequestInterface $request, string $sub): ResponseInterface
     {
         $user = $this->users->find($sub);
@@ -508,9 +586,10 @@ final class AdminController
         return [$input, $errors];
     }
 
-    private function userForm(?array $user, array $item, array $errors = [], string $tab = 'details'): ResponseInterface
+    /** @param array<string, mixed> $extra more for the template, with the status to answer with (the IP rules tab uses it) */
+    private function userForm(?array $user, array $item, array $errors = [], string $tab = 'details', array $extra = [], ?int $status = null): ResponseInterface
     {
-        return $this->render('users/form.html.twig', [
+        return $this->render('users/form.html.twig', $extra + [
             'tab' => $tab,
             'impersonation_refusal' => $user ? $this->impersonation->refusal($this->admin, $user) : 'new',
             'lock' => $user && $tab === 'danger' ? $this->throttle->accountStatus($user['sub']) : null,
@@ -519,14 +598,14 @@ final class AdminController
             'connections' => $user && $tab === 'details' ? $this->social->connectionsOf($user['sub']) : [],
             'scim' => $user && $tab === 'details' ? $this->scimUsers->managedBy($user['sub']) : null,
             'consent_status' => $user && $tab === 'notices' ? $this->consents->statusFor($user['sub']) : [],
-            'mfa' => $user && $tab === 'details' ? ['enrolled' => $this->mfa->isEnrolled($user['sub']), 'codes_left' => $this->mfa->recoveryCodesLeft($user['sub'])] : null,
+            'mfa' => $user && $tab === 'danger' ? ['enrolled' => $this->mfa->isEnrolled($user['sub']), 'codes_left' => $this->mfa->recoveryCodesLeft($user['sub'])] : null,
             'reset_available' => $user !== null && $tab === 'danger' && $this->passwordReset !== null,
             'reset_refusal' => $user !== null && $this->passwordReset !== null ? $this->passwordReset->refusal($user) : null,
             'user' => $user,
             'item' => $item,
             'errors' => $errors,
             'rel' => $user && $tab === 'groups' ? $this->picker->view('user-groups', $user['sub'], $_SESSION['csrf']) : null,
-        ], $errors ? 422 : 200);
+        ], $status ?? ($errors ? 422 : 200));
     }
 
     private function userAskConsentAgain(ServerRequestInterface $request, string $sub, string $id): ResponseInterface
@@ -1982,6 +2061,7 @@ final class AdminController
             'allow_active' => (bool) array_filter($rules, static fn (array $r): bool => $r['type'] === 'allow'),
             'base' => $this->ipRulesUrl($client),
             'client' => $client,
+            'person' => null,
             // The general rules also apply to a client; shown read-only on its page.
             'inherited' => $client === null ? [] : $this->ipRules->all(),
             'ignores_general' => $client !== null && $this->ipRules->ignoresGeneral($client['client_id']),
